@@ -6,7 +6,7 @@ export interface RegisterRequest {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier: string; // Có thể là email hoặc số điện thoại
   password: string;
 }
 

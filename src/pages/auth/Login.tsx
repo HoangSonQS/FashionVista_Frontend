@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 
 interface LoginFormState {
-  email: string;
+  identifier: string; // Email hoặc số điện thoại
   password: string;
 }
 
 const initialFormState: LoginFormState = {
-  email: '',
+  identifier: '',
   password: '',
 };
 
@@ -27,15 +27,15 @@ const Login = () => {
     e.preventDefault();
     setError(null);
 
-    if (!form.email || !form.password) {
-      setError('Vui lòng nhập email và mật khẩu.');
+    if (!form.identifier || !form.password) {
+      setError('Vui lòng nhập email/số điện thoại và mật khẩu.');
       return;
     }
 
     try {
       setLoading(true);
       const result = await authService.login({
-        email: form.email,
+        identifier: form.identifier,
         password: form.password,
       });
       // Lưu token + user vào localStorage cho các phần khác dùng sau này
@@ -97,19 +97,19 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label
-                htmlFor="email"
+                htmlFor="identifier"
                 className="block text-xs md:text-sm font-medium text-[hsl(210,35%,88%)]"
               >
-                Email
+                Email hoặc số điện thoại
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                value={form.email}
+                id="identifier"
+                name="identifier"
+                type="text"
+                value={form.identifier}
                 onChange={handleChange}
                 className="w-full rounded-lg border border-[hsl(210,40%,35%)] bg-[hsl(210,43%,27%)] px-3 py-2 text-sm text-foreground placeholder:text-[hsl(210,35%,75%)] focus:outline-none focus:ring-2 focus:ring-[hsl(210,45%,50%)]"
-                placeholder="you@example.com"
+                placeholder="you@example.com hoặc 0901234567"
               />
             </div>
 
