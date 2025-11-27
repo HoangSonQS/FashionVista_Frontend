@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { AUTH_CHANGE_EVENT } from '../../constants/events';
 
 interface LoginFormState {
   identifier: string; // Email hoặc số điện thoại
@@ -40,6 +41,7 @@ const Login = () => {
       });
       // Lưu token + user vào localStorage cho các phần khác dùng sau này
       localStorage.setItem('auth', JSON.stringify(result));
+      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
       // Chuyển về trang Home sau khi đăng nhập thành công
       navigate('/');
     } catch (err) {

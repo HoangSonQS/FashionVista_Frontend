@@ -110,7 +110,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Categories: Áo, Quần, Váy, Áo khoác, Phụ kiện
 - Collections: The New, Bộ Sưu Tập, Sale
 - Tags: Màu sắc, Chất liệu, Style
-- Filter: Giá, Size, Màu, Category, Brand
+- Filter: Giá, Size, Màu, Category
 
 #### 3.2.2. Thông tin sản phẩm
 
@@ -124,7 +124,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 #### 3.2.3. Tìm kiếm sản phẩm
 
-- Full-text search: Tìm kiếm theo tên, mô tả, tags, brand
+- Full-text search: Tìm kiếm theo tên, mô tả, tags
 - Dictionary-based query parsing: Phân tích từ khóa để hiểu ý định người dùng
 - Autocomplete suggestions: Gợi ý tìm kiếm khi người dùng nhập
 - Lưu lịch sử tìm kiếm: Lưu các từ khóa đã tìm để gợi ý sau
@@ -142,7 +142,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 **Filter Types:**
 
-- Fixed Attributes (Fixed Schema): Category, Price Range, Size, Color, Brand, Availability
+- Fixed Attributes (Fixed Schema): Category, Price Range, Size, Color, Availability
 - Dynamic Attributes (EAV - Entity-Attribute-Value): Chất liệu, Style, Pattern, Fit, Season, Care Instructions
 - Variant-based Filters: Size availability, Color availability, Price range theo variant
 - JSONB Attributes (Flexible): Custom attributes linh hoạt
@@ -516,14 +516,14 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 ### Phase 1: MVP (Minimum Viable Product)
 
-1. User authentication (Register/Login)
-2. Product listing và detail
-3. Basic filtering (Fixed attributes: Category, Price, Size, Color)
-4. Simple search (Full-text PostgreSQL)
-5. Cart management (backend)
-6. Checkout và Order creation
-7. Basic payment (COD)
-8. User profile
+1. ✅ User authentication (Register/Login)
+2. ✅ Product listing và detail
+3. ✅ Basic filtering (Fixed attributes: Category, Price, Size, Color)
+4. ✅ Simple search (Full-text PostgreSQL)
+5. ✅ Cart management (backend)
+6. ✅ Checkout và Order creation
+7. ✅ Basic payment (COD)
+8. ✅ User profile
 
 ### Phase 2: Enhanced Features
 
@@ -561,7 +561,7 @@ Hệ thống filter sử dụng 4 mô hình kết hợp để tối ưu hiệu n
 1. **Fixed Schema (Fixed Attributes)**
    - Lưu trực tiếp trong bảng `products`
    - Dùng cho các attributes cố định, thường xuyên query
-   - Ví dụ: `category_id`, `brand_id`, `price`, `status`
+   - Ví dụ: `category_id`, `price`, `status`
    - Index trực tiếp trên các cột này
 
 2. **EAV (Entity-Attribute-Value)**
@@ -643,7 +643,6 @@ function buildFilterQuery(filters: ProductFilters) {
 function buildFilterHash(filters: ProductFilters): string {
   const normalized = {
     category: filters.categoryId,
-    brand: filters.brandId,
     priceRange: filters.priceRange,
     sizes: filters.size?.sort(),
     colors: filters.color?.sort(),
@@ -746,11 +745,10 @@ async function fullTextSearch(query: string, filters?: ProductFilters) {
 ```typescript
 interface DictionaryEntry {
   keyword: string;
-  type: 'synonym' | 'category' | 'brand' | 'attribute' | 'stopword';
+  type: 'synonym' | 'category' | 'attribute' | 'stopword';
   mappings: {
     synonyms?: string[];
     category?: string;
-    brand?: string;
     attributes?: Record<string, any>;
   };
   priority: number;
@@ -765,7 +763,6 @@ async function parseQuery(query: string): Promise<ParsedQuery> {
   const parsed: ParsedQuery = {
     keywords: [],
     categories: [],
-    brands: [],
     attributes: {},
     originalQuery: query
   };
@@ -784,11 +781,6 @@ async function parseQuery(query: string): Promise<ParsedQuery> {
       case 'category':
         if (dictEntry.mappings.category) {
           parsed.categories.push(dictEntry.mappings.category);
-        }
-        break;
-      case 'brand':
-        if (dictEntry.mappings.brand) {
-          parsed.brands.push(dictEntry.mappings.brand);
         }
         break;
       case 'attribute':
@@ -884,5 +876,244 @@ function useProductFilters() {
 - **Lazy load** các filter options phức tạp hoặc ít dùng.
 - Sử dụng **virtual scrolling** cho danh sách filter dài.
 - Áp dụng **Optimistic UI updates** để trải nghiệm người dùng mượt mà hơn.
+
+---
+
+## 14. DATABASE SCHEMA & ERD
+
+### 14.1. Tổng quan
+
+Hệ thống sử dụng PostgreSQL với JPA/Hibernate ORM. Dưới đây là mô tả các bảng chính và mối quan hệ giữa chúng.
+
+### 14.2. Các bảng chính
+
+#### 14.2.1. **users**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `email` (VARCHAR, UNIQUE, NOT NULL)
+- `password` (VARCHAR, NOT NULL)
+- `full_name` (VARCHAR)
+- `phone_number` (VARCHAR)
+- `role` (ENUM: CUSTOMER, ADMIN, NOT NULL, DEFAULT: CUSTOMER)
+- `active` (BOOLEAN, NOT NULL, DEFAULT: true)
+
+#### 14.2.2. **addresses**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `user_id` (FK → users.id, NOT NULL)
+- `full_name` (VARCHAR, NOT NULL)
+- `phone` (VARCHAR, NOT NULL)
+- `address` (VARCHAR, NOT NULL)
+- `ward` (VARCHAR)
+- `district` (VARCHAR)
+- `city` (VARCHAR)
+- `is_default` (BOOLEAN, NOT NULL, DEFAULT: false)
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.3. **categories**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `name` (VARCHAR, NOT NULL)
+- `slug` (VARCHAR, UNIQUE, NOT NULL)
+- `description` (TEXT)
+- `image` (VARCHAR)
+- `parent_id` (FK → categories.id, NULLABLE) - Self-referencing cho category tree
+- `display_order` (INTEGER, NOT NULL, DEFAULT: 0)
+- `is_active` (BOOLEAN, NOT NULL, DEFAULT: true)
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.4. **products**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `name` (VARCHAR, NOT NULL)
+- `slug` (VARCHAR, UNIQUE, NOT NULL)
+- `description` (TEXT)
+- `short_description` (TEXT)
+- `price` (DECIMAL(10,2), NOT NULL)
+- `compare_at_price` (DECIMAL(10,2))
+- `sku` (VARCHAR, UNIQUE, NOT NULL)
+- `status` (ENUM: ACTIVE, INACTIVE, OUT_OF_STOCK, NOT NULL, DEFAULT: ACTIVE)
+- `featured` (BOOLEAN, NOT NULL, DEFAULT: false)
+- `category_id` (FK → categories.id, NULLABLE)
+- `sizes` (TEXT[], DEFAULT: '{}') - Array of available sizes
+- `colors` (TEXT[], DEFAULT: '{}') - Array of available colors
+- `attributes` (JSONB, DEFAULT: '{}') - Flexible attributes
+- `tags` (TEXT[], DEFAULT: '{}') - Tags for filtering
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+**Lưu ý:** Bảng `brands` đã được loại bỏ vì hệ thống chỉ bán thương hiệu của chính mình (Single Brand model).
+
+#### 14.2.5. **product_variants**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `product_id` (FK → products.id, NOT NULL)
+- `size` (VARCHAR, NOT NULL)
+- `color` (VARCHAR, NOT NULL)
+- `sku` (VARCHAR, UNIQUE, NOT NULL)
+- `price` (DECIMAL(10,2)) - Override product price if needed
+- `stock` (INTEGER, NOT NULL, DEFAULT: 0)
+- `is_active` (BOOLEAN, NOT NULL, DEFAULT: true)
+- `version` (BIGINT, NOT NULL) - **Optimistic Locking** để xử lý concurrency
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+**Lưu ý:** Trường `version` được sử dụng cho Optimistic Locking để tránh race condition khi nhiều người dùng cùng đặt hàng một variant. Hibernate tự động tăng version mỗi khi entity được update.
+
+#### 14.2.6. **product_images**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `product_id` (FK → products.id, NOT NULL)
+- `url` (VARCHAR, NOT NULL)
+- `alt` (VARCHAR)
+- `display_order` (INTEGER, NOT NULL, DEFAULT: 0)
+- `is_primary` (BOOLEAN, NOT NULL, DEFAULT: false)
+- `created_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.7. **product_attributes** (EAV Model)
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `product_id` (FK → products.id, NOT NULL)
+- `attribute_key` (VARCHAR, NOT NULL) - e.g., 'material', 'style', 'pattern'
+- `attribute_value` (VARCHAR, NOT NULL) - e.g., 'Cotton', 'Casual', 'Solid'
+- `created_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.8. **carts**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `user_id` (FK → users.id, NULLABLE) - NULL cho guest cart
+- `session_id` (VARCHAR) - Cho guest cart
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.9. **cart_items**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `cart_id` (FK → carts.id, NOT NULL)
+- `product_id` (FK → products.id, NOT NULL)
+- `variant_id` (FK → product_variants.id, NULLABLE)
+- `quantity` (INTEGER, NOT NULL, DEFAULT: 1)
+- `price` (DECIMAL(10,2), NOT NULL) - Snapshot tại thời điểm thêm vào giỏ
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.10. **orders**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `order_number` (VARCHAR, UNIQUE, NOT NULL) - Format: ORD-YYYYMMDD-XXXX
+- `user_id` (FK → users.id, NOT NULL)
+- `status` (ENUM: PENDING, CONFIRMED, PROCESSING, SHIPPING, DELIVERED, CANCELLED, REFUNDED, NOT NULL, DEFAULT: PENDING)
+- `subtotal` (DECIMAL(10,2), NOT NULL)
+- `shipping_fee` (DECIMAL(10,2), NOT NULL, DEFAULT: 0)
+- `discount` (DECIMAL(10,2), NOT NULL, DEFAULT: 0)
+- `total` (DECIMAL(10,2), NOT NULL)
+- `payment_method` (ENUM: COD, BANK_TRANSFER, VNPAY, MOMO, NOT NULL)
+- `payment_status` (ENUM: PENDING, PAID, FAILED, REFUNDED, NOT NULL, DEFAULT: PENDING)
+- `shipping_address` (JSONB, NOT NULL) - JSON snapshot
+- `billing_address` (JSONB) - JSON snapshot (optional)
+- `notes` (TEXT)
+- `tracking_number` (VARCHAR)
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.11. **order_items**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `order_id` (FK → orders.id, NOT NULL)
+- `product_id` (FK → products.id, NOT NULL)
+- `variant_id` (FK → product_variants.id, NULLABLE)
+- `product_name` (VARCHAR, NOT NULL) - Snapshot
+- `product_image` (VARCHAR) - Snapshot
+- `price` (DECIMAL(10,2), NOT NULL) - Snapshot
+- `quantity` (INTEGER, NOT NULL)
+- `subtotal` (DECIMAL(10,2), NOT NULL)
+- `created_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.12. **payments**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `order_id` (FK → orders.id, UNIQUE, NOT NULL) - OneToOne với Order
+- `payment_method` (ENUM: COD, BANK_TRANSFER, VNPAY, MOMO, NOT NULL)
+- `payment_status` (ENUM: PENDING, PAID, FAILED, REFUNDED, NOT NULL, DEFAULT: PENDING)
+- `amount` (DECIMAL(10,2), NOT NULL)
+- `transaction_id` (VARCHAR) - From payment gateway
+- `payment_gateway_response` (TEXT) - JSON response from gateway
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.13. **reviews**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `product_id` (FK → products.id, NOT NULL)
+- `user_id` (FK → users.id, NOT NULL)
+- `rating` (INTEGER, NOT NULL, DEFAULT: 5) - 1-5 stars
+- `comment` (TEXT)
+- `review_images` (TEXT[]) - Array of image URLs
+- `created_at` (TIMESTAMP, NOT NULL)
+- `updated_at` (TIMESTAMP, NOT NULL)
+
+#### 14.2.14. **wishlists**
+- `id` (PK, BIGINT, AUTO_INCREMENT)
+- `user_id` (FK → users.id, NOT NULL)
+- `product_id` (FK → products.id, NOT NULL)
+- `created_at` (TIMESTAMP, NOT NULL)
+
+### 14.3. Mối quan hệ (Relationships)
+
+#### 14.3.1. User Relationships
+- User **1:N** Address
+- User **1:N** Cart
+- User **1:N** Order (không CASCADE - giữ lại lịch sử)
+- User **1:N** Review (không CASCADE - giữ lại reviews)
+- User **1:N** Wishlist
+
+#### 14.3.2. Category Relationships
+- Category **N:1** Category (self-referencing - parent category)
+- Category **1:N** Product
+
+#### 14.3.3. Product Relationships
+- Product **N:1** Category
+- Product **1:N** ProductImage
+- Product **1:N** ProductVariant
+- Product **1:N** ProductAttribute (EAV)
+- Product **1:N** Review
+- Product **1:N** Wishlist
+- Product **1:N** CartItem
+- Product **1:N** OrderItem
+
+#### 14.3.4. ProductVariant Relationships
+- ProductVariant **N:1** Product
+- ProductVariant **1:N** CartItem
+- ProductVariant **1:N** OrderItem
+
+**Lưu ý về Optimistic Locking:**
+- Trường `version` trong `product_variants` được sử dụng để xử lý concurrency khi nhiều người dùng cùng đặt hàng.
+- Khi update stock, Hibernate sẽ kiểm tra version. Nếu version không khớp (đã bị update bởi transaction khác), sẽ throw `OptimisticLockException`.
+- Service layer cần handle exception này và retry hoặc thông báo lỗi cho user.
+
+#### 14.3.5. Cart Relationships
+- Cart **N:1** User (nullable - cho guest cart)
+- Cart **1:N** CartItem
+
+#### 14.3.6. Order Relationships
+- Order **N:1** User
+- Order **1:N** OrderItem
+- Order **1:1** Payment
+
+#### 14.3.7. Payment Relationships
+- Payment **1:1** Order
+
+### 14.4. Indexes quan trọng
+
+- `users.email` (UNIQUE INDEX)
+- `products.slug` (UNIQUE INDEX)
+- `products.category_id` (INDEX)
+- `products.sku` (UNIQUE INDEX)
+- `product_variants.sku` (UNIQUE INDEX)
+- `product_variants.product_id` (INDEX)
+- `orders.order_number` (UNIQUE INDEX)
+- `orders.user_id` (INDEX)
+- `categories.slug` (UNIQUE INDEX)
+- `categories.parent_id` (INDEX)
+- Full-text search index trên `products.search_vector` (GIN index)
+- JSONB index trên `products.attributes` (GIN index)
+
+### 14.5. Thay đổi so với phiên bản trước
+
+**Đã loại bỏ:**
+- Bảng `brands` - Hệ thống chuyển sang mô hình Single Brand (chỉ bán thương hiệu của chính mình)
+- Relationship `Product → Brand` - Đã xóa khỏi Product entity
+
+**Đã thêm:**
+- Trường `version` trong `product_variants` - Optimistic Locking để xử lý concurrency khi cập nhật tồn kho
 
 Tài liệu này sẽ được cập nhật khi có thay đổi về yêu cầu hoặc phạm vi dự án.
