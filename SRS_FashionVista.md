@@ -105,64 +105,72 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 ### 3.2. Quản lý sản phẩm (Product Management)
 
-#### 3.2.1. Danh mục sản phẩm
+#### 3.2.1. Cấu trúc dữ liệu
 
-- Categories: Áo, Quần, Váy, Áo khoác, Phụ kiện
-- Collections: The New, Bộ Sưu Tập, Sale
-- Tags: Màu sắc, Chất liệu, Style
-- Filter: Giá, Size, Màu, Category
+- Thông tin cơ bản: tên, slug, SKU, barcode, trạng thái hiển thị, mô tả ngắn/dài.
+- Giá: giá niêm yết, giá sale, giá flash sale, đơn vị tiền tệ, lịch áp dụng.
+- Tồn kho: tổng stock, stock theo biến thể (size, màu, chất liệu), ngưỡng cảnh báo.
+- Media: danh sách hình ảnh, ảnh đại diện, video/360, thứ tự hiển thị.
+- Danh mục: category cha/con, collections theo chiến dịch, danh sách tags.
+- Thuộc tính mở rộng (EAV): chất liệu, style, season, care instructions, fitting.
+- SEO fields: meta title, meta description, keywords, canonical URL.
 
-#### 3.2.2. Thông tin sản phẩm
+#### 3.2.2. Nghiệp vụ CRUD
 
-- Tên, mô tả, giá, hình ảnh (nhiều ảnh)
-- Size (XS, S, M, L, XL, XXL)
-- Màu sắc
-- Số lượng tồn kho
-- Trạng thái (Còn hàng, Hết hàng, Sắp về)
-- SKU (Stock Keeping Unit)
-- Tags, Categories
+- Thêm sản phẩm nhiều bước (thông tin → giá → tồn kho → media → SEO).
+- Chỉnh sửa có versioning, lưu audit log (ai sửa gì, khi nào).
+- Ẩn/hiện sản phẩm, chuyển trạng thái Coming Soon/Stopped.
+- Soft delete: chỉ đánh dấu `ARCHIVED` nếu sản phẩm đã có đơn hàng.
+- Nhân bản sản phẩm (duplicate) để tạo dòng tương tự nhanh.
 
-#### 3.2.3. Tìm kiếm sản phẩm
+#### 3.2.3. Quản lý tồn kho & biến thể
 
-- Full-text search: Tìm kiếm theo tên, mô tả, tags
-- Dictionary-based query parsing: Phân tích từ khóa để hiểu ý định người dùng
-- Autocomplete suggestions: Gợi ý tìm kiếm khi người dùng nhập
-- Lưu lịch sử tìm kiếm: Lưu các từ khóa đã tìm để gợi ý sau
-- Search analytics: Theo dõi các từ khóa phổ biến
+- Variant gồm size, màu, vật liệu… với SKU riêng, giá override và barcode.
+- Trừ tồn theo biến thể, tích hợp import tồn kho từ hệ thống WMS.
+- Cho phép khoá bán tự động khi stock ≤ 0, cảnh báo low-stock.
+- Khi sản phẩm nằm trong giỏ của user: kiểm tra stock trước khi checkout, thông báo nếu không đủ.
 
-#### 3.2.4. Lọc sản phẩm (Filter System)
+#### 3.2.4. Hình ảnh & media
 
-**Filter UI Components:**
+- Upload nhiều hình ảnh, kéo thả reorder, chọn ảnh thumbnail.
+- Gán ALT text cho SEO, hỗ trợ upload từ URL/CDN.
+- Preview trực tiếp trước khi lưu, đánh dấu ảnh chỉ dùng cho một variant.
 
-- Sidebar Filter: Hiển thị các filter options ở sidebar trái
-- Dropdown Filters: Dropdown menu với các tag/search filters
-- Tag Chips: Hiển thị các tag đã chọn dưới dạng chips có thể xóa
-- Active Filters Display: Hiển thị tất cả filters đang active
-- Clear All Filters: Nút xóa tất cả filters
+#### 3.2.5. Danh mục, bộ sưu tập, tag
 
-**Filter Types:**
+- Tree view quản lý category cha/con, drag & drop đổi thứ tự hiển thị.
+- Collections theo chiến dịch (Sale, New Arrival, Holiday), gắn nhiều sản phẩm cùng lúc.
+- Tagging tự do để phục vụ filter và chiến dịch marketing.
 
-- Fixed Attributes (Fixed Schema): Category, Price Range, Size, Color, Availability
-- Dynamic Attributes (EAV - Entity-Attribute-Value): Chất liệu, Style, Pattern, Fit, Season, Care Instructions
-- Variant-based Filters: Size availability, Color availability, Price range theo variant
-- JSONB Attributes (Flexible): Custom attributes linh hoạt
+#### 3.2.6. Giá & khuyến mãi
 
-**Filter Behavior:**
+- Giá sale theo % hoặc số tiền cố định; flash sale với thời gian bắt đầu/kết thúc.
+- Cho phép set lịch giảm giá, chọn có stack với voucher hay không.
+- Theo dõi lịch sử thay đổi giá, cảnh báo nếu giá sale thấp hơn cost.
 
-- Multi-select: Cho phép chọn nhiều giá trị trong cùng một filter
-- AND logic: Tất cả filters được kết hợp bằng AND
-- OR logic trong cùng filter: Các giá trị trong cùng filter dùng OR
-- Real-time filtering: Cập nhật kết quả ngay khi chọn filter
-- Filter count: Hiển thị số lượng sản phẩm sau mỗi filter option
-- Filter persistence: Lưu filters trong URL query params để share và bookmark
-- Smart defaults: Gợi ý filters phổ biến dựa trên category
+#### 3.2.7. SEO & URL
 
-**Precomputed Filter Table:**
+- Chỉnh slug thân thiện, tự sinh nhưng cho phép override.
+- Meta title/description/keywords, snippet preview như Google SERP.
+- Thiết lập OG tags, structured data cho sản phẩm.
 
-- Bảng cache chứa tất cả combinations của filters
-- Tăng tốc độ query khi có nhiều filters
-- Tự động cập nhật khi sản phẩm thay đổi
-- Hỗ trợ filter suggestions dựa trên dữ liệu thực tế
+#### 3.2.8. Kiểm tra & quy tắc
+
+- Validate trùng SKU, trùng slug, trùng tên trong cùng category.
+- Không cho xoá sản phẩm có order; chỉ đổi trạng thái.
+- Khi đổi giá/tồn kho: kiểm tra các đơn Pending, giỏ hàng đang giữ; ghi log thay đổi.
+
+#### 3.2.9. Import/Export
+
+- Template Excel chứa thông tin sản phẩm + variants + stock.
+- Import hỗ trợ update (match theo SKU) và tạo mới, ghi log kết quả.
+- Export để đồng bộ với kho/marketplace; cho phép lọc trước khi export.
+
+#### 3.2.10. Danh sách sản phẩm
+
+- Filter theo category, status (Active/Hidden/Archived), tồn kho (Out-of-stock), tag, featured.
+- Search theo tên, SKU, barcode.
+- Bulk actions: đổi category, bật/tắt hiển thị, set featured, export, gắn collection.
 
 ### 3.3. Quản lý giỏ hàng (Cart Management)
 
@@ -182,31 +190,83 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 ### 3.4. Quản lý đơn hàng (Order Management)
 
-#### 3.4.1. Tạo đơn hàng
+#### 3.4.1. Trạng thái chuẩn
 
-- Từ giỏ hàng → Checkout
-- Nhập thông tin giao hàng
-- Chọn phương thức thanh toán
-- Chọn phương thức vận chuyển
-- Tính phí vận chuyển
-- Áp dụng mã giảm giá (nếu có)
+- `Pending`: User đặt đơn, hệ thống chờ kiểm tra thông tin.
+- `Confirmed`: CSKH xác minh địa chỉ, phí ship, khóa giá.
+- `Processing`: Đã xác nhận thanh toán (online) hoặc khóa COD.
+- `Packing`: Kho đóng gói, in packing list, gán vận đơn.
+- `Shipping`: Đơn đã bàn giao cho GHN/GHTK/J&T, tracking chạy.
+- `Completed`: Giao thành công, đối soát doanh thu, cộng điểm.
+- `Cancelled`: Huỷ trước khi giao, ghi rõ lý do.
+- `Returned`: Khách trả hàng/RTS (Return To Sender).
+- `Refunded`: Hoàn tiền toàn phần/partial và ghi lại chứng từ.
 
-#### 3.4.2. Trạng thái đơn hàng
+#### 3.4.2. Thông tin chi tiết một đơn
 
-- Pending: Chờ xác nhận
-- Confirmed: Đã xác nhận
-- Processing: Đang xử lý
-- Shipping: Đang giao hàng
-- Delivered: Đã giao hàng
-- Cancelled: Đã hủy
-- Refunded: Đã hoàn tiền
+- Khách hàng: họ tên, email, phone, nhóm khách (New/VIP), ghi chú CSKH.
+- Địa chỉ nhúng kiểu JSON (shipping & billing), lịch sử chỉnh sửa.
+- Thanh toán: phương thức (COD/VNPay/MoMo), transactionId, trạng thái.
+- Vận chuyển: đơn vị ship, mã vận đơn, phí thực tế, tracking URL.
+- Ưu đãi: voucher, mã giảm giá, điểm loyalty, phần trăm chiết khấu.
+- Sản phẩm: danh sách items, biến thể (size/màu), ảnh snapshot, giá tại thời điểm mua, tồn kho snapshot.
+- Log thay đổi: thời gian, nhân viên thao tác, mô tả hành động.
 
-#### 3.4.3. Theo dõi đơn hàng
+#### 3.4.3. Luồng xử lý nhân viên
 
-- Mã đơn hàng (Order ID)
-- Lịch sử cập nhật trạng thái
-- Thông tin vận chuyển (tracking number)
-- Thời gian ước tính giao hàng
+1. CSKH duyệt đơn: kiểm tra thông tin, cập nhật ghi chú, xác nhận thanh toán.
+2. Kho tạo vận đơn (qua API), đóng gói, cập nhật `Packing`.
+3. Khi hãng lấy hàng → chuyển `Shipping` và push thông báo.
+4. Theo dõi tracking, xử lý yêu cầu đổi địa chỉ, đổi lịch giao.
+5. Đơn giao thành công → `Completed`, đối soát tiền, cộng điểm.
+6. Huỷ/đổi trả: chọn lý do, trả tồn, hoàn voucher/điểm, xử lý refund.
+
+#### 3.4.4. Audit log & tồn kho
+
+- Mọi thay đổi trạng thái ghi vào `order_history` (thời gian, userId, action, ghi chú).
+- Trừ tồn:
+  - Tuỳ loại sản phẩm: trừ ngay khi `Confirmed` hoặc khi `Packing`.
+  - Có cấu hình “giữ tồn” cho đơn Pending trong X phút.
+- Khi hủy/Returned/Refunded: tự động trả tồn và ghi lại phiếu nhập kho ngược.
+
+#### 3.4.5. Tích hợp đơn vị vận chuyển
+
+- API tạo vận đơn GHN/GHTK/J&T: truyền cân nặng, COD, địa chỉ, gói dịch vụ.
+- Nhận webhook trạng thái (Picked up, In transit, Delivered, Return) → auto update đơn.
+- Cho phép huỷ vận đơn (nếu hãng hỗ trợ) và tạo lại khi đổi địa chỉ.
+- Lưu file vận đơn/nhãn PDF để in trực tiếp.
+
+#### 3.4.6. Quản lý thanh toán
+
+- COD: theo dõi tiền thu hộ, đối soát với hãng giao nhận, cảnh báo nợ COD.
+- Online: lưu transaction VNPay/MoMo, xử lý callback/webhook, tự động chuyển trạng thái.
+- Partial refund: chọn item/số tiền hoàn, ghi chú lý do, cập nhật Payment record.
+
+#### 3.4.7. Màn hình danh sách đơn
+
+- Filter theo trạng thái, khoảng thời gian, phương thức thanh toán, nhân viên xử lý, kênh bán.
+- Search theo mã đơn, email/phone khách, SKU trong đơn.
+- Bulk actions: duyệt hàng loạt, in hàng loạt, cập nhật trạng thái.
+
+#### 3.4.8. In ấn & xuất dữ liệu
+
+- In hóa đơn VAT, phiếu giao hàng, packing slip, tem sản phẩm.
+- Xuất Excel/CSV theo filter hiện tại để gửi kế toán/kho.
+- Sinh vận đơn giấy theo template từng hãng.
+
+#### 3.4.9. Edge cases quan trọng
+
+- Huỷ sau khi tạo vận đơn: gửi request huỷ tới hãng, trả tồn, log lý do.
+- RTS (Return To Sender): cập nhật trạng thái Returned, kho xác nhận hàng hoàn, cho phép ship lại.
+- Khách đổi địa chỉ sau khi packing: huỷ vận đơn cũ, tạo vận đơn mới, log thao tác.
+- Thanh toán thất bại: tạo sub-state “Payment Failed”, cho phép khách retry hoặc CSKH chuyển COD.
+- Refund một phần: vẫn giữ item đã nhận, chỉ hoàn tiền phần còn lại.
+
+#### 3.4.10. Vai trò
+
+- Admin: cấu hình quy trình, phân quyền, duyệt refund lớn, xem báo cáo.
+- CSKH: duyệt đơn, chỉnh thông tin khách, xử lý hủy/đổi/complaint.
+- Kho: đóng gói, cập nhật tồn, tạo/huỷ vận đơn, xác nhận hàng hoàn.
 
 ### 3.5. Thanh toán (Payment)
 
@@ -259,29 +319,71 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 #### 3.9.1. Dashboard
 
-- Tổng quan doanh thu, đơn hàng, người dùng
-- Biểu đồ thống kê
-- Top sản phẩm bán chạy
+- Cards KPI: doanh thu hôm nay/tháng/năm, tỷ lệ chuyển đổi, khách mới
+- Biểu đồ doanh thu theo thời gian, đơn hàng gần nhất, sản phẩm bán chạy
+- Cảnh báo sản phẩm sắp hết hàng, hiệu suất nhân viên/chiến dịch marketing
 
-#### 3.9.2. Quản lý sản phẩm
+#### 3.9.2. Quản lý sản phẩm & danh mục
 
-- CRUD sản phẩm
-- Upload nhiều hình ảnh
-- Quản lý tồn kho
-- Quản lý categories, tags
+- CRUD sản phẩm, quản lý biến thể (size, màu), tồn kho theo variant
+- Thiết lập giá gốc/giá sale/flash sale, gắn tags/bộ sưu tập chủ đề
+- Upload hình ảnh, quản lý danh mục cha/con, sắp xếp thứ tự hiển thị
+- (Import/Export Excel được hoãn, sẽ bổ sung sau nếu cần)
 
 #### 3.9.3. Quản lý đơn hàng
 
-- Xem danh sách đơn hàng
-- Cập nhật trạng thái đơn hàng
-- In hóa đơn
-- Export dữ liệu
+- Danh sách đơn, tra cứu theo mã, khách, trạng thái
+- Quy trình duyệt → đóng gói → giao → hoàn tất, cập nhật trạng thái hàng loạt
+- Hủy đơn có lý do, xử lý đổi trả (RMA), đồng bộ đơn vị vận chuyển
+- In hóa đơn/phiếu giao hàng, xuất vận đơn
 
-#### 3.9.4. Quản lý người dùng
+#### 3.9.4. Quản lý người dùng & khách hàng
 
-- Xem danh sách user
-- Khóa/Mở khóa tài khoản
-- Xem lịch sử mua hàng của user
+- Danh sách khách, thông tin cá nhân + lịch sử đơn
+- Phân nhóm (VIP, mới, trung thành...), quản lý loyalty points
+- Blacklist khách (nếu cần), ghi chú CSKH
+
+#### 3.9.5. Quản lý thanh toán & vận chuyển
+
+- Cấu hình phương thức thanh toán (COD, VNPay, MoMo...), theo dõi giao dịch, hoàn tiền
+- Thiết lập đơn vị vận chuyển (GHN, GHTK, J&T...), phí ship theo khu vực
+- Theo dõi trạng thái giao hàng, xử lý hàng hoàn (return-to-sender)
+
+#### 3.9.6. Quản lý kho (Warehouse)
+
+- Danh sách kho, nhập kho/xuất kho, kiểm kê tồn kho
+- Theo dõi sản phẩm sắp hết hàng, nhật ký chuyển kho giữa chi nhánh
+
+#### 3.9.7. Quản lý người dùng nội bộ & phân quyền
+
+- Danh sách admin/staff, phân quyền theo vai trò (quản trị, kho, CSKH…)
+- Tách riêng route đăng nhập `/api/admin/auth/login`
+- Ghi nhật ký hoạt động (audit log) cho thao tác quan trọng
+
+#### 3.9.8. Báo cáo & tìm kiếm nâng cao
+
+- Báo cáo doanh thu, lợi nhuận, tỷ lệ hủy/trả, hiệu suất chiến dịch
+- Tìm kiếm nâng cao trong admin: theo sản phẩm, SKU, đơn hàng, khách hàng
+
+### 3.10. Quản lý tài khoản (Account Management)
+
+#### 3.10.1. Khách hàng (User)
+
+- Hồ sơ: họ tên, email, số điện thoại, ngày sinh, giới tính, điểm tích lũy, nhóm khách (new/loyal/VIP).
+- Địa chỉ: cho phép lưu nhiều địa chỉ, chọn mặc định shipping/billing, ghi chú riêng cho shipper.
+- Trạng thái: `active`, `inactive`, `banned`; CSKH có thể khoá/mở khóa, bắt khách đặt lại mật khẩu.
+- Lịch sử: đơn hàng, thanh toán, voucher đã dùng, loyalty logs, đánh giá sản phẩm.
+- Phân nhóm tự động dựa trên doanh thu, lượt mua; cho phép gắn tag thủ công.
+- Bảo mật: reset mật khẩu (email OTP), bắt buộc đổi khi nghi ngờ, ghi log đăng nhập (thiết bị/IP).
+
+#### 3.10.2. Admin/Staff
+
+- Tạo tài khoản với role: Super Admin, Product Manager, Order Manager, CSKH, Marketing, Warehouse.
+- Phân quyền chi tiết theo module + action (view/add/edit/delete/export/approve).
+- Audit log: lưu lại ai chỉnh sản phẩm, ai đổi trạng thái đơn, ai cập nhật quyền.
+- Bảo mật nâng cao: hỗ trợ 2FA (OTP email/app), cảnh báo đăng nhập lạ, bắt đổi mật khẩu lần đầu/định kỳ.
+- Reset mật khẩu admin, khoá tạm thời khi nghi bị compromise.
+- Màn hình quản lý staff: filter theo role, trạng thái, xem lịch sử hoạt động và đăng nhập gần nhất.
 
 ---
 

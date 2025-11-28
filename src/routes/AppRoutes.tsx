@@ -7,8 +7,13 @@ import CartPage from '../pages/user/CartPage';
 import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
 import ProductCreatePage from '../pages/admin/ProductCreate';
+import AdminLogin from '../pages/admin/AdminLogin';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminProductList from '../pages/admin/AdminProductList';
 import { ProtectedRoute } from './ProtectedRoute';
+import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
+import AdminLayout from '../components/layout/AdminLayout';
 
 export const AppRoutes = () => {
   return (
@@ -22,12 +27,21 @@ export const AppRoutes = () => {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin/products/new" element={<ProductCreatePage />} />
           </Route>
         </Route>
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route element={<AdminProtectedRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProductList />} />
+            <Route path="products/new" element={<ProductCreatePage />} />
+            <Route path="products/:id/edit" element={<ProductCreatePage />} />
+          </Route>
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -29,6 +29,15 @@ export const authService = {
       throw new Error(extractErrorMessage(error, 'Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.'));
     }
   },
+
+  async loginAdmin(data: LoginRequest): Promise<AuthResponse> {
+    try {
+      const response = await axiosClient.post<AuthResponse>('/admin/auth/login', data);
+      return response.data;
+    } catch (error) {
+      throw new Error(extractErrorMessage(error, 'Đã xảy ra lỗi khi đăng nhập admin. Vui lòng thử lại.'));
+    }
+  },
 };
 
 

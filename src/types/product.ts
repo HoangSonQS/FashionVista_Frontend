@@ -2,10 +2,12 @@ export interface ProductListItem {
   id: number;
   name: string;
   slug: string;
+  sku?: string;
   price: number;
   compareAtPrice?: number;
   status: string;
   featured: boolean;
+  category?: string | null;
   thumbnailUrl?: string | null;
 }
 
@@ -71,6 +73,7 @@ export interface ProductVariantRequest {
   price?: number;
   stock: number;
   active?: boolean;
+  id?: number;
 }
 
 export interface ProductCreateRequest {
@@ -88,5 +91,6 @@ export interface ProductCreateRequest {
   sizes?: string[];
   colors?: string[];
   variants?: ProductVariantRequest[];
+  removedImageIds?: number[];
 }
 

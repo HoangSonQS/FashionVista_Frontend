@@ -1,10 +1,10 @@
-import { FormEvent, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { addressService } from '../../services/addressService';
 import type { CheckoutRequest } from '../../types/order';
-import type { UserProfile } from '../../types/user';
 import type { AddressOption } from '../../types/address';
 
 const defaultForm: CheckoutRequest = {
@@ -19,7 +19,6 @@ const defaultForm: CheckoutRequest = {
 
 const CheckoutPage = () => {
   const [form, setForm] = useState<CheckoutRequest>(defaultForm);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [provinces, setProvinces] = useState<AddressOption[]>([]);
@@ -35,7 +34,6 @@ const CheckoutPage = () => {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
-        setProfile(data);
         setForm((prev) => ({
           ...prev,
           fullName: data.fullName ?? '',
