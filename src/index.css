@@ -2,17 +2,95 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Merriweather:wght@400;700&display=swap');
 
 :root {
-  /* Palette lấy cảm hứng từ ảnh: Deep Ocean, Blueberry, Bluebird, Clouds */
-  --background: #12284B;          /* Deep Ocean */
-  --foreground: #FFF8E7;          /* Clouds */
-  --card: #183a63;
-  --card-foreground: #FFF8E7;
-  --primary: #0055A0;             /* Blueberry */
-  --primary-foreground: #FFF8E7;
-  --muted: #438BC4;               /* Bluebird */
-  --muted-foreground: #E6EDF7;
-  --border: #0e1e3a;
+  /* ============================================
+     PALETTE CHUẨN ECOMMERCE FASHION BRAND
+     ============================================
+     Lấy cảm hứng từ Zara, Uniqlo, H&M, Routine
+     - Background sáng, foreground tối
+     - Tương phản cao, dễ đọc (WCAG ≥ 4.5)
+     - Màu nhẹ nhàng, không bão hòa
+     ============================================ */
 
+  /* === Màu nền & chữ chính === */
+  --background: #FAFAFA;               /* Nền sáng - tạo không gian thoáng */
+  --foreground: #4DA3E8;              /* Chữ tối - tương phản cao */
+
+  /* === Card & Container === */
+  --card: #FFFFFF;
+  --card-foreground: #4DA3E8;
+
+  /* === Primary (CTA) === */
+  --primary: #4DA3E8;                  /* CTA đen – signature của fashion brands */
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #2D2D2D;           /* Hover nhẹ, không quá tối */
+  --primary-focus: #1A1A1A;            /* Focus ring tương phản */
+
+  /* === Muted (phụ, nhạt) === */
+  --muted: #F2F2F2;
+  --muted-foreground: #555555;
+
+  /* === Border === */
+  --border: #E5E5E5;                   /* Border xám nhạt - phân lớp UI */
+
+  /* === Input === */
+  --input-background: #FFFFFF;
+  --input-border: #E5E5E5;
+  --input-border-focus: #111111;      /* Focus border tối */
+  --input-placeholder: #999999;
+
+  /* === Checkbox === */
+  --checkbox-checked: #81D8D0;         /* Màu xanh ngọc khi checkbox được chọn */
+  --checkbox-checked-foreground: #FFFFFF;
+
+  /* === Accent (Badge, Tag, Sale Label) === */
+  --accent: #EF4444;                   /* Đỏ nhẹ cho badge, sale */
+  --accent-foreground: #FFFFFF;
+  --accent-hover: #DC2626;
+
+  /* === Error === */
+  --error: #EF4444;
+  --error-foreground: #991B1B;        /* Màu tối để đọc rõ trên nền đỏ nhạt */
+  --error-bg: #FEE2E2;                /* Background nhẹ cho error message */
+
+  /* === Success === */
+  --success: #10B981;
+  --success-foreground: #065F46; /* Màu tối để đọc rõ trên nền xanh nhạt */
+  --success-bg: #D1FAE5;
+
+  /* === Warning === */
+  --warning: #F59E0B;
+  --warning-foreground: #92400E; /* Màu tối để đọc rõ trên nền vàng nhạt */
+  --warning-bg: #FEF3C7;
+
+  /* === Overlay (Modal, Drawer) === */
+  --overlay: rgba(0, 0, 0, 0.5);      /* Overlay tối vừa phải */
+
+  /* === Auth Page (Login/Register) - Sáng như ecommerce === */
+  --auth-background-gradient: linear-gradient(to bottom, #FAFAFA, #FFFFFF);
+  --auth-card-bg: #FFFFFF;
+  --auth-card-border: #E5E5E5;
+  --auth-text-primary: #111111;
+  --auth-text-secondary: #555555;
+  --auth-text-muted: #555555;
+  --auth-text-link: #111111;
+  --auth-text-link-hover: #2D2D2D;
+  --auth-input-bg: #FFFFFF;
+  --auth-input-border: #E5E5E5;
+  --auth-focus-ring: #111111;
+  --auth-button-bg: #111111;
+  --auth-button-hover: #2D2D2D;
+  --auth-button-text: #FFFFFF;
+
+  /* === Admin Theme (Sáng như ecommerce) === */
+  --admin-background: #FAFAFA;        /* Giống --background */
+  --admin-foreground: #111111;        /* Giống --foreground */
+  --admin-card: #FFFFFF;               /* Giống --card */
+  --admin-card-hover: #F2F2F2;        /* Giống --muted */
+  --admin-border: #E5E5E5;             /* Giống --border */
+  --admin-muted: #F2F2F2;             /* Giống --muted */
+  --admin-muted-foreground: #555555;   /* Giống --muted-foreground */
+
+  /* === Typography === */
   --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Merriweather', 'Times New Roman', serif;
   --radius: 0.5rem;
@@ -66,11 +144,67 @@ button {
 }
 
 button:hover {
-  background-color: #0064c0;
-  border-color: #1c74d0;
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 button:active {
   transform: translateY(1px);
+}
+
+/* === Checkbox Styling === */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 0.25rem;
+  background-color: var(--input-background);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--checkbox-checked);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--checkbox-checked);
+  border-color: var(--checkbox-checked);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 4px;
+  height: 8px;
+  border: solid var(--checkbox-checked-foreground);
+  border-width: 0 2px 2px 0;
+}
+
+input[type="checkbox"]:focus {
+  outline: 2px solid var(--checkbox-checked);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hide scrollbar for admin menu when closed */
+nav.overflow-x-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+nav.overflow-x-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 

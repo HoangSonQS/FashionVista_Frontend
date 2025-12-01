@@ -71,11 +71,11 @@ const AdminProductList = () => {
           <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
             Quản lý sản phẩm
           </h1>
-          <p className="text-sm text-slate-400">Theo dõi và cập nhật danh sách sản phẩm đang bán.</p>
+          <p className="text-sm text-[var(--muted-foreground)]">Theo dõi và cập nhật danh sách sản phẩm đang bán.</p>
         </div>
         <Link
           to="/admin/products/new"
-          className="inline-flex items-center justify-center rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-white transition-colors"
+          className="inline-flex items-center justify-center rounded-full bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--card)]/90 transition-colors"
         >
           + Thêm sản phẩm
         </Link>
@@ -90,7 +90,7 @@ const AdminProductList = () => {
             setSearch(e.target.value);
             setPage(0);
           }}
-          className="rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+          className="rounded-xl border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
         />
         <select
           value={status}
@@ -98,7 +98,7 @@ const AdminProductList = () => {
             setStatus(e.target.value);
             setPage(0);
           }}
-          className="rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+          className="rounded-xl border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
         >
           {statusOptions.map((option) => (
             <option value={option.value} key={option.value}>
@@ -106,12 +106,12 @@ const AdminProductList = () => {
             </option>
           ))}
         </select>
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && <p className="text-sm text-[var(--error)]">{error}</p>}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-800">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--card)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-900/60 text-left text-slate-400">
+          <thead className="bg-[var(--muted)] text-left text-[var(--muted-foreground)]">
             <tr>
               <th className="px-4 py-3 font-medium">Sản phẩm</th>
               <th className="px-4 py-3 font-medium">SKU</th>
@@ -124,17 +124,17 @@ const AdminProductList = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-[var(--muted-foreground)]">
                   Đang tải...
                 </td>
               </tr>
             ) : data && data.items.length > 0 ? (
               data.items.map((item) => (
-                <tr key={item.id} className="border-t border-slate-800">
+                <tr key={item.id} className="border-t border-[var(--border)]">
                   <td className="px-4 py-3">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-slate-400">{item.slug}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">{item.slug}</p>
                     </div>
                   </td>
                   <td className="px-4 py-3">{item.sku ?? '—'}</td>
@@ -143,7 +143,7 @@ const AdminProductList = () => {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        item.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'
+                        item.status === 'ACTIVE' ? 'bg-[var(--success-bg)] text-[var(--success)]' : 'bg-[var(--muted)] text-[var(--foreground)]'
                       }`}
                     >
                       {item.status}
@@ -152,7 +152,7 @@ const AdminProductList = () => {
                   <td className="px-4 py-3 space-x-2">
                     <Link
                       to={`/admin/products/${item.id}/edit`}
-                      className="inline-flex items-center justify-center rounded-full border border-slate-700 px-3 py-1 text-xs hover:bg-slate-800"
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)]"
                     >
                       Chỉnh sửa
                     </Link>
@@ -160,7 +160,7 @@ const AdminProductList = () => {
                       type="button"
                       onClick={() => handleToggleStatus(item)}
                       disabled={updatingId === item.id}
-                      className="rounded-full border border-slate-700 px-3 py-1 text-xs hover:bg-slate-800 disabled:opacity-50"
+                      className="rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-50"
                     >
                       {item.status === 'ACTIVE' ? 'Ẩn' : 'Bật'}
                     </button>
@@ -169,7 +169,7 @@ const AdminProductList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-[var(--muted-foreground)]">
                   Chưa có sản phẩm nào.
                 </td>
               </tr>
@@ -179,7 +179,7 @@ const AdminProductList = () => {
       </div>
 
       {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-slate-400">
+        <div className="flex items-center justify-between text-sm text-[var(--muted-foreground)]">
           <span>
             Trang {data.page + 1}/{data.totalPages}
           </span>
@@ -188,7 +188,7 @@ const AdminProductList = () => {
               type="button"
               disabled={page === 0}
               onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-              className="rounded-full border border-slate-700 px-3 py-1 disabled:opacity-50"
+              className="rounded-full border border-[var(--border)] px-3 py-1 disabled:opacity-50"
             >
               Trước
             </button>
@@ -196,7 +196,7 @@ const AdminProductList = () => {
               type="button"
               disabled={page + 1 >= data.totalPages}
               onClick={() => setPage((prev) => prev + 1)}
-              className="rounded-full border border-slate-700 px-3 py-1 disabled:opacity-50"
+              className="rounded-full border border-[var(--border)] px-3 py-1 disabled:opacity-50"
             >
               Sau
             </button>

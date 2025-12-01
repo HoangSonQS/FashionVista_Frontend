@@ -19,9 +19,7 @@ axiosClient.interceptors.request.use((config) => {
     return config;
   }
 
-  // POST /products yêu cầu admin token (có @PreAuthorize("hasRole('ADMIN')"))
-  const isAdminEndpoint = normalized.startsWith('/admin/') || 
-    (config.method?.toUpperCase() === 'POST' && normalized === '/products');
+  const isAdminEndpoint = normalized.startsWith('/admin/');
   const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
   const raw = localStorage.getItem(storageKey);
 
@@ -35,38 +33,9 @@ axiosClient.interceptors.request.use((config) => {
     } catch {
       // ignore parse error
     }
-  } else if (isAdminEndpoint) {
-    // Nếu là admin endpoint nhưng không có token, có thể cần redirect
-    console.warn('Admin endpoint called without token:', normalized);
   }
 
   return config;
 });
-
-// Thêm response interceptor để xử lý lỗi 403
-axiosClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 403 || error.response?.status === 401) {
-      // Nếu là 403/401 và đang ở admin route hoặc đang tạo sản phẩm, có thể token hết hạn hoặc không có quyền
-      if (typeof window !== 'undefined') {
-        const currentPath = window.location.pathname;
-        const requestUrl = error.config?.url ?? '';
-        const isAdminAction = currentPath.startsWith('/admin') || 
-          (error.config?.method?.toUpperCase() === 'POST' && requestUrl.includes('/products'));
-        
-        if (isAdminAction) {
-          // Xóa token và redirect về login
-          localStorage.removeItem('adminAuth');
-          window.dispatchEvent(new Event('admin-auth-change'));
-          if (currentPath !== '/admin/login' && !currentPath.includes('/admin/login')) {
-            window.location.href = '/admin/login';
-          }
-        }
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 

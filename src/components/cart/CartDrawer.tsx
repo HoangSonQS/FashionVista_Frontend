@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { cartService } from '../../services/cartService';
+import { productService } from '../../services/productService';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import type { CartItem } from '../../types/cart';
 
@@ -13,12 +14,82 @@ const CartDrawer = () => {
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shippingFee ?? 0;
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+  const [outOfStockItems, setOutOfStockItems] = useState<Set<number>>(new Set());
+  const [stockCheckMessages, setStockCheckMessages] = useState<Record<number, string>>({});
+
+  const checkItemStock = useCallback(async (item: CartItem): Promise<boolean> => {
+    try {
+      const product = await productService.getProduct(item.productSlug);
+      const variant = product.variants.find((v) => v.id === item.variantId);
+      
+      if (!variant) {
+        setStockCheckMessages((prev) => ({
+          ...prev,
+          [item.id]: 'Biến thể sản phẩm không tồn tại.',
+        }));
+        return false;
+      }
+
+      if (!variant.active || variant.stock <= 0) {
+        setStockCheckMessages((prev) => ({
+          ...prev,
+          [item.id]: 'Sản phẩm đã hết hàng.',
+        }));
+        setOutOfStockItems((prev) => new Set(prev).add(item.id));
+        return false;
+      }
+
+      if (variant.stock < item.quantity) {
+        setStockCheckMessages((prev) => ({
+          ...prev,
+          [item.id]: `Chỉ còn ${variant.stock} sản phẩm trong kho.`,
+        }));
+        setOutOfStockItems((prev) => new Set(prev).add(item.id));
+        return false;
+      }
+
+      // Còn hàng, xóa thông báo và khỏi danh sách hết hàng
+      setStockCheckMessages((prev) => {
+        const next = { ...prev };
+        delete next[item.id];
+        return next;
+      });
+      setOutOfStockItems((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+      return true;
+    } catch (error) {
+      setStockCheckMessages((prev) => ({
+        ...prev,
+        [item.id]: 'Không thể kiểm tra tồn kho. Vui lòng thử lại.',
+      }));
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     if (open && !cart && !loading) {
       void refreshCart();
     }
   }, [open, cart, loading, refreshCart]);
+
+  // Tự động kiểm tra stock của các items đã chọn khi cart thay đổi
+  useEffect(() => {
+    if (!cart || selectedItemIds.length === 0) return;
+    
+    const checkSelectedItemsStock = async () => {
+      for (const itemId of selectedItemIds) {
+        const item = cartItems.find((i) => i.id === itemId);
+        if (item) {
+          await checkItemStock(item);
+        }
+      }
+    };
+    
+    void checkSelectedItemsStock();
+  }, [cartItems, selectedItemIds, checkItemStock]);
 
   useEffect(() => {
     setSelectedItemIds((prev) => {
@@ -60,11 +131,13 @@ const CartDrawer = () => {
   };
 
   const handleCheckout = () => {
-    if (selectedItemIds.length === 0) {
+    // Chỉ cho checkout các item còn hàng
+    const availableSelectedIds = selectedItemIds.filter((id) => !outOfStockItems.has(id));
+    if (availableSelectedIds.length === 0) {
       return;
     }
     closeDrawer();
-    navigate('/checkout', { state: { selectedItemIds } });
+    navigate('/checkout', { state: { selectedItemIds: availableSelectedIds } });
   };
 
   const handleContinueShopping = () => {
@@ -74,20 +147,45 @@ const CartDrawer = () => {
 
   const formatCurrency = (value: number) => value.toLocaleString('vi-VN') + '₫';
   const allSelected = cartItems.length > 0 && selectedItemIds.length === cartItems.length;
-  const toggleSelectAll = () => {
+
+  const toggleSelectAll = async () => {
     if (allSelected) {
       setSelectedItemIds([]);
       return;
     }
-    setSelectedItemIds(cartItems.map((item) => item.id));
-  };
-  const toggleItemSelection = (itemId: number) => {
-    setSelectedItemIds((prev) =>
-      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId],
-    );
+
+    // Kiểm tra stock của tất cả items trước khi chọn
+    const availableItems: number[] = [];
+    for (const item of cartItems) {
+      const isAvailable = await checkItemStock(item);
+      if (isAvailable) {
+        availableItems.push(item.id);
+      }
+    }
+    setSelectedItemIds(availableItems);
   };
 
-  const selectedItems = cartItems.filter((item) => selectedItemIds.includes(item.id));
+  const toggleItemSelection = async (itemId: number) => {
+    const item = cartItems.find((i) => i.id === itemId);
+    if (!item) return;
+
+    // Nếu đang bỏ chọn, cho phép
+    if (selectedItemIds.includes(itemId)) {
+      setSelectedItemIds((prev) => prev.filter((id) => id !== itemId));
+      return;
+    }
+
+    // Nếu đang chọn, kiểm tra stock trước
+    const isAvailable = await checkItemStock(item);
+    if (isAvailable) {
+      setSelectedItemIds((prev) => [...prev, itemId]);
+    }
+  };
+
+  // Chỉ tính tiền các item đã chọn và còn hàng
+  const selectedItems = cartItems.filter(
+    (item) => selectedItemIds.includes(item.id) && !outOfStockItems.has(item.id)
+  );
   const selectedSubtotal = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
   const hasSelection = selectedItemIds.length > 0;
   const proportionalShipping =
@@ -131,7 +229,7 @@ const CartDrawer = () => {
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-[var(--border)] bg-transparent text-[var(--primary)] focus:ring-[var(--primary)]"
+                className="h-4 w-4"
               />
               Chọn tất cả
             </label>
@@ -153,9 +251,10 @@ const CartDrawer = () => {
                   <div className="pt-1">
                     <input
                       type="checkbox"
-                      checked={selectedItemIds.includes(item.id)}
+                      checked={selectedItemIds.includes(item.id) && !outOfStockItems.has(item.id)}
                       onChange={() => toggleItemSelection(item.id)}
-                      className="h-4 w-4 rounded border-[var(--border)] bg-transparent text-[var(--primary)] focus:ring-[var(--primary)]"
+                      disabled={outOfStockItems.has(item.id)}
+                      className="h-4 w-4 rounded border-[var(--border)] bg-transparent text-[var(--primary)] focus:ring-[var(--primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={`Chọn ${item.productName}`}
                     />
                   </div>
@@ -170,12 +269,17 @@ const CartDrawer = () => {
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium">{item.productName}</p>
                         {(item.size || item.color) && (
                           <p className="text-xs text-[var(--muted-foreground)]">
                             {item.size && <>Size: {item.size} </>}
                             {item.color && <>• Màu: {item.color}</>}
+                          </p>
+                        )}
+                        {stockCheckMessages[item.id] && (
+                          <p className="text-xs text-[var(--error)] mt-1 font-medium">
+                            {stockCheckMessages[item.id]}
                           </p>
                         )}
                       </div>
@@ -231,7 +335,7 @@ const CartDrawer = () => {
             type="button"
             onClick={handleCheckout}
             disabled={selectedItemIds.length === 0}
-            className="w-full rounded-full bg-[var(--primary)] py-3 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[#0064c0] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-full bg-[var(--primary)] py-3 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {selectedItemIds.length === 0 ? 'Chọn sản phẩm để thanh toán' : 'Thanh toán'}
           </button>

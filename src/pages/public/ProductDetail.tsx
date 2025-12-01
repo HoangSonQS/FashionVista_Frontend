@@ -5,6 +5,7 @@ import { cartService } from '../../services/cartService';
 import type { ProductDetail, ProductVariant } from '../../types/product';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
+import { LoginModal } from '../../components/common/LoginModal';
 
 const ProductDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -13,6 +14,7 @@ const ProductDetailPage = () => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const { openDrawer } = useCartDrawer();
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +24,13 @@ const ProductDetailPage = () => {
       try {
         const detail = await productService.getProduct(slug);
         setProduct(detail);
-        if (detail.variants.length > 0) {
-          setSelectedVariant(detail.variants[0]);
+        // Chỉ lấy biến thể còn hàng (active && stock > 0)
+        const availableVariants = detail.variants.filter((v) => v.active && v.stock > 0);
+        if (availableVariants.length > 0) {
+          setSelectedVariant(availableVariants[0]);
+        } else {
+          // Tất cả biến thể đều hết hàng
+          setSelectedVariant(null);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không tìm thấy sản phẩm.');
@@ -32,9 +39,28 @@ const ProductDetailPage = () => {
     fetchProduct();
   }, [slug]);
 
+  const ensureAuthenticated = () => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    const raw = window.localStorage.getItem('auth');
+    if (!raw) {
+      setShowLoginModal(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleAddToCart = async () => {
+    if (!ensureAuthenticated()) {
+      return;
+    }
     if (!selectedVariant) {
-      setStatus('Vui lòng chọn biến thể sản phẩm.');
+      setStatus('Sản phẩm đã hết hàng.');
+      return;
+    }
+    if (selectedVariant.stock < quantity) {
+      setStatus(`Chỉ còn ${selectedVariant.stock} sản phẩm.`);
       return;
     }
     try {
@@ -45,14 +71,21 @@ const ProductDetailPage = () => {
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Không thể thêm vào giỏ hàng.');
       if ((err as Error).message.includes('Unauthorized')) {
-        navigate('/login');
+        setShowLoginModal(true);
       }
     }
   };
 
   const handleBuyNow = async () => {
+    if (!ensureAuthenticated()) {
+      return;
+    }
     if (!selectedVariant) {
-      setStatus('Vui lòng chọn biến thể sản phẩm.');
+      setStatus('Sản phẩm đã hết hàng.');
+      return;
+    }
+    if (selectedVariant.stock < quantity) {
+      setStatus(`Chỉ còn ${selectedVariant.stock} sản phẩm.`);
       return;
     }
     try {
@@ -62,33 +95,41 @@ const ProductDetailPage = () => {
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Không thể mua ngay lúc này.');
       if ((err as Error).message.includes('Unauthorized')) {
-        navigate('/login', { state: { from: `/products/${product?.slug}` } });
+        setShowLoginModal(true);
       }
     }
   };
 
+  // Chỉ lấy biến thể còn hàng (active && stock > 0)
+  const availableVariants = useMemo(() => {
+    if (!product) return [];
+    return product.variants.filter((v) => v.active && v.stock > 0);
+  }, [product]);
+
   const uniqueSizes = useMemo(() => {
-    const sizes = product?.variants
+    const sizes = availableVariants
       .map((variant) => variant.size)
       .filter((size): size is string => Boolean(size));
     return Array.from(new Set(sizes));
-  }, [product]);
+  }, [availableVariants]);
 
   const uniqueColors = useMemo(() => {
-    const colors = product?.variants
+    const colors = availableVariants
       .map((variant) => variant.color)
       .filter((color): color is string => Boolean(color));
     return Array.from(new Set(colors));
-  }, [product]);
+  }, [availableVariants]);
 
   const filteredVariants = useMemo(() => {
     if (!product) return [];
-    return product.variants.filter((variant) => {
+    return availableVariants.filter((variant) => {
       if (selectedVariant?.size && variant.size !== selectedVariant.size) return false;
       if (selectedVariant?.color && variant.color !== selectedVariant.color) return false;
       return true;
     });
-  }, [product, selectedVariant]);
+  }, [product, selectedVariant, availableVariants]);
+
+  const isOutOfStock = availableVariants.length === 0;
 
   if (error) {
     return <p className="p-6 text-center text-red-300">{error}</p>;
@@ -144,26 +185,39 @@ const ProductDetailPage = () => {
 
           <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{product.shortDescription}</p>
 
+          {isOutOfStock ? (
+            <div className="rounded-lg border border-[var(--error)] bg-[var(--error-bg)] p-4">
+              <p className="text-sm font-medium text-[var(--error)]">Sản phẩm đã hết hàng</p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">Tất cả biến thể của sản phẩm này đã hết hàng.</p>
+            </div>
+          ) : (
+            <>
           {uniqueSizes.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm text-[var(--muted-foreground)]">Size</p>
               <div className="flex flex-wrap gap-2">
-                {uniqueSizes.map((size) => (
+                    {uniqueSizes.map((size) => {
+                      // Tìm biến thể có size này và còn hàng
+                      const variantWithSize = availableVariants.find((v) => v.size === size);
+                      return (
                   <button
                     key={size}
                     type="button"
-                    onClick={() =>
-                      setSelectedVariant((prev) =>
-                        prev ? { ...prev, size } : product.variants.find((variant) => variant.size === size) ?? null,
-                      )
+                          onClick={() => {
+                            if (variantWithSize) {
+                              setSelectedVariant(variantWithSize);
                     }
+                          }}
                     className={`px-3 py-1 rounded-full border ${
-                      selectedVariant?.size === size ? 'border-[var(--primary)] text-[var(--primary)]' : 'border-[var(--border)]'
+                            selectedVariant?.size === size
+                              ? 'border-[var(--primary)] text-[var(--primary)]'
+                              : 'border-[var(--border)]'
                     }`}
                   >
                     {size}
                   </button>
-                ))}
+                      );
+                    })}
               </div>
             </div>
           )}
@@ -172,22 +226,28 @@ const ProductDetailPage = () => {
             <div className="space-y-2">
               <p className="text-sm text-[var(--muted-foreground)]">Màu sắc</p>
               <div className="flex flex-wrap gap-2">
-                {uniqueColors.map((color) => (
+                    {uniqueColors.map((color) => {
+                      // Tìm biến thể có color này và còn hàng
+                      const variantWithColor = availableVariants.find((v) => v.color === color);
+                      return (
                   <button
                     key={color}
                     type="button"
-                    onClick={() =>
-                      setSelectedVariant((prev) =>
-                        prev ? { ...prev, color } : product.variants.find((variant) => variant.color === color) ?? null,
-                      )
+                          onClick={() => {
+                            if (variantWithColor) {
+                              setSelectedVariant(variantWithColor);
                     }
+                          }}
                     className={`px-3 py-1 rounded-full border ${
-                      selectedVariant?.color === color ? 'border-[var(--primary)] text-[var(--primary)]' : 'border-[var(--border)]'
+                            selectedVariant?.color === color
+                              ? 'border-[var(--primary)] text-[var(--primary)]'
+                              : 'border-[var(--border)]'
                     }`}
                   >
                     {color}
                   </button>
-                ))}
+                      );
+                    })}
               </div>
             </div>
           )}
@@ -197,10 +257,10 @@ const ProductDetailPage = () => {
             <select
               value={selectedVariant?.id ?? ''}
               onChange={(e) => {
-                const variant = product.variants.find((item) => item.id === Number(e.target.value));
+                    const variant = availableVariants.find((item) => item.id === Number(e.target.value));
                 setSelectedVariant(variant ?? null);
               }}
-              className="w-full rounded-lg border border-[hsl(211,35%,55%)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             >
               {filteredVariants.map((variant) => (
                 <option key={variant.id} value={variant.id}>
@@ -214,14 +274,16 @@ const ProductDetailPage = () => {
             <input
               type="number"
               min={1}
+                  max={selectedVariant?.stock ?? 1}
               value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-20 rounded-lg border border-[hsl(211,35%,55%)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-center text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  onChange={(e) => setQuantity(Math.min(Number(e.target.value), selectedVariant?.stock ?? 1))}
+                  className="w-20 rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-center text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex-1 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[#0064c0] transition-colors"
+                  disabled={!selectedVariant}
+                  className="flex-1 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Thêm vào giỏ
             </button>
@@ -230,14 +292,22 @@ const ProductDetailPage = () => {
           <button
             type="button"
             onClick={handleBuyNow}
-            className="w-full rounded-full border border-[var(--primary)] text-[var(--primary)] py-3 font-medium hover:bg-[var(--primary)]/10 transition-colors"
+                disabled={!selectedVariant}
+                className="w-full rounded-full border border-[var(--primary)] text-[var(--primary)] py-3 font-medium hover:bg-[var(--primary)]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Mua ngay & thanh toán
           </button>
+            </>
+          )}
 
           {status && <p className="text-sm text-[var(--muted-foreground)]">{status}</p>}
         </div>
       </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng hoặc mua ngay."
+      />
     </div>
   );
 };

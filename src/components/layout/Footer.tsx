@@ -55,12 +55,14 @@ const Footer = () => {
               />
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] border border-[var(--primary)] h-9 w-9 hover:bg-[#0064c0] transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] border border-[var(--primary)] px-3 py-2 h-9 hover:bg-[var(--primary-hover)] transition-colors"
+                aria-label="Gửi email"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect width="20" height="16" x="2" y="4" rx="2" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
                 </svg>
+                <span className="text-sm font-medium">Gửi</span>
               </button>
             </form>
             <div className="flex gap-4 mt-6">

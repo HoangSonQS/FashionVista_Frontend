@@ -44,8 +44,8 @@ const AdminDashboard = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map((card) => (
-          <div key={card.key} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{card.label}</p>
+          <div key={card.key} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">{card.label}</p>
             <p className="text-2xl font-semibold mt-2">
               {card.key === 'conversionRate'
                 ? `${overview?.conversionRate?.toFixed(2) ?? '0.00'}${card.suffix}`
@@ -56,67 +56,67 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Đơn hàng</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Đơn hàng</p>
               <h3 className="text-lg font-semibold">Trạng thái hiện tại</h3>
             </div>
           </div>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="text-slate-400">Chờ duyệt</dt>
+              <dt className="text-[var(--muted-foreground)]">Chờ duyệt</dt>
               <dd className="text-2xl font-semibold">{overview?.pendingOrders ?? 0}</dd>
             </div>
             <div>
-              <dt className="text-slate-400">Đang giao</dt>
+              <dt className="text-[var(--muted-foreground)]">Đang giao</dt>
               <dd className="text-2xl font-semibold">{overview?.shippingOrders ?? 0}</dd>
             </div>
             <div>
-              <dt className="text-slate-400">Hoàn tất</dt>
+              <dt className="text-[var(--muted-foreground)]">Hoàn tất</dt>
               <dd className="text-2xl font-semibold">{overview?.completedOrders ?? 0}</dd>
             </div>
             <div>
-              <dt className="text-slate-400">Hủy/Hoàn tiền</dt>
+              <dt className="text-[var(--muted-foreground)]">Hủy/Hoàn tiền</dt>
               <dd className="text-2xl font-semibold">{overview?.cancelledOrders ?? 0}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Kho & khách hàng</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Kho & khách hàng</p>
               <h3 className="text-lg font-semibold">Cảnh báo nhanh</h3>
             </div>
           </div>
           <dl className="space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-lg bg-slate-800/60 px-3 py-2">
-              <dt className="text-slate-300">Sản phẩm sắp hết</dt>
-              <dd className="text-lg font-semibold text-amber-300">{overview?.lowStockProducts ?? 0}</dd>
+            <div className="flex items-center justify-between rounded-lg bg-[var(--muted)] px-3 py-2">
+              <dt className="text-[var(--foreground)]">Sản phẩm sắp hết</dt>
+              <dd className="text-lg font-semibold text-[var(--warning)]">{overview?.lowStockProducts ?? 0}</dd>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-800/60 px-3 py-2">
-              <dt className="text-slate-300">Khách hàng mới (7 ngày)</dt>
-              <dd className="text-lg font-semibold text-emerald-300">{overview?.newCustomers ?? 0}</dd>
+            <div className="flex items-center justify-between rounded-lg bg-[var(--muted)] px-3 py-2">
+              <dt className="text-[var(--foreground)]">Khách hàng mới (7 ngày)</dt>
+              <dd className="text-lg font-semibold text-[var(--success)]">{overview?.newCustomers ?? 0}</dd>
             </div>
           </dl>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Top sản phẩm</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Top sản phẩm</p>
             <h3 className="text-lg font-semibold">Bán chạy nhất</h3>
           </div>
         </div>
-        {loading && <p className="text-sm text-slate-400">Đang tải dữ liệu...</p>}
-        {error && !loading && <p className="text-sm text-red-300">{error}</p>}
+        {loading && <p className="text-sm text-[var(--muted-foreground)]">Đang tải dữ liệu...</p>}
+        {error && !loading && <p className="text-sm text-[var(--error)]">{error}</p>}
         {!loading && !error && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-400">
+                <tr className="text-left text-[var(--muted-foreground)]">
                   <th className="py-2 font-medium">Sản phẩm</th>
                   <th className="py-2 font-medium">Số lượng</th>
                   <th className="py-2 font-medium text-right">Doanh thu</th>
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
               <tbody>
                 {overview?.topProducts?.length ? (
                   overview.topProducts.map((product) => (
-                    <tr key={product.productId} className="border-t border-slate-800">
+                    <tr key={product.productId} className="border-t border-[var(--border)]">
                       <td className="py-3">{product.productName}</td>
                       <td className="py-3">{product.quantity}</td>
                       <td className="py-3 text-right">{formatCurrency(product.revenue)}</td>
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="py-6 text-center text-slate-400">
+                    <td colSpan={3} className="py-6 text-center text-[var(--muted-foreground)]">
                       Chưa có dữ liệu.
                     </td>
                   </tr>

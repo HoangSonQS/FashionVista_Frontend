@@ -48,25 +48,25 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--admin-background)] px-4">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-lg">
         <div className="mb-6 text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500 mb-2">Admin Portal</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--muted-foreground)] mb-2">Admin Portal</p>
           <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
             SixthSoul
           </h1>
-          <p className="text-sm text-slate-400 mt-2">Đăng nhập để quản trị hệ thống.</p>
+          <p className="text-sm text-[var(--muted-foreground)] mt-2">Đăng nhập để quản trị hệ thống.</p>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <div className="mb-4 rounded-lg border border-[var(--error)]/30 bg-[var(--error-bg)] px-3 py-2 text-sm text-[var(--error)]">
             {error}
           </div>
         )}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
-            <label htmlFor="identifier" className="text-sm text-slate-300">
+            <label htmlFor="identifier" className="text-sm text-[var(--foreground)]">
               Email hoặc số điện thoại
             </label>
             <input
@@ -75,12 +75,12 @@ const AdminLogin = () => {
               type="text"
               value={form.identifier}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="admin@sixthsoul.com"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm text-slate-300">
+            <label htmlFor="password" className="text-sm text-[var(--foreground)]">
               Mật khẩu
             </label>
             <input
@@ -89,14 +89,14 @@ const AdminLogin = () => {
               type="password"
               value={form.password}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="********"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-white/90 text-slate-950 py-2.5 font-medium hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="w-full rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-2.5 font-medium hover:bg-[var(--primary-hover)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập quản trị'}
           </button>

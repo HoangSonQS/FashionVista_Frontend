@@ -9,6 +9,8 @@ export interface ProductListItem {
   featured: boolean;
   category?: string | null;
   thumbnailUrl?: string | null;
+  sizes?: string[] | null;
+  colors?: string[] | null;
 }
 
 export interface ProductVariant {

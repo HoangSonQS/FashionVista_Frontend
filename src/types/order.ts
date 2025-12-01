@@ -15,6 +15,8 @@ export interface OrderResponse {
   status: string;
   paymentMethod: string;
   paymentStatus: string;
+  shippingMethod?: string;
+  shippingAddress?: string | null;
   subtotal: number;
   shippingFee: number;
   discount: number;
@@ -23,14 +25,6 @@ export interface OrderResponse {
   items: OrderItem[];
 }
 
-export interface CheckoutRequest {
-  fullName: string;
-  phone: string;
-  address: string;
-  ward: string;
-  district: string;
-  city: string;
-  notes?: string;
-  paymentMethod: string;
-}
+// Re-export để giữ tương thích ngược cho các import cũ
+export type { CheckoutRequest } from './checkout';
 

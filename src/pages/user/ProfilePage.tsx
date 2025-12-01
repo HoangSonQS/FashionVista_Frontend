@@ -273,7 +273,7 @@ const ProfilePage = () => {
       </div>
       <button
         type="submit"
-        className="w-full rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[#0064c0] transition-colors"
+        className="w-full rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[var(--primary-hover)] transition-colors"
       >
         Lưu thay đổi
       </button>
@@ -290,7 +290,7 @@ const ProfilePage = () => {
         <button
           type="button"
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[#0064c0]"
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)]"
         >
           + Thêm địa chỉ mới
         </button>
@@ -314,7 +314,7 @@ const ProfilePage = () => {
                   {address.ward}, {address.district}, {address.city}
                 </p>
                 {address.isDefault && (
-                  <span className="mt-2 inline-flex w-fit rounded border border-[#ee4d2d] px-2 py-0.5 text-xs font-semibold text-[#ee4d2d]">
+                  <span className="mt-2 inline-flex w-fit rounded border border-[var(--accent)] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
                     Mặc định
                   </span>
                 )}
@@ -334,7 +334,7 @@ const ProfilePage = () => {
                   onClick={() => handleSetDefault(address)}
                   className={`rounded border px-3 py-1 text-xs ${
                     address.isDefault
-                      ? 'border-gray-400 text-gray-400 cursor-not-allowed'
+                      ? 'border-[var(--muted-foreground)] text-[var(--muted-foreground)] cursor-not-allowed'
                       : 'border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--border)]'
                   }`}
                 >
@@ -354,12 +354,12 @@ const ProfilePage = () => {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
         <form
           onSubmit={handleAddressSubmit}
-          className="w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 text-[var(--background)] shadow-2xl"
+          className="w-full max-w-xl space-y-4 rounded-3xl bg-[var(--card)] p-6 text-[var(--foreground)] shadow-2xl"
         >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold">Địa chỉ mới</h3>
-              <p className="text-sm text-gray-500">Dùng thông tin trước sáp nhập</p>
+              <p className="text-sm text-[var(--muted-foreground)]">Dùng thông tin trước sáp nhập</p>
             </div>
             <button
               type="button"
@@ -367,7 +367,7 @@ const ProfilePage = () => {
                 setModalOpen(false);
                 setEditingAddressId(null);
               }}
-              className="text-sm text-gray-400 hover:text-gray-700"
+              className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             >
               ✕
             </button>
@@ -379,7 +379,7 @@ const ProfilePage = () => {
               value={addressForm.fullName}
               onChange={(e) => setAddressForm((prev) => ({ ...prev, fullName: e.target.value }))}
               required
-              className="rounded-lg border border-gray-200 px-3 py-2 focus:border-[#0f1f3c] focus:outline-none"
+              className="rounded-lg border border-[var(--border)] px-3 py-2 focus:border-[var(--input-border-focus)] focus:outline-none"
             />
             <input
               type="tel"
@@ -387,7 +387,7 @@ const ProfilePage = () => {
               value={addressForm.phone}
               onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
               required
-              className="rounded-lg border border-gray-200 px-3 py-2 focus:border-[#0f1f3c] focus:outline-none"
+              className="rounded-lg border border-[var(--border)] px-3 py-2 focus:border-[var(--input-border-focus)] focus:outline-none"
             />
           </div>
           <select
@@ -409,7 +409,7 @@ const ProfilePage = () => {
               onChange={(e) => handleDistrictChange(e.target.value)}
               required
               disabled={!districts.length}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[var(--background)] focus:border-[#0f1f3c] focus:outline-none disabled:bg-gray-100"
+              className="rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--input-border-focus)] focus:outline-none disabled:bg-[var(--muted)]"
             >
               <option value="">Quận/Huyện</option>
               {districts.map((district) => (
@@ -423,7 +423,7 @@ const ProfilePage = () => {
               onChange={(e) => handleWardChange(e.target.value)}
               required
               disabled={!wards.length}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[var(--background)] focus:border-[#0f1f3c] focus:outline-none disabled:bg-gray-100"
+              className="rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--input-border-focus)] focus:outline-none disabled:bg-[var(--muted)]"
             >
               <option value="">Phường/Xã</option>
               {wards.map((ward) => (
@@ -442,11 +442,11 @@ const ProfilePage = () => {
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[var(--background)] focus:border-[#0f1f3c] focus:outline-none"
           />
           <div className="space-y-2">
-            <span className="text-sm text-gray-500">Loại địa chỉ</span>
+            <span className="text-sm text-[var(--muted-foreground)]">Loại địa chỉ</span>
             <div className="flex gap-3">
               <label
                 className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${
-                  addressType === 'HOME' ? 'border-[#0f1f3c] bg-[#0f1f3c] text-white' : 'border-gray-200 text-gray-600'
+                  addressType === 'HOME' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
                 }`}
               >
                 <input
@@ -461,7 +461,7 @@ const ProfilePage = () => {
               </label>
               <label
                 className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${
-                  addressType === 'OFFICE' ? 'border-[#0f1f3c] bg-[#0f1f3c] text-white' : 'border-gray-200 text-gray-600'
+                  addressType === 'OFFICE' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
                 }`}
               >
                 <input
@@ -476,7 +476,7 @@ const ProfilePage = () => {
               </label>
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-500">
+          <label className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
             <input
               type="checkbox"
               checked={addressForm.isDefault}
@@ -488,13 +488,13 @@ const ProfilePage = () => {
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="rounded-full border border-gray-200 px-6 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100"
+              className="rounded-full border border-[var(--border)] px-6 py-2 text-sm font-semibold text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
             >
               Trở lại
             </button>
             <button
               type="submit"
-              className="rounded-full bg-[#ee4d2d] px-6 py-2 text-sm font-semibold text-white hover:bg-[#d63f21]"
+              className="rounded-full bg-[var(--accent)] px-6 py-2 text-sm font-semibold text-[var(--accent-foreground)] hover:bg-[var(--accent-hover)]"
             >
               Hoàn thành
             </button>
@@ -509,7 +509,7 @@ const ProfilePage = () => {
       <div className="mx-auto flex max-w-6xl flex-col gap-6 lg:flex-row">
         <aside className="w-full rounded-3xl border border-[var(--border)] bg-[var(--card)] px-4 py-6 shadow-lg lg:w-64">
           <div className="flex items-center gap-3 border-b border-[var(--border)] pb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] font-serif text-lg">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--muted)] font-serif text-lg">
               {profile?.fullName?.charAt(0) ?? 'S'}
             </div>
             <div>
@@ -523,7 +523,7 @@ const ProfilePage = () => {
               type="button"
               onClick={() => setActiveTab('INFO')}
               className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'INFO' ? 'bg-[rgba(255,255,255,0.08)] font-semibold' : 'text-[var(--muted-foreground)]'
+                activeTab === 'INFO' ? 'bg-[var(--muted)] font-semibold' : 'text-[var(--muted-foreground)]'
               }`}
             >
               Hồ sơ
@@ -532,7 +532,7 @@ const ProfilePage = () => {
               type="button"
               onClick={() => setActiveTab('ADDRESS')}
               className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'ADDRESS' ? 'bg-[rgba(255,255,255,0.08)] font-semibold' : 'text-[var(--muted-foreground)]'
+                activeTab === 'ADDRESS' ? 'bg-[var(--muted)] font-semibold' : 'text-[var(--muted-foreground)]'
               }`}
             >
               Địa chỉ

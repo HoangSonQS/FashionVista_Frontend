@@ -23,7 +23,6 @@ export const adminProductService = {
     return response.data;
   },
 
-
   async updateProduct(id: number, payload: ProductCreateRequest, files: File[]): Promise<ProductDetail> {
     const formData = new FormData();
     formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));

@@ -1,9 +1,12 @@
 import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { adminProductService } from '../../services/adminProductService';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { productService } from '../../services/productService';
+import { adminProductService } from '../../services/adminProductService';
 import type { ProductCreateRequest, ProductDetail, ProductVariantRequest, ProductImage } from '../../types/product';
+import { useToast } from '../../hooks/useToast';
+import { ToastContainer } from '../../components/common/Toast';
+import { ArrowLeft } from 'lucide-react';
 
 const initialForm: ProductCreateRequest = {
   name: '',
@@ -69,18 +72,16 @@ const ProductCreatePage = () => {
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
   const [variantPriceInputs, setVariantPriceInputs] = useState<Record<number, string>>({});
   const [variantStockInputs, setVariantStockInputs] = useState<Record<number, string>>({});
-  const [sizesInput, setSizesInput] = useState<string>('');
-  const [colorsInput, setColorsInput] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const cloneId = searchParams.get('clone');
   const editingId = id ? Number(id) : null;
   const isEditing = Boolean(editingId);
-  const isDataLoadedRef = useRef(false); // Flag để biết đã load dữ liệu từ server chưa
+  const { toasts, showToast, removeToast } = useToast();
+  const navigate = useNavigate();
 
   const headerTitle = isEditing ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới';
   const submitLabel = isEditing ? 'Cập nhật sản phẩm' : 'Tạo sản phẩm';
@@ -93,17 +94,13 @@ const ProductCreatePage = () => {
       setForm(initialForm);
       setPriceInput('');
       setComparePriceInput('');
-      setSizesInput('');
-      setColorsInput('');
       setExistingImages([]);
       setRemovedImageIds([]);
       setVariantPriceInputs({});
       setVariantStockInputs({});
-      isDataLoadedRef.current = false;
       return;
     }
     setPrefillLoading(true);
-    isDataLoadedRef.current = false;
     adminProductService
       .getProduct(sourceId)
       .then((detail) => {
@@ -111,8 +108,6 @@ const ProductCreatePage = () => {
         setForm(mapped);
         setPriceInput(mapped.price ? String(mapped.price) : '');
         setComparePriceInput(mapped.compareAtPrice ? String(mapped.compareAtPrice) : '');
-        setSizesInput((mapped.sizes ?? []).join(', '));
-        setColorsInput((mapped.colors ?? []).join(', '));
         setExistingImages(Boolean(cloneId) ? [] : (detail.images ?? []));
         setRemovedImageIds([]);
         // Sync variant inputs
@@ -124,76 +119,14 @@ const ProductCreatePage = () => {
         });
         setVariantPriceInputs(priceInputs);
         setVariantStockInputs(stockInputs);
-        isDataLoadedRef.current = true; // Đánh dấu đã load dữ liệu từ server
       })
       .catch((error) => {
-        setStatusMessage(error instanceof Error ? error.message : 'Không thể tải dữ liệu sản phẩm.');
+        const message = error instanceof Error ? error.message : 'Không thể tải dữ liệu sản phẩm.';
+        setStatusMessage(message);
+        showToast(message, 'error');
       })
       .finally(() => setPrefillLoading(false));
   }, [editingId, cloneId]);
-
-  // Tự động tạo biến thể khi sizes/colors/SKU/price thay đổi
-  // CHỈ chạy khi KHÔNG phải đang edit hoặc chưa load dữ liệu từ server
-  useEffect(() => {
-    // Nếu đang edit và đã load dữ liệu từ server → không tự động tạo biến thể (giữ nguyên dữ liệu từ server)
-    if (isEditing && isDataLoadedRef.current) {
-      return;
-    }
-
-    const sizes = form.sizes ?? [];
-    const colors = form.colors ?? [];
-    const hasSizes = sizes.length > 0;
-    const hasColors = colors.length > 0;
-    const hasSku = form.sku && form.sku.trim();
-    const hasPrice = form.price && form.price > 0;
-
-    let autoVariants: ProductVariantRequest[] = [];
-
-    // Nếu không có SKU → không có biến thể
-    if (!hasSku) {
-      autoVariants = [];
-    }
-    // Nếu có sizes hoặc colors → tạo biến thể từ sizes/colors
-    else if ((hasSizes || hasColors) && hasPrice) {
-      autoVariants = generateVariantsFromOptions(sizes, colors, form.sku.trim(), Number(form.price));
-    }
-    // Nếu có SKU nhưng không có sizes/colors → tạo 1 biến thể mặc định
-    else if (hasSku && hasPrice && !hasSizes && !hasColors) {
-      autoVariants = [
-        {
-          size: '',
-          color: '',
-          sku: form.sku.trim(),
-          price: Number(form.price),
-          stock: 0,
-          active: true,
-        },
-      ];
-    }
-
-    // Chỉ cập nhật nếu số lượng hoặc nội dung biến thể thay đổi (tránh loop vô hạn)
-    const currentVariants = form.variants ?? [];
-    const shouldUpdate =
-      autoVariants.length !== currentVariants.length ||
-      JSON.stringify(
-        autoVariants.map((v) => ({ size: v.size || '', color: v.color || '', sku: v.sku }))
-      ) !==
-        JSON.stringify(
-          currentVariants.map((v) => ({ size: v.size || '', color: v.color || '', sku: v.sku }))
-        );
-
-    if (shouldUpdate) {
-      const newPriceInputs: Record<number, string> = {};
-      const newStockInputs: Record<number, string> = {};
-      autoVariants.forEach((variant, idx) => {
-        newPriceInputs[idx] = variant.price ? String(variant.price) : '';
-        newStockInputs[idx] = variant.stock ? String(variant.stock) : '';
-      });
-      setVariantPriceInputs(newPriceInputs);
-      setVariantStockInputs(newStockInputs);
-      setForm((prev) => ({ ...prev, variants: autoVariants }));
-    }
-  }, [form.sizes, form.colors, form.sku, form.price, isEditing]);
 
   const mapDetailToForm = (detail: ProductDetail, isClone: boolean): ProductCreateRequest => ({
     name: detail.name,
@@ -253,52 +186,34 @@ const ProductCreatePage = () => {
           payload,
           uploadFiles.map((item) => item.file),
         );
-        setStatusMessage('Đã cập nhật sản phẩm. Đang tải lại dữ liệu...');
-        
-        // Reload lại dữ liệu sản phẩm từ server để hiển thị ảnh mới và dữ liệu mới nhất
-        try {
-          const updatedDetail = await adminProductService.getProduct(editingId);
-          const mapped = mapDetailToForm(updatedDetail, false);
-          setForm(mapped);
-          setPriceInput(mapped.price ? String(mapped.price) : '');
-          setComparePriceInput(mapped.compareAtPrice ? String(mapped.compareAtPrice) : '');
-          setSizesInput((mapped.sizes ?? []).join(', '));
-          setColorsInput((mapped.colors ?? []).join(', '));
-          setExistingImages(updatedDetail.images ?? []);
-          setRemovedImageIds([]);
-          
-          // Sync variant inputs với dữ liệu mới
-          const priceInputs: Record<number, string> = {};
-          const stockInputs: Record<number, string> = {};
-          mapped.variants?.forEach((variant, idx) => {
-            priceInputs[idx] = variant.price ? String(variant.price) : '';
-            stockInputs[idx] = variant.stock ? String(variant.stock) : '';
-          });
-          setVariantPriceInputs(priceInputs);
-          setVariantStockInputs(stockInputs);
-          isDataLoadedRef.current = true; // Đánh dấu đã load lại dữ liệu
-          
-          setStatusMessage('Đã cập nhật sản phẩm thành công.');
-        } catch (reloadError) {
-          console.error('Lỗi khi reload dữ liệu:', reloadError);
-          setStatusMessage('Đã cập nhật sản phẩm. (Không thể tải lại dữ liệu, vui lòng refresh trang)');
-        }
+        const msg = 'Đã cập nhật sản phẩm. Tự động quay lại danh sách sau 2 giây.';
+        setStatusMessage(msg);
+        showToast(msg, 'success');
+        setTimeout(() => {
+          navigate('/admin/products');
+        }, 2000);
       } else {
         await productService.createProduct(
           payload,
           uploadFiles.map((item) => item.file),
         );
-        setStatusMessage('Đã tạo sản phẩm thành công.');
-        
-        // Navigate về danh sách sau khi tạo thành công
-        setTimeout(() => {
-          navigate('/admin/products');
-        }, 1500);
+        const msg = 'Đã tạo sản phẩm thành công. Tự động quay lại danh sách sau 2 giây.';
+        setStatusMessage(msg);
+        showToast(msg, 'success');
+        setForm(initialForm);
+        setPriceInput('');
+        setComparePriceInput('');
+        setExistingImages([]);
+        setRemovedImageIds([]);
+        setVariantPriceInputs({});
+        setVariantStockInputs({});
       }
       cleanupFilePreviews(uploadFiles);
       setUploadFiles([]);
     } catch (err) {
-      setStatusMessage(err instanceof Error ? err.message : 'Không thể lưu sản phẩm.');
+      const message = err instanceof Error ? err.message : 'Không thể lưu sản phẩm.';
+      setStatusMessage(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -463,34 +378,20 @@ const ProductCreatePage = () => {
   };
 
   const handleOptionChange = (field: 'sizes' | 'colors', raw: string) => {
-    // Tự động format: nếu có pattern "X " (giá trị + khoảng trắng) thì chuyển thành "X, "
-    let formatted = raw;
-    // Tìm pattern: một từ (không có dấu phẩy) theo sau bởi khoảng trắng và không có dấu phẩy ngay sau
-    formatted = formatted.replace(/([^,\s]+)\s+(?![,])/g, '$1, ');
-    
-    // Cập nhật input state
-    if (field === 'sizes') {
-      setSizesInput(formatted);
-    } else {
-      setColorsInput(formatted);
-    }
-
     // Parse values: hỗ trợ cả "S, M, L" và "S,M,L" và "S M L"
-    // Cải thiện regex để parse tốt hơn: tách theo dấu phẩy hoặc khoảng trắng liên tiếp
-    const values = formatted
-      .split(/,|\s+/)
+    const values = raw
+      .split(/[,\s]+/)
       .map((v) => v.trim())
       .filter(Boolean);
 
     setForm((prev) => {
       const next: ProductCreateRequest = { ...prev, [field]: values };
-      const sizes = (field === 'sizes' ? values : (next.sizes ?? [])) as string[];
-      const colors = (field === 'colors' ? values : (next.colors ?? [])) as string[];
+      const sizes = (field === 'sizes' ? values : next.sizes ?? []) as string[];
+      const colors = (field === 'colors' ? values : next.colors ?? []) as string[];
 
       // Sinh biến thể tự động nếu có size/màu và có SKU mã kho + giá bán
-      // Chỉ sinh khi có ít nhất 1 giá trị và có SKU + giá
-      if ((sizes.length > 0 || colors.length > 0) && next.sku && next.sku.trim() && next.price && next.price > 0) {
-        const autoVariants = generateVariantsFromOptions(sizes, colors, next.sku.trim(), Number(next.price));
+      if ((sizes.length || colors.length) && next.sku && next.price) {
+        const autoVariants = generateVariantsFromOptions(sizes, colors, next.sku, Number(next.price));
         // Reset input states cho variants mới
         const newPriceInputs: Record<number, string> = {};
         const newStockInputs: Record<number, string> = {};
@@ -511,33 +412,33 @@ const ProductCreatePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white px-4 py-8">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500 mb-2">{isEditing ? 'Update product' : 'New product'}</p>
+        <div className="pt-6">
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--muted-foreground)] mb-2">{isEditing ? 'Update product' : 'New product'}</p>
           <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
             {headerTitle}
           </h1>
-          <p className="text-sm text-slate-400">Điền thông tin chuẩn SEO & kho hàng trước khi xuất bản.</p>
+          <p className="text-sm text-[var(--muted-foreground)]">Điền thông tin chuẩn SEO & kho hàng trước khi xuất bản.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-lg">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {baseFields.map((item) => (
               <div key={item.field} className="space-y-2">
-                <label className="text-sm text-slate-300">{item.label}</label>
+                <label className="text-sm text-[var(--foreground)]">{item.label}</label>
                 <input
                   type="text"
                   placeholder={item.placeholder}
                   value={getFieldValue(item.field)}
                   onChange={(e) => setFormField(item.field, e.target.value as ProductCreateRequest[typeof item.field])}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                   required={item.required}
                 />
               </div>
             ))}
             <div className="space-y-2">
-              <label className="text-sm text-slate-300">Giá bán</label>
+              <label className="text-sm text-[var(--foreground)]">Giá bán</label>
               <input
                 type="number"
                 min={0}
@@ -548,11 +449,11 @@ const ProductCreatePage = () => {
                   setPriceInput(value);
                   setForm((prev) => ({ ...prev, price: value === '' ? 0 : Number(value) }));
                 }}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-slate-300">Giá gốc (nếu có)</label>
+              <label className="text-sm text-[var(--foreground)]">Giá gốc (nếu có)</label>
               <input
                 type="number"
                 min={0}
@@ -566,15 +467,15 @@ const ProductCreatePage = () => {
                     compareAtPrice: value === '' ? undefined : Number(value),
                   }));
                 }}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-slate-300">Trạng thái hiển thị</label>
+              <label className="text-sm text-[var(--foreground)]">Trạng thái hiển thị</label>
               <select
                 value={form.status}
                 onChange={(e) => setFormField('status', e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               >
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -589,9 +490,9 @@ const ProductCreatePage = () => {
                 type="checkbox"
                 checked={form.featured ?? false}
                 onChange={(e) => setFormField('featured', e.target.checked)}
-                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-slate-200 focus:ring-slate-500"
+                className="h-4 w-4"
               />
-              <label htmlFor="featured" className="text-sm text-slate-300">
+              <label htmlFor="featured" className="text-sm text-[var(--foreground)]">
                 Gắn tag nổi bật
               </label>
             </div>
@@ -600,17 +501,11 @@ const ProductCreatePage = () => {
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {chipFields.map((item) => (
               <div key={item.field} className="space-y-2">
-                <label className="text-sm text-slate-300">{item.label}</label>
+                <label className="text-sm text-[var(--foreground)]">{item.label}</label>
                 <input
                   type="text"
                   placeholder={item.placeholder}
-                  value={
-                    item.field === 'sizes'
-                      ? sizesInput || getFieldValue(item.field)
-                      : item.field === 'colors'
-                        ? colorsInput || getFieldValue(item.field)
-                        : getFieldValue(item.field)
-                  }
+                  value={getFieldValue(item.field)}
                   onChange={(e) => {
                     if (item.field === 'sizes' || item.field === 'colors') {
                       handleOptionChange(item.field as 'sizes' | 'colors', e.target.value);
@@ -624,7 +519,7 @@ const ProductCreatePage = () => {
                       );
                     }
                   }}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
               </div>
             ))}
@@ -634,7 +529,7 @@ const ProductCreatePage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Biến thể</h2>
-                <p className="text-xs text-slate-400">Quản lý size/màu khác nhau và tồn kho tương ứng.</p>
+                <p className="text-xs text-[var(--muted-foreground)]">Quản lý size/màu khác nhau và tồn kho tương ứng.</p>
               </div>
               <button
                 type="button"
@@ -647,14 +542,14 @@ const ProductCreatePage = () => {
                     ],
                   }))
                 }
-                className="rounded-full border border-slate-700 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800"
+                className="rounded-full border border-[var(--border)] px-4 py-2 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted)]"
               >
                 + Thêm biến thể
               </button>
             </div>
 
             {safeVariants.length === 0 && (
-              <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-3 text-sm text-slate-400">
+              <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted)] px-4 py-3 text-sm text-[var(--muted-foreground)]">
                 Chưa có biến thể nào. Thêm biến thể để thiết lập tồn kho chi tiết.
               </p>
             )}
@@ -662,12 +557,12 @@ const ProductCreatePage = () => {
             {safeVariants.map((variant, index) => (
               <div
                 key={index}
-                className="relative flex flex-wrap gap-3 rounded-2xl bg-slate-900/40 p-4 items-center"
+                className="relative flex flex-wrap gap-3 rounded-2xl bg-[var(--muted)] p-4 items-center"
               >
                 <button
                   type="button"
                   onClick={() => removeVariant(index)}
-                  className="!absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full !bg-red-600 !text-white text-xs hover:!bg-red-500 z-10"
+                  className="!absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full !bg-[var(--error)] !text-[var(--error-foreground)] text-xs hover:!bg-[var(--error)]/90 z-10"
                   aria-label="Xóa biến thể"
                 >
                   ×
@@ -678,23 +573,9 @@ const ProductCreatePage = () => {
                     type="text"
                     placeholder={input.placeholder}
                     value={String(variant[input.field] ?? '')}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      updateVariant(index, input.field, newValue);
-                      
-                      // Tự động tạo SKU khi thay đổi size hoặc color
-                      if ((input.field === 'size' || input.field === 'color') && form.sku) {
-                        const updatedVariant = { ...variant, [input.field]: newValue };
-                        const newSku = generateVariantSku(
-                          form.sku,
-                          updatedVariant.size,
-                          updatedVariant.color
-                        );
-                        updateVariant(index, 'sku', newSku);
-                      }
-                    }}
-                    className={`rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 ${
-                      input.field === 'size' ? 'w-40' : input.field === 'color' ? 'w-48' : 'w-48'
+                    onChange={(e) => updateVariant(index, input.field, e.target.value)}
+                    className={`rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${
+                      input.field === 'size' ? 'w-24' : input.field === 'color' ? 'w-32' : 'w-48'
                     } ${input.className ?? ''}`}
                   />
                 ))}
@@ -708,7 +589,7 @@ const ProductCreatePage = () => {
                     setVariantPriceInputs((prev) => ({ ...prev, [index]: value }));
                     updateVariant(index, 'price', value === '' ? 0 : Number(value));
                   }}
-                  className="w-32 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  className="w-32 rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
                 <div className="flex items-center gap-3">
                   <input
@@ -721,14 +602,14 @@ const ProductCreatePage = () => {
                       setVariantStockInputs((prev) => ({ ...prev, [index]: value }));
                       updateVariant(index, 'stock', value === '' ? 0 : Number(value));
                     }}
-                    className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    className="w-24 rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                   />
-                  <label className="flex items-center gap-2 text-xs text-slate-300 whitespace-nowrap">
+                  <label className="flex items-center gap-2 text-xs text-[var(--foreground)] whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={variant.active ?? true}
                       onChange={(e) => updateVariant(index, 'active', e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-slate-200 focus:ring-slate-500"
+                      className="h-4 w-4"
                     />
                     Bật bán
                   </label>
@@ -738,9 +619,9 @@ const ProductCreatePage = () => {
           </section>
 
           <section className="space-y-2">
-            <label className="text-sm text-slate-300">Hình ảnh sản phẩm</label>
-            <div className="rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/40 p-4">
-              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-white hover:bg-slate-900">
+            <label className="text-sm text-[var(--foreground)]">Hình ảnh sản phẩm</label>
+            <div className="rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--muted)] p-4">
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)]">
                 <span>Chọn file hình ảnh</span>
                 <input
                   type="file"
@@ -750,12 +631,12 @@ const ProductCreatePage = () => {
                   className="sr-only"
                 />
               </label>
-              <p className="mt-2 text-xs text-slate-500">Hỗ trợ PNG/JPG, tối đa 5MB mỗi ảnh.</p>
-              {isEditing && <p className="mt-1 text-xs text-slate-400">Nếu không chọn file mới, ảnh cũ sẽ được giữ nguyên.</p>}
+              <p className="mt-2 text-xs text-[var(--muted-foreground)]">Hỗ trợ PNG/JPG, tối đa 5MB mỗi ảnh.</p>
+              {isEditing && <p className="mt-1 text-xs text-[var(--muted-foreground)]">Nếu không chọn file mới, ảnh cũ sẽ được giữ nguyên.</p>}
 
               {existingImages.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-[0.25em] text-slate-500">Ảnh hiện tại</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.25em] text-[var(--muted-foreground)]">Ảnh hiện tại</p>
                   <div className="flex flex-wrap gap-6">
                     {existingImages.map((image) => (
                       <div key={image.id} className="inline-block relative">
@@ -767,12 +648,12 @@ const ProductCreatePage = () => {
                         <button
                           type="button"
                           onClick={() => image.id && handleRemoveExistingImage(image.id)}
-                          className="absolute -top-2 -right-2 w-3 h-3 flex items-center justify-center rounded-full bg-red-600 text-white text-xs hover:bg-red-500"
+                          className="absolute -top-2 -right-2 w-3 h-3 flex items-center justify-center rounded-full bg-[var(--error)] text-[var(--error-foreground)] text-xs hover:bg-[var(--error)]/90"
                           aria-label="Xóa ảnh"
                         >
                           ×
                         </button>
-                        <p className="text-center text-sm mt-2 text-gray-300">
+                        <p className="text-center text-sm mt-2 text-[var(--admin-foreground)]">
                           Đã xuất bản
                         </p>
                       </div>
@@ -795,7 +676,7 @@ const ProductCreatePage = () => {
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(index)}
-                          className="absolute -top-2 -right-2 w-3 h-3 flex items-center justify-center rounded-full bg-red-600 text-white text-xs hover:bg-red-500"
+                          className="absolute -top-2 -right-2 w-3 h-3 flex items-center justify-center rounded-full bg-[var(--error)] text-[var(--error-foreground)] text-xs hover:bg-[var(--error)]/90"
                           aria-label="Xóa file"
                         >
                           ×
@@ -815,15 +696,15 @@ const ProductCreatePage = () => {
             <button
               type="submit"
               disabled={loading || prefillLoading}
-              className="w-full rounded-full bg-white/90 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-white disabled:opacity-50"
+              className="w-full rounded-full bg-[var(--card)] py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--card)]/90 disabled:opacity-50"
             >
               {loading ? 'Đang xử lý...' : submitLabel}
             </button>
-            {prefillLoading && <p className="text-sm text-slate-400">Đang tải dữ liệu sản phẩm...</p>}
-            {statusMessage && <p className="text-sm text-slate-300">{statusMessage}</p>}
+            {prefillLoading && <p className="text-sm text-[var(--muted-foreground)]">Đang tải dữ liệu sản phẩm...</p>}
           </div>
         </form>
       </div>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

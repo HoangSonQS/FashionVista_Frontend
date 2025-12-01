@@ -66,9 +66,19 @@ User → Giỏ hàng → Click "Thanh toán" → Checkout Page → Nhập thông
 
 User → "Đơn hàng của tôi" → Xem danh sách đơn hàng → Click đơn hàng → Xem chi tiết đơn hàng → Hủy đơn hàng (nếu chưa xử lý) / Theo dõi vận chuyển
 
-#### 2.2.5. Luồng tìm kiếm
+#### 2.2.5. Luồng tìm kiếm *(ĐÃ IMPLEMENT: Header Search + ProductList.tsx + /products route)*
 
-User → Nhập từ khóa vào search bar → Gợi ý tìm kiếm (autocomplete) → Click kết quả / Enter → Search Results Page → Lọc kết quả (giá, size, màu, category) → Xem sản phẩm
+1. User click icon **Search** trên header → ô input tìm kiếm bung rộng từ nút Search về phía logo, tạm ẩn các link `THE NEW / BỘ SƯU TẬP / SALE`.  
+2. User nhập từ khóa (tên sản phẩm, loại váy/áo, màu sắc, bộ sưu tập...).  
+3. Hệ thống debounce và gọi API `/search/suggestions` → hiển thị tối đa **5 gợi ý sản phẩm** ngay bên dưới input (ảnh + tên).  
+4. Nhánh xử lý:
+   - User click một gợi ý → đóng thanh search → chuyển thẳng tới **Product Detail** tương ứng (`/products/:slug`).  
+   - User nhấn **Enter** hoặc nút "Tìm" → đóng thanh search → điều hướng tới **trang kết quả chung** `/products?search=...`.  
+5. Trang `/products` (sử dụng `ProductList.tsx`) đọc query `search` và:
+   - Gọi API `/products` với tham số `search` + các filter giá/size/màu/category.
+   - Hiển thị danh sách kết quả theo phân trang; user có thể tiếp tục filter/tìm hẹp hơn.
+   - Đây là trang kết quả chính cho mọi tìm kiếm full-text (kể cả khi có 1.000+ sản phẩm).  
+6. UI gợi ý trong header dùng nền `--background` khi hover để giữ trải nghiệm nhẹ, sáng, không lấn át trang.
 
 #### 2.2.6. Luồng đánh giá sản phẩm
 
@@ -171,6 +181,63 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Filter theo category, status (Active/Hidden/Archived), tồn kho (Out-of-stock), tag, featured.
 - Search theo tên, SKU, barcode.
 - Bulk actions: đổi category, bật/tắt hiển thị, set featured, export, gắn collection.
+
+#### 3.2.11. Product Visibility Management
+
+**Mục tiêu:**  
+Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của sản phẩm trên trang Product List, tách bạch với dữ liệu gốc của sản phẩm.
+
+**Trang quản trị:** `/admin/product-visibility`
+
+**Bảng danh sách sản phẩm**
+
+- **Thumbnail**: Ảnh đại diện sản phẩm.
+- **Name**: Tên sản phẩm.
+- **SKU**: Mã sản phẩm.
+- **Variants Count**: Tổng số biến thể (size/màu…).
+- **Status**: Trạng thái sản phẩm (Active / Inactive).
+- **Visibility**: Toggle Hiện / Ẩn (isVisible = true/false).
+- **Updated At**: Ngày giờ cập nhật visibility gần nhất.
+- **Actions**: View Detail (mở trang chi tiết sản phẩm).
+
+**Chức năng FE**
+
+- Tìm kiếm theo **tên** và **SKU**.
+- Bộ lọc:
+  - Theo **Visible / Hidden**.
+  - Theo **Active / Inactive**.
+- Sắp xếp:
+  - Name (A–Z).
+  - Last Updated (visible_updated_at).
+- Toggle visibility trực tiếp trên bảng:
+  - Bật → gọi API `PATCH /api/admin/products/:id/visibility`.
+  - Tắt → gọi API `PATCH /api/admin/products/:id/visibility`.
+  - Sau khi update: cập nhật lại row hoặc reload bảng.
+- **Bulk actions**:
+  - Chọn nhiều sản phẩm.
+  - Gọi `PATCH /api/admin/products/visibility/bulk` với `visible = true/false`.
+- Phân trang, đảm bảo hoạt động tốt với danh sách lớn.
+
+**Flow hiển thị**
+
+1. FE gọi `GET /api/admin/products?search=&visible=&status=&sort=&page=&size=&include=visibility`.
+2. Render bảng theo cấu trúc response (bao gồm visible, variantsCount, updatedAt).
+3. Khi admin bật/tắt visibility:
+   - FE gọi **PATCH** tương ứng.
+   - Nếu thành công: cập nhật UI; nếu lỗi (fail rule) thì hiển thị tooltip/lỗi chi tiết.
+
+**Validation FE**
+
+- Không cho phép bật Visible nếu sản phẩm:
+  - Không có ảnh đại diện.
+  - Không có giá hợp lệ.
+  - Tổng tồn kho = 0 hoặc không có biến thể hợp lệ.
+- FE hiển thị tooltip/lý do khi hover vào toggle bị disable hoặc khi API trả error.
+
+**Mở rộng UI/UX**
+
+- Cho phép hiển thị badge cảnh báo (ví dụ: “No image”, “No inventory”) ngay trong bảng.
+- Khi đổi visibility thành công, hiển thị toast “Cập nhật hiển thị sản phẩm thành công”.
 
 ### 3.3. Quản lý giỏ hàng (Cart Management)
 
@@ -330,18 +397,19 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Upload hình ảnh, quản lý danh mục cha/con, sắp xếp thứ tự hiển thị
 - (Import/Export Excel được hoãn, sẽ bổ sung sau nếu cần)
 
-#### 3.9.3. Quản lý đơn hàng
+#### 3.9.3. Quản lý đơn hàng ✅
 
-- Danh sách đơn, tra cứu theo mã, khách, trạng thái
-- Quy trình duyệt → đóng gói → giao → hoàn tất, cập nhật trạng thái hàng loạt
-- Hủy đơn có lý do, xử lý đổi trả (RMA), đồng bộ đơn vị vận chuyển
-- In hóa đơn/phiếu giao hàng, xuất vận đơn
+- ✅ Danh sách đơn, tra cứu theo mã, khách, trạng thái
+- ✅ Quy trình duyệt → đóng gói → giao → hoàn tất, cập nhật trạng thái
+- ⏳ Hủy đơn có lý do, xử lý đổi trả (RMA), đồng bộ đơn vị vận chuyển (sẽ bổ sung sau)
+- ⏳ In hóa đơn/phiếu giao hàng, xuất vận đơn (sẽ bổ sung sau)
 
-#### 3.9.4. Quản lý người dùng & khách hàng
+#### 3.9.4. Quản lý người dùng & khách hàng ✅
 
-- Danh sách khách, thông tin cá nhân + lịch sử đơn
-- Phân nhóm (VIP, mới, trung thành...), quản lý loyalty points
-- Blacklist khách (nếu cần), ghi chú CSKH
+- ✅ Danh sách khách, thông tin cá nhân + lịch sử đơn
+- ✅ Khóa/Mở khóa tài khoản
+- ⏳ Phân nhóm (VIP, mới, trung thành...), quản lý loyalty points (sẽ bổ sung sau)
+- ⏳ Blacklist khách (nếu cần), ghi chú CSKH (sẽ bổ sung sau)
 
 #### 3.9.5. Quản lý thanh toán & vận chuyển
 
@@ -487,13 +555,13 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Component: `ProductForm.tsx`
 - Tính năng: Form tạo/sửa sản phẩm, Upload nhiều hình ảnh, Quản lý variants, Rich text editor
 
-#### 5.5.4. Orders Management (`/admin/orders`)
+#### 5.5.4. Orders Management (`/admin/orders`) ✅
 - Component: `AdminOrders.tsx`
-- Tính năng: Danh sách đơn hàng, Filter theo trạng thái, ngày, Cập nhật trạng thái, Xem chi tiết, In hóa đơn
+- Tính năng: ✅ Danh sách đơn hàng, ✅ Filter theo trạng thái, ngày, phương thức thanh toán, ✅ Cập nhật trạng thái, ✅ Xem chi tiết, ⏳ In hóa đơn (sẽ bổ sung sau)
 
-#### 5.5.5. Users Management (`/admin/users`)
+#### 5.5.5. Users Management (`/admin/users`) ✅
 - Component: `AdminUsers.tsx`
-- Tính năng: Danh sách users, Search, filter, Xem chi tiết, Khóa/Mở khóa tài khoản
+- Tính năng: ✅ Danh sách users, ✅ Search, filter, ✅ Xem chi tiết, ✅ Khóa/Mở khóa tài khoản
 
 #### 5.5.6. Categories Management (`/admin/categories`)
 - Component: `AdminCategories.tsx`
