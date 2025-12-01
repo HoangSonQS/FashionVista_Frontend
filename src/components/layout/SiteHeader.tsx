@@ -223,10 +223,12 @@ const SiteHeader = () => {
     openDrawer();
   };
 
-  const handleHelpClick = () => {
-    if (typeof window !== 'undefined') {
-      window.open('mailto:support@sixthsoul.vn', '_blank');
+  const handleOrdersClick = () => {
+    if (!auth) {
+      setShowLoginModal(true);
+      return;
     }
+    navigate('/orders');
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -392,7 +394,7 @@ const SiteHeader = () => {
               )}
             </div>
 
-            <IconButton icon={CircleHelp} label="Hỗ trợ" onClick={handleHelpClick} className="hidden sm:inline-flex" />
+            <IconButton icon={CircleHelp} label="Đơn hàng" onClick={handleOrdersClick} className="hidden sm:inline-flex" />
 
             <IconButton icon={ShoppingBag} label="Giỏ hàng" onClick={handleCartClick} badge={cartCount} />
 

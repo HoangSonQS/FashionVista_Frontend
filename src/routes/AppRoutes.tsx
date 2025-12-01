@@ -8,6 +8,8 @@ import SearchResultsPage from '../pages/public/SearchResults';
 import CartPage from '../pages/user/CartPage';
 import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
+import UserOrdersPage from '../pages/user/UserOrders';
+import UserOrderDetailPage from '../pages/user/UserOrderDetail';
 import ProductCreatePage from '../pages/admin/ProductCreate';
 import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -34,6 +36,8 @@ export const AppRoutes = () => {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/orders" element={<UserOrdersPage />} />
+            <Route path="/orders/:orderNumber" element={<UserOrderDetailPage />} />
           </Route>
         </Route>
 

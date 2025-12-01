@@ -6,7 +6,6 @@ import { adminProductService } from '../../services/adminProductService';
 import type { ProductCreateRequest, ProductDetail, ProductVariantRequest, ProductImage } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
-import { ArrowLeft } from 'lucide-react';
 
 const initialForm: ProductCreateRequest = {
   name: '',
@@ -72,9 +71,11 @@ const ProductCreatePage = () => {
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
   const [variantPriceInputs, setVariantPriceInputs] = useState<Record<number, string>>({});
   const [variantStockInputs, setVariantStockInputs] = useState<Record<number, string>>({});
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [, setStatusMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
+  const [rawSizes, setRawSizes] = useState('');
+  const [rawColors, setRawColors] = useState('');
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const cloneId = searchParams.get('clone');
@@ -98,6 +99,8 @@ const ProductCreatePage = () => {
       setRemovedImageIds([]);
       setVariantPriceInputs({});
       setVariantStockInputs({});
+      setRawSizes('');
+      setRawColors('');
       return;
     }
     setPrefillLoading(true);
@@ -119,6 +122,8 @@ const ProductCreatePage = () => {
         });
         setVariantPriceInputs(priceInputs);
         setVariantStockInputs(stockInputs);
+        setRawSizes((mapped.sizes ?? []).join(', '));
+        setRawColors((mapped.colors ?? []).join(', '));
       })
       .catch((error) => {
         const message = error instanceof Error ? error.message : 'Không thể tải dữ liệu sản phẩm.';
@@ -378,11 +383,18 @@ const ProductCreatePage = () => {
   };
 
   const handleOptionChange = (field: 'sizes' | 'colors', raw: string) => {
-    // Parse values: hỗ trợ cả "S, M, L" và "S,M,L" và "S M L"
+    // Parse values: cho phép khoảng trắng tự do, chỉ tách theo dấu phẩy
+    // Ví dụ: "S, M, L" hoặc "Black, White, Dark Green"
     const values = raw
-      .split(/[,\s]+/)
+      .split(',')
       .map((v) => v.trim())
       .filter(Boolean);
+
+    if (field === 'sizes') {
+      setRawSizes(raw);
+    } else {
+      setRawColors(raw);
+    }
 
     setForm((prev) => {
       const next: ProductCreateRequest = { ...prev, [field]: values };
@@ -505,7 +517,13 @@ const ProductCreatePage = () => {
                 <input
                   type="text"
                   placeholder={item.placeholder}
-                  value={getFieldValue(item.field)}
+                  value={
+                    item.field === 'sizes'
+                      ? rawSizes
+                      : item.field === 'colors'
+                        ? rawColors
+                        : getFieldValue(item.field)
+                  }
                   onChange={(e) => {
                     if (item.field === 'sizes' || item.field === 'colors') {
                       handleOptionChange(item.field as 'sizes' | 'colors', e.target.value);

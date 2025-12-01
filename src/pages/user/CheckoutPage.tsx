@@ -37,7 +37,8 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as { selectedItemIds?: number[] } | undefined;
-  const selectedItemIds = locationState?.selectedItemIds ?? [];
+  // Lưu selectedItemIds vào state để tránh tạo mới mảng [] mỗi lần render
+  const [selectedItemIds] = useState<number[]>(() => locationState?.selectedItemIds ?? []);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -125,7 +126,8 @@ const CheckoutPage = () => {
     };
 
     void loadCart();
-  }, [selectedItemIds, showToast]);
+    // selectedItemIds là nguồn duy nhất cần theo dõi
+  }, [selectedItemIds]);
 
   const items = cart?.items ?? [];
   const subtotal = useMemo(
@@ -194,11 +196,11 @@ const CheckoutPage = () => {
     };
 
     setSubmitting(true);
-    try {
-      const order = await orderService.checkout(payload);
-      showToast('Đặt hàng thành công.', 'success');
-      navigate('/checkout/success', { state: { orderNumber: order.orderNumber } });
-    } catch (error) {
+                try {
+                  const order = await orderService.checkout(payload);
+                  showToast('Đặt hàng thành công. Bạn có thể theo dõi tại Đơn hàng của tôi.', 'success');
+                  navigate('/orders', { state: { recentOrderNumber: order.orderNumber } });
+                } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Không thể tạo đơn hàng. Vui lòng thử lại.';
       showToast(message, 'error');
