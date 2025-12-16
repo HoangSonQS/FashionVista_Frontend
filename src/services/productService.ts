@@ -54,5 +54,19 @@ export const productService = {
     });
     return response.data;
   },
+
+  async getFeaturedProducts(limit: number = 8): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  async getNewArrivals(limit: number = 8): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>('/products/new-arrivals', {
+      params: { limit },
+    });
+    return response.data;
+  },
 };
 

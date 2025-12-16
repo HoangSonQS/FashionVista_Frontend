@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { CircleHelp, LogOut, Menu, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
+import { Heart, LogOut, Menu, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
 
 import type { AuthResponse } from '../../types/auth';
 import { cartService } from '../../services/cartService';
+import { wishlistService } from '../../services/wishlistService';
 import { AUTH_CHANGE_EVENT, CART_UPDATED_EVENT } from '../../constants/events';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../common/LoginModal';
@@ -45,11 +46,11 @@ const IconButton = ({ icon: Icon, label, onClick, className = '', badge }: IconB
     <button
       type="button"
       onClick={onClick}
-      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-transparent text-[var(--foreground)] transition-colors hover:bg-[var(--muted)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--primary)] ${className}`}
+      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-[#4DA3E8] text-white transition-colors hover:bg-[#3A8BC7] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3E8] ${className}`}
     >
       <Icon className="h-5 w-5 shrink-0" />
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -right-1 -top-1 rounded-full bg-[var(--accent)] px-1 text-[10px] font-semibold text-[var(--accent-foreground)]">
+        <span className="absolute -right-1 -top-1 rounded-full bg-white px-1 text-[10px] font-semibold text-[#4DA3E8]">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -65,6 +66,7 @@ const SiteHeader = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const { openDrawer } = useCartDrawer();
@@ -114,9 +116,23 @@ const SiteHeader = () => {
     }
   }, [auth?.token]);
 
+  const loadWishlistCount = useCallback(async () => {
+    if (!auth?.token) {
+      setWishlistCount(0);
+      return;
+    }
+    try {
+      const wishlist = await wishlistService.getMyWishlist();
+      setWishlistCount(wishlist.length);
+    } catch {
+      setWishlistCount(0);
+    }
+  }, [auth?.token]);
+
   useEffect(() => {
     loadCartCount();
-  }, [loadCartCount]);
+    loadWishlistCount();
+  }, [loadCartCount, loadWishlistCount]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -135,6 +151,19 @@ const SiteHeader = () => {
       window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdate as EventListener);
     };
   }, [loadCartCount]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const handleWishlistUpdate = () => {
+      loadWishlistCount();
+    };
+    window.addEventListener('wishlist-updated', handleWishlistUpdate);
+    return () => {
+      window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+    };
+  }, [loadWishlistCount]);
 
   useEffect(() => {
     if (!accountMenuOpen) {
@@ -223,13 +252,14 @@ const SiteHeader = () => {
     openDrawer();
   };
 
-  const handleOrdersClick = () => {
+  const handleWishlistClick = () => {
     if (!auth) {
       setShowLoginModal(true);
       return;
     }
-    navigate('/orders');
+    navigate('/wishlist');
   };
+
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,19 +272,36 @@ const SiteHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--card)]/92 backdrop-blur supports-[backdrop-filter]:bg-[var(--card)]/75">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-shrink-0">
-            <Link
-              to="/"
-              className="font-serif text-2xl font-bold uppercase tracking-[0.25em] text-[var(--foreground)]"
-            >
-              sixthsoul
-            </Link>
-          </div>
+    <header className="sticky top-0 z-50 w-full">
+      {/* Top dark grey bar */}
+      <div className="h-1 bg-gray-800"></div>
+      
+      {/* Main header with light blue background and vertical light streaks */}
+      <div className="relative bg-[#4DA3E8]/20 border-b-2 border-[#4DA3E8]">
+        {/* Vertical light streaks effect */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+          <div className="absolute left-[20%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+          <div className="absolute left-[40%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+          <div className="absolute left-[60%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+          <div className="absolute left-[80%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+          <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+        </div>
+        
+        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-4">
+            {/* Brand name - left side */}
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <Link
+                to="/"
+                className="font-serif text-xl md:text-2xl font-bold uppercase tracking-wide text-[#4DA3E8]"
+              >
+                SIXTHSOUL
+              </Link>
+            </div>
 
-          <div className="flex-1 flex items-center justify-center">
+            {/* Navigation links - center */}
+            <div className="flex-1 flex items-center justify-center">
             {searchOpen ? (
               <div className="relative w-full max-w-md origin-right transition-all duration-1000 scale-100 opacity-100">
                 <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--input-background)] px-3 py-1.5 shadow-sm">
@@ -321,23 +368,31 @@ const SiteHeader = () => {
                 </div>
               </div>
             ) : (
-              auth && (
-                <nav className="hidden items-center gap-6 lg:flex">
-                  {NAV_ITEMS.map((item) => (
-                    <Link
-                      key={item.label}
-                      to={item.href}
-                      className="uppercase text-xs font-medium tracking-[0.35em] text-[var(--foreground)] transition-colors hover:text-white"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              )
+              <nav className="hidden items-center gap-8 md:gap-12 lg:flex">
+                {NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    onClick={() => {
+                      // Scroll to products section after navigation
+                      setTimeout(() => {
+                        const productsSection = document.getElementById('products-section');
+                        if (productsSection) {
+                          productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 200);
+                    }}
+                    className="uppercase text-sm md:text-base font-medium tracking-wider text-[#4DA3E8] transition-colors hover:text-[#3A8BC7]"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
             )}
-          </div>
+            </div>
 
-          <div className="flex items-center gap-1.5">
+            {/* Icon buttons - right side */}
+            <div className="flex items-center gap-1.5">
             <IconButton
               icon={Search}
               label="Tìm kiếm"
@@ -375,11 +430,31 @@ const SiteHeader = () => {
                       type="button"
                           className="w-full rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left text-[var(--foreground)] hover:bg-[var(--muted)]/80"
                       onClick={() => {
-                        navigate('/profile', { state: { section: 'orders' } });
+                        navigate('/orders');
                         setAccountMenuOpen(false);
                       }}
                     >
                       Đơn hàng
+                    </button>
+                    <button
+                      type="button"
+                          className="w-full rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left text-[var(--foreground)] hover:bg-[var(--muted)]/80"
+                      onClick={() => {
+                        navigate('/wishlist');
+                        setAccountMenuOpen(false);
+                      }}
+                    >
+                      Yêu thích
+                    </button>
+                    <button
+                      type="button"
+                          className="w-full rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left text-[var(--foreground)] hover:bg-[var(--muted)]/80"
+                      onClick={() => {
+                        navigate('/reviews');
+                        setAccountMenuOpen(false);
+                      }}
+                    >
+                      Đánh giá của tôi
                     </button>
                     <button
                       type="button"
@@ -394,7 +469,7 @@ const SiteHeader = () => {
               )}
             </div>
 
-            <IconButton icon={CircleHelp} label="Đơn hàng" onClick={handleOrdersClick} className="hidden sm:inline-flex" />
+            <IconButton icon={Heart} label="Yêu thích" onClick={handleWishlistClick} badge={wishlistCount} />
 
             <IconButton icon={ShoppingBag} label="Giỏ hàng" onClick={handleCartClick} badge={cartCount} />
 
@@ -416,6 +491,7 @@ const SiteHeader = () => {
               </button>
             )}
           </div>
+          </div>
         </div>
       </div>
 
@@ -434,6 +510,36 @@ const SiteHeader = () => {
               </Link>
             ))}
             <div className="mt-3 flex flex-col gap-2 text-sm">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left"
+                    onClick={() => {
+                      navigate('/orders');
+                      setMobileNavOpen(false);
+                    }}
+                  >
+                    Đơn hàng
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left"
+                    onClick={() => {
+                      navigate('/wishlist');
+                      setMobileNavOpen(false);
+                    }}
+                  >
+                    Yêu thích
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left"
+                    onClick={() => {
+                      navigate('/reviews');
+                      setMobileNavOpen(false);
+                    }}
+                  >
+                    Đánh giá của tôi
+                  </button>
                   <button
                     type="button"
                   className="rounded-xl border border-transparent bg-[var(--muted)] px-3 py-2 text-left"

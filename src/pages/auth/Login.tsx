@@ -144,6 +144,7 @@ const Login = () => {
               <button
                 type="button"
                 className="bg-transparent border-none p-0 text-[var(--foreground)] hover:text-[var(--primary-hover)]"
+                onClick={() => navigate('/forgot-password')}
               >
                 Quên mật khẩu?
               </button>
