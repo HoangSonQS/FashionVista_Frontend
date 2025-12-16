@@ -30,5 +30,9 @@ export const userService = {
   async deleteAddress(id: number): Promise<void> {
     await axiosClient.delete(`/users/me/addresses/${id}`);
   },
+
+  async changePassword(payload: { currentPassword: string; newPassword: string }): Promise<void> {
+    await axiosClient.post('/users/me/change-password', payload);
+  },
 };
 

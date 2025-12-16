@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { AxiosError } from 'axios';
 import { productService } from '../../services/productService';
 import { cartService } from '../../services/cartService';
 import type { ProductDetail, ProductVariant } from '../../types/product';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
+import { reviewService } from '../../services/reviewService';
+import type { ReviewSummary } from '../../types/review';
+import { wishlistService } from '../../services/wishlistService';
 
 const ProductDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -17,6 +21,14 @@ const ProductDetailPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { openDrawer } = useCartDrawer();
   const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<ReviewSummary[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -38,6 +50,50 @@ const ProductDetailPage = () => {
     };
     fetchProduct();
   }, [slug]);
+
+  // Load reviews khi đã có product
+  useEffect(() => {
+    if (!product) return;
+    const loadReviews = async () => {
+      setLoadingReviews(true);
+      try {
+        const data = await reviewService.getProductReviews(product.id);
+        setReviews(data);
+      } catch {
+        // ignore review error, không chặn trang
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+    void loadReviews();
+  }, [product]);
+
+  // Kiểm tra trạng thái wishlist để hiển thị đúng nhãn (nếu đã đăng nhập)
+  useEffect(() => {
+    if (!product) return;
+    const rawAuth = typeof window !== 'undefined' ? window.localStorage.getItem('auth') : null;
+    if (!rawAuth) {
+      setInWishlist(false);
+      return;
+    }
+    let cancelled = false;
+    const checkWishlist = async () => {
+      try {
+        const items = await wishlistService.getMyWishlist();
+        if (!cancelled) {
+          setInWishlist(items.some((item) => item.productId === product.id));
+        }
+      } catch {
+        if (!cancelled) {
+          setInWishlist(false);
+        }
+      }
+    };
+    void checkWishlist();
+    return () => {
+      cancelled = true;
+    };
+  }, [product]);
 
   const ensureAuthenticated = () => {
     if (typeof window === 'undefined') {
@@ -131,6 +187,16 @@ const ProductDetailPage = () => {
 
   const isOutOfStock = availableVariants.length === 0;
 
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+  // Filter reviews: chỉ hiển thị >= 4 sao mặc định
+  const highRatingReviews = reviews.filter((r) => r.rating >= 4);
+  const lowRatingReviews = reviews.filter((r) => r.rating < 4);
+  const displayedReviews = showAllReviews ? reviews : highRatingReviews;
+
   if (error) {
     return <p className="p-6 text-center text-red-300">{error}</p>;
   }
@@ -163,14 +229,53 @@ const ProductDetailPage = () => {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
             <p className="text-xs tracking-[0.35em] uppercase text-[var(--muted-foreground)] mb-2">
               SixthSoul Studio
             </p>
+            <div className="flex items-start justify-between gap-3">
             <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
               {product.name}
             </h1>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!ensureAuthenticated()) return;
+                  if (!product) return;
+                  setTogglingWishlist(true);
+                  try {
+                    const added = await wishlistService.toggle(product.id);
+                    setInWishlist(added);
+                    setStatus(
+                      added
+                        ? 'Đã thêm sản phẩm vào danh sách yêu thích.'
+                        : 'Đã xóa sản phẩm khỏi danh sách yêu thích.',
+                    );
+                  } catch (err) {
+                    const msg =
+                      err instanceof Error
+                        ? err.message
+                        : 'Không thể cập nhật danh sách yêu thích. Vui lòng thử lại.';
+                    setStatus(msg);
+                  } finally {
+                    setTogglingWishlist(false);
+                  }
+                }}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  inWishlist
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
+                    : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }`}
+                disabled={togglingWishlist}
+              >
+                {togglingWishlist
+                  ? 'Đang xử lý...'
+                  : inWishlist
+                  ? 'Xóa yêu thích'
+                  : 'Thêm vào yêu thích'}
+              </button>
+            </div>
             <div className="flex items-center gap-3 mt-4">
               <p className="text-2xl font-semibold text-[var(--primary)]">
                 {product.price.toLocaleString('vi-VN')}₫
@@ -182,6 +287,160 @@ const ProductDetailPage = () => {
               )}
             </div>
           </div>
+
+          {/* Reviews */}
+          <section className="space-y-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-light text-[#4DA3E8] tracking-wide uppercase">
+                Đánh giá sản phẩm
+              </h2>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      className={`text-sm ${
+                        star <= Math.round(averageRating) ? 'text-[#4DA3E8]' : 'text-gray-300'
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  <span className="text-xs text-gray-600 font-light ml-2">
+                    {averageRating.toFixed(1)} / 5 · {reviews.length} đánh giá
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Form tạo review */}
+            <div className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Chỉ khách đã mua mới có thể đánh giá. Nếu bạn chưa đăng nhập, hệ thống sẽ yêu cầu đăng nhập.
+              </p>
+              <div className="flex items-center gap-3">
+                <select
+                  value={newReviewRating}
+                  onChange={(e) => setNewReviewRating(Number(e.target.value))}
+                  className="rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                >
+                  {[5, 4, 3, 2, 1].map((star) => (
+                    <option key={star} value={star}>
+                      {star} sao
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={newReviewComment}
+                  onChange={(e) => setNewReviewComment(e.target.value)}
+                  placeholder="Chia sẻ cảm nhận của bạn..."
+                  className="flex-1 rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+                <button
+                  type="button"
+                  disabled={submittingReview}
+                  onClick={async () => {
+                    if (!ensureAuthenticated()) return;
+                    if (!product) return;
+                    setSubmittingReview(true);
+                    try {
+                      const created = await reviewService.createReview({
+                        productId: product.id,
+                        rating: newReviewRating,
+                        comment: newReviewComment || undefined,
+                      });
+                      setReviews((prev) => [created, ...prev]);
+                      setNewReviewComment('');
+                      setStatus('Cảm ơn bạn đã đánh giá sản phẩm.');
+                    } catch (err) {
+                      const axiosError = err as AxiosError<{ message?: string }>;
+                      const msg =
+                        axiosError.response?.data?.message ||
+                        axiosError.message ||
+                        'Không thể gửi đánh giá. Vui lòng thử lại.';
+                      setStatus(msg);
+                    } finally {
+                      setSubmittingReview(false);
+                    }
+                  }}
+                  className="rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 text-xs sm:text-sm font-medium hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+                </button>
+              </div>
+            </div>
+
+            {/* Danh sách review */}
+            <div className="space-y-3">
+              {loadingReviews ? (
+                <p className="text-xs text-[var(--muted-foreground)]">Đang tải đánh giá...</p>
+              ) : reviews.length === 0 ? (
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này.
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    {displayedReviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="rounded-2xl border border-gray-200 bg-white p-4 text-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span
+                                key={star}
+                                className={`text-xs ${
+                                  star <= review.rating ? 'text-[#4DA3E8]' : 'text-gray-300'
+                                }`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                            <span className="text-xs text-gray-500 font-light ml-1">
+                              {review.rating}/5
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-500 font-light">
+                            {new Date(review.createdAt).toLocaleDateString('vi-VN', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        {review.comment && (
+                          <p className="mt-2 text-gray-700 font-light leading-relaxed">
+                            {review.comment}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {!showAllReviews && lowRatingReviews.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllReviews(true)}
+                      className="w-full mt-3 text-xs text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium underline"
+                    >
+                      Xem tất cả đánh giá
+                    </button>
+                  )}
+                  {showAllReviews && lowRatingReviews.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllReviews(false)}
+                      className="w-full mt-3 text-xs text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium underline"
+                    >
+                      Ẩn đánh giá
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
 
           <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{product.shortDescription}</p>
 

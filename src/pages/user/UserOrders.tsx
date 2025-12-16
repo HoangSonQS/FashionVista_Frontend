@@ -9,6 +9,8 @@ const STATUS_LABEL: Record<string, string> = {
   PROCESSING: 'Đang xử lý',
   SHIPPING: 'Đang giao',
   DELIVERED: 'Đã giao',
+  RETURN_REQUESTED: 'Yêu cầu đổi trả',
+  RETURN_APPROVED: 'Đã hoàn trả',
   CANCELLED: 'Đã hủy',
   RETURNED: 'Đã trả',
   REFUNDED: 'Đã hoàn tiền',
@@ -25,6 +27,10 @@ const getStatusBadgeClass = (status: string) => {
       return 'bg-[var(--primary)]/10 text-[var(--primary)]';
     case 'DELIVERED':
       return 'bg-[var(--success-bg)] text-[var(--success)]';
+    case 'RETURN_REQUESTED':
+      return 'bg-[var(--warning-bg)] text-[var(--warning)]';
+    case 'RETURN_APPROVED':
+      return 'bg-[var(--warning-bg)] text-[var(--warning)]';
     case 'CANCELLED':
     case 'RETURNED':
     case 'REFUNDED':
@@ -132,6 +138,8 @@ const UserOrdersPage = () => {
               <option value="PROCESSING">Đang xử lý</option>
               <option value="SHIPPING">Đang giao</option>
               <option value="DELIVERED">Đã giao</option>
+              <option value="RETURN_REQUESTED">Yêu cầu đổi trả</option>
+              <option value="RETURN_APPROVED">Đã hoàn trả</option>
               <option value="CANCELLED">Đã hủy</option>
               <option value="RETURNED">Đã trả</option>
               <option value="REFUNDED">Đã hoàn tiền</option>

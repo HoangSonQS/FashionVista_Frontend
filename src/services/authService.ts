@@ -38,6 +38,22 @@ export const authService = {
       throw new Error(extractErrorMessage(error, 'Đã xảy ra lỗi khi đăng nhập admin. Vui lòng thử lại.'));
     }
   },
+
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      await axiosClient.post('/auth/forgot-password', { email });
+    } catch (error) {
+      throw new Error(extractErrorMessage(error, 'Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.'));
+    }
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      await axiosClient.post('/auth/reset-password', { token, newPassword });
+    } catch (error) {
+      throw new Error(extractErrorMessage(error, 'Không thể đặt lại mật khẩu. Vui lòng thử lại.'));
+    }
+  },
 };
 
 

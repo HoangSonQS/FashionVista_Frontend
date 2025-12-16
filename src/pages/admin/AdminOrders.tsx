@@ -3,12 +3,23 @@ import {
   adminOrderService,
   type AdminOrderListResponse,
   type UpdateOrderStatusRequest,
+  type UpdateTrackingNumberRequest,
 } from '../../services/adminOrderService';
+import { adminReturnService } from '../../services/adminReturnService';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
 import type { OrderResponse } from '../../types/order';
+import type { RefundMethod, ReturnRequestResponse, ReturnStatus } from '../../types/return';
 
 type Palette = 'info' | 'success' | 'warning' | 'danger' | 'refund';
+
+const RETURN_STATUS_LABEL: Record<ReturnStatus, string> = {
+  REQUESTED: 'Chờ duyệt',
+  APPROVED: 'Đã chấp nhận',
+  REJECTED: 'Từ chối',
+  REFUND_PENDING: 'Đang hoàn tiền',
+  REFUNDED: 'Đã hoàn tiền',
+};
 
 const statusOptions: Array<{ label: string; value: string; palette?: Palette }> = [
   { label: 'Tất cả', value: '' },
@@ -17,17 +28,11 @@ const statusOptions: Array<{ label: string; value: string; palette?: Palette }> 
   { label: 'Đang xử lý', value: 'PROCESSING', palette: 'info' },
   { label: 'Đang giao', value: 'SHIPPING', palette: 'info' },
   { label: 'Đã giao', value: 'DELIVERED', palette: 'success' },
+   { label: 'Yêu cầu đổi trả', value: 'RETURN_REQUESTED', palette: 'warning' },
+  { label: 'Đã đổi trả', value: 'RETURN_APPROVED', palette: 'warning' },
   { label: 'Đã hủy', value: 'CANCELLED', palette: 'danger' },
   { label: 'Đã hoàn tiền', value: 'REFUNDED', palette: 'refund' },
 ];
-
-const statusWorkflow: Record<string, string[]> = {
-  PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PROCESSING', 'CANCELLED'],
-  PROCESSING: ['SHIPPING', 'CANCELLED'],
-  SHIPPING: ['DELIVERED', 'REFUNDED'],
-  DELIVERED: ['REFUNDED'],
-};
 
 const paymentMethodOptions = [
   { label: 'Tất cả', value: '' },
@@ -41,6 +46,7 @@ const paymentStatusOptions: Array<{ label: string; value: string; palette: Palet
   { label: 'Chờ thanh toán', value: 'PENDING', palette: 'warning' },
   { label: 'Đã thanh toán', value: 'PAID', palette: 'success' },
   { label: 'Thanh toán thất bại', value: 'FAILED', palette: 'danger' },
+  { label: 'Chờ hoàn tiền', value: 'REFUND_PENDING', palette: 'warning' },
   { label: 'Đã hoàn tiền', value: 'REFUNDED', palette: 'refund' },
 ];
 
@@ -93,8 +99,28 @@ const getStatusColor = (status: string) => {
       return 'bg-[var(--primary)]/10 text-[var(--primary)]';
     case 'DELIVERED':
       return 'bg-[var(--success-bg)] text-[var(--success)]';
+    case 'RETURN_REQUESTED':
+    case 'RETURN_APPROVED':
+      return 'bg-[var(--warning-bg)] text-[var(--warning)]';
     case 'CANCELLED':
     case 'REFUNDED':
+      return 'bg-[var(--error-bg)] text-[var(--error)]';
+    default:
+      return 'bg-[var(--muted)] text-[var(--muted-foreground)]';
+  }
+};
+
+const getReturnStatusColor = (status: ReturnStatus) => {
+  switch (status) {
+    case 'REQUESTED':
+      return 'bg-[var(--warning-bg)] text-[var(--warning)]';
+    case 'APPROVED':
+      return 'bg-[var(--primary)]/10 text-[var(--primary)]';
+    case 'REFUND_PENDING':
+      return 'bg-[var(--warning-bg)] text-[var(--warning)]';
+    case 'REFUNDED':
+      return 'bg-[var(--muted)] text-[var(--foreground)]';
+    case 'REJECTED':
       return 'bg-[var(--error-bg)] text-[var(--error)]';
     default:
       return 'bg-[var(--muted)] text-[var(--muted-foreground)]';
@@ -121,6 +147,15 @@ const AdminOrders = () => {
   const [paymentStatusForm, setPaymentStatusForm] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
   const [notifyCustomer, setNotifyCustomer] = useState(true);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [updatingTracking, setUpdatingTracking] = useState(false);
+  const [returnRequest, setReturnRequest] = useState<ReturnRequestResponse | null>(null);
+  const [returnLoading, setReturnLoading] = useState(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnActionLoading, setReturnActionLoading] = useState(false);
+  const [returnAdminNote, setReturnAdminNote] = useState('');
+  const [returnRefundAmount, setReturnRefundAmount] = useState<string>('');
+  const [returnRefundMethod, setReturnRefundMethod] = useState<RefundMethod>('ORIGINAL');
   const { toasts, showToast, removeToast } = useToast();
 
   const filters = useMemo(
@@ -175,6 +210,8 @@ const AdminOrders = () => {
       setOrderDetail(detail);
       setOrderStatusForm(detail.status);
       setPaymentStatusForm(detail.paymentStatus);
+      setTrackingNumber(detail.trackingNumber || '');
+      await fetchReturnRequest(detail.id);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng.';
       showToast(message, 'error');
@@ -182,6 +219,73 @@ const AdminOrders = () => {
       setSelectedOrder(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const fetchReturnRequest = async (orderId: number) => {
+    setReturnLoading(true);
+    setReturnError(null);
+    setReturnRequest(null);
+    try {
+      const data = await adminReturnService.getByOrder(orderId);
+      setReturnRequest(data);
+      setReturnRefundAmount(data.refundAmount != null ? String(data.refundAmount) : '');
+      setReturnRefundMethod((data.refundMethod as RefundMethod) ?? 'ORIGINAL');
+    } catch (err) {
+      const status = (err as any)?.response?.status;
+      const message =
+        status === 400 || status === 404
+          ? 'Đơn chưa có yêu cầu đổi trả.'
+          : err instanceof Error
+            ? err.message
+            : 'Không thể tải yêu cầu đổi trả.';
+      setReturnError(message);
+      setReturnRequest(null);
+    } finally {
+      setReturnLoading(false);
+    }
+  };
+
+  const handleReturnAction = async (nextStatus: ReturnStatus) => {
+    if (!returnRequest || !selectedOrder) {
+      showToast('Đơn chưa có yêu cầu đổi trả.', 'error');
+      return;
+    }
+
+    const refundAmountValue =
+      returnRefundAmount.trim().length > 0 ? Number(returnRefundAmount.trim()) : undefined;
+
+    if (refundAmountValue !== undefined && Number.isNaN(refundAmountValue)) {
+      showToast('Số tiền hoàn không hợp lệ.', 'error');
+      return;
+    }
+
+    try {
+      setReturnActionLoading(true);
+      const payload = {
+        status: nextStatus,
+        adminNote: returnAdminNote.trim() || undefined,
+        refundMethod: returnRefundMethod,
+        refundAmount: refundAmountValue,
+      };
+
+      const updated = await adminReturnService.updateStatus(returnRequest.id, payload);
+      setReturnRequest(updated);
+      setReturnRefundAmount(updated.refundAmount != null ? String(updated.refundAmount) : '');
+      setReturnRefundMethod((updated.refundMethod as RefundMethod) ?? 'ORIGINAL');
+      showToast('Đã cập nhật yêu cầu đổi trả.', 'success');
+
+      // Refresh order detail to sync statuses
+      const detail = await adminOrderService.getOrderById(selectedOrder.id);
+      setOrderDetail(detail);
+      setOrderStatusForm(detail.status);
+      setPaymentStatusForm(detail.paymentStatus);
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể cập nhật yêu cầu đổi trả.';
+      showToast(message, 'error');
+    } finally {
+      setReturnActionLoading(false);
     }
   };
 
@@ -211,6 +315,35 @@ const AdminOrders = () => {
       showToast(message, 'error');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleUpdateTracking = async () => {
+    if (!selectedOrder || !orderDetail) {
+      showToast('Không tìm thấy thông tin đơn hàng.', 'error');
+      return;
+    }
+
+    if (!trackingNumber.trim()) {
+      showToast('Vui lòng nhập mã vận đơn.', 'error');
+      return;
+    }
+
+    try {
+      setUpdatingTracking(true);
+      const payload: UpdateTrackingNumberRequest = {
+        trackingNumber: trackingNumber.trim(),
+        notifyCustomer,
+      };
+      const updated = await adminOrderService.updateTrackingNumber(selectedOrder.id, payload);
+      setOrderDetail(updated);
+      showToast('Đã cập nhật mã vận đơn.', 'success');
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể cập nhật mã vận đơn.';
+      showToast(message, 'error');
+    } finally {
+      setUpdatingTracking(false);
     }
   };
 
@@ -545,23 +678,17 @@ const AdminOrders = () => {
                         {statusOptions
                           .filter((opt) => opt.value !== '')
                           .map((opt) => {
-                            const allowedTargets = statusWorkflow[orderDetail.status] ?? [];
-                            const disabled =
-                              opt.value !== orderDetail.status &&
-                              allowedTargets.length > 0 &&
-                              !allowedTargets.includes(opt.value);
                             const isActive = orderStatusForm === opt.value;
                             return (
                               <div
                                 key={opt.value}
                                 role="button"
-                                tabIndex={disabled ? -1 : 0}
-                                aria-disabled={disabled}
+                                tabIndex={0}
                                 onClick={() => {
-                                  if (!disabled) setOrderStatusForm(opt.value);
+                                  setOrderStatusForm(opt.value);
                                 }}
                                 onKeyDown={(e) => {
-                                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                                  if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
                                     setOrderStatusForm(opt.value);
                                   }
@@ -569,7 +696,7 @@ const AdminOrders = () => {
                                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${getPaletteClasses(
                                   opt.palette,
                                   isActive,
-                                )} ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
+                                )} cursor-pointer`}
                               >
                                 {opt.label}
                               </div>
@@ -605,6 +732,220 @@ const AdminOrders = () => {
                           );
                         })}
                       </div>
+                    </div>
+
+                    {/* Tracking Number Section */}
+                    {(orderDetail.status === 'SHIPPING' || orderDetail.status === 'DELIVERED') && (
+                      <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-3">
+                        <p className="text-xs font-semibold text-[var(--muted-foreground)]">Mã vận đơn</p>
+                        {orderDetail.trackingNumber ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{orderDetail.trackingNumber}</span>
+                              {orderDetail.trackingUrl && (
+                                <a
+                                  href={orderDetail.trackingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-[var(--primary)] hover:underline"
+                                >
+                                  Theo dõi
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={trackingNumber}
+                                onChange={(e) => setTrackingNumber(e.target.value)}
+                                placeholder="Cập nhật mã vận đơn"
+                                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleUpdateTracking}
+                                disabled={updatingTracking || !trackingNumber.trim() || trackingNumber === orderDetail.trackingNumber}
+                                className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {updatingTracking ? 'Đang cập nhật...' : 'Cập nhật'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={trackingNumber}
+                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              placeholder="Nhập mã vận đơn"
+                              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleUpdateTracking}
+                              disabled={updatingTracking || !trackingNumber.trim()}
+                              className="w-full rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {updatingTracking ? 'Đang cập nhật...' : 'Thêm mã vận đơn'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Return Request Section */}
+                    <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/10 p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold">Yêu cầu đổi trả</p>
+                        {returnRequest && (
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getReturnStatusColor(
+                              returnRequest.status,
+                            )}`}
+                          >
+                            {RETURN_STATUS_LABEL[returnRequest.status]}
+                          </span>
+                        )}
+                      </div>
+
+                      {returnLoading && (
+                        <p className="text-xs text-[var(--muted-foreground)]">Đang tải yêu cầu đổi trả...</p>
+                      )}
+
+                      {!returnLoading && returnError && (
+                        <p className="text-xs text-[var(--muted-foreground)]">{returnError}</p>
+                      )}
+
+                      {!returnLoading && returnRequest && (
+                        <div className="space-y-3">
+                          <div className="space-y-1 text-xs">
+                            <p className="font-semibold">Lý do</p>
+                            <p className="text-[var(--muted-foreground)]">{returnRequest.reason}</p>
+                            {returnRequest.note && (
+                              <>
+                                <p className="font-semibold mt-2">Ghi chú khách</p>
+                                <p className="text-[var(--muted-foreground)] whitespace-pre-wrap">
+                                  {returnRequest.note}
+                                </p>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold">Sản phẩm yêu cầu đổi trả</p>
+                            <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                              {returnRequest.items.map((item) => (
+                                <div
+                                  key={item.orderItemId}
+                                  className="flex items-center justify-between rounded-lg border border-[var(--border)] px-3 py-2 text-xs"
+                                >
+                                  <div>
+                                    <p className="font-medium">{item.productName}</p>
+                                    <p className="text-[var(--muted-foreground)]">SL: {item.quantity}</p>
+                                  </div>
+                                  <p className="text-sm font-semibold">
+                                    {Number(item.lineTotal).toLocaleString('vi-VN')}₫
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="grid gap-2 text-sm">
+                            <label className="text-xs text-[var(--muted-foreground)]">Số tiền hoàn (có thể chỉnh)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={returnRefundAmount}
+                              onChange={(e) => setReturnRefundAmount(e.target.value)}
+                              className="rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                              placeholder="Ví dụ 150000"
+                            />
+                            <label className="text-xs text-[var(--muted-foreground)]">Phương thức hoàn</label>
+                            <select
+                              value={returnRefundMethod ?? 'ORIGINAL'}
+                              onChange={(e) => setReturnRefundMethod(e.target.value as RefundMethod)}
+                              className="rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                            >
+                              <option value="ORIGINAL">Hoàn về phương thức gốc</option>
+                              <option value="MANUAL_CASH">Hoàn thủ công / tiền mặt</option>
+                            </select>
+                            <label className="text-xs text-[var(--muted-foreground)]">Ghi chú admin</label>
+                            <textarea
+                              rows={3}
+                              value={returnAdminNote}
+                              onChange={(e) => setReturnAdminNote(e.target.value)}
+                              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                              placeholder="Ghi chú cho khách hoặc nội bộ"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            {returnRequest.status === 'REQUESTED' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('APPROVED')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                                >
+                                  Chấp nhận
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('REJECTED')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full border border-[var(--error)] px-3 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 disabled:opacity-50"
+                                >
+                                  Từ chối
+                                </button>
+                              </>
+                            )}
+
+                            {returnRequest.status === 'APPROVED' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('REFUND_PENDING')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full bg-[var(--warning)] px-3 py-2 text-sm font-semibold text-[var(--warning-foreground)] hover:bg-[var(--warning)]/90 disabled:opacity-50"
+                                >
+                                  Đánh dấu đang hoàn
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('REFUNDED')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full bg-[var(--muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--muted)]/80 disabled:opacity-50"
+                                >
+                                  Đã hoàn tiền
+                                </button>
+                              </>
+                            )}
+
+                            {returnRequest.status === 'REFUND_PENDING' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('REFUNDED')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full bg-[var(--muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--muted)]/80 disabled:opacity-50"
+                                >
+                                  Đã hoàn tiền
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReturnAction('REJECTED')}
+                                  disabled={returnActionLoading}
+                                  className="rounded-full border border-[var(--error)] px-3 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 disabled:opacity-50"
+                                >
+                                  Từ chối
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
