@@ -239,6 +239,27 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Cho phép hiển thị badge cảnh báo (ví dụ: “No image”, “No inventory”) ngay trong bảng.
 - Khi đổi visibility thành công, hiển thị toast “Cập nhật hiển thị sản phẩm thành công”.
 
+#### 3.2.12. Bộ sưu tập (Collections)
+
+- Khái niệm: Nhóm sản phẩm theo chiến dịch/chủ đề (New Arrival, Holiday, Capsule, Sale). Một sản phẩm có thể thuộc nhiều bộ sưu tập.
+- Trạng thái & lịch hiển thị: `DRAFT`, `SCHEDULED`, `ACTIVE`, `ENDED`/`ARCHIVED`; trường `startAt`, `endAt`; toggle `isVisible` để ẩn/hiện mà không xóa.
+- Nội dung/SEO: name, slug duy nhất, description, hero/cover image, SEO title/description, optional banner CTA.
+- Gắn sản phẩm: CRUD liên kết sản phẩm–collection, cho phép sắp xếp thủ công `position`; optional bulk add; validate không cho ACTIVE nếu rỗng hoặc thiếu hero image (configurable).
+- API công khai:
+  - `GET /api/collections` (lọc ACTIVE + visible + trong khoảng thời gian; search by name; phân trang).
+  - `GET /api/collections/:slug` trả về thông tin + danh sách sản phẩm với filter kế thừa từ products (category, size, color, price, sort manual/newest/price asc/desc; pagination).
+- API admin:
+  - CRUD collection (`/api/admin/collections`), upload hero image.
+  - Quản lý sản phẩm trong collection: set/bulk update list + `position`, toggle visibility, reorder.
+  - Filter/search by name/slug/status/visible/date range.
+- FE công khai:
+  - Trang `/collections` (grid danh sách collection với badge trạng thái “Sắp diễn ra/Đang diễn ra/Đã kết thúc”).
+  - Trang `/collections/:slug` (hero + mô tả + CTA + list sản phẩm, filter/sort/pagination; fallback 404 hoặc thông báo nếu hết hạn/ẩn).
+- FE admin:
+  - Trang danh sách collection: search, filter trạng thái/visible, toggle, xem lịch.
+  - Form tạo/sửa: name, slug, mô tả, hero image, lịch start/end, SEO, visibility.
+  - Tab gắn sản phẩm: search/filter sản phẩm, select nhiều, drag & drop reorder, bulk remove.
+
 ### 3.3. Quản lý giỏ hàng (Cart Management)
 
 #### 3.3.1. Chức năng cơ bản

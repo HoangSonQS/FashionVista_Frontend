@@ -290,8 +290,9 @@ const ProductList = () => {
 
       <div className="max-w-6xl mx-auto space-y-8 px-4 pt-10">
 
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 space-y-4">
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+          {/* Sidebar filter - sticky on desktop after banner */}
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 space-y-4 md:sticky md:top-24">
             <h2 className="text-lg font-semibold">Bộ lọc</h2>
 
             <div className="space-y-2 text-sm relative">

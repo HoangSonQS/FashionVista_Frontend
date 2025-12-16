@@ -245,7 +245,7 @@ const CheckoutPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
+    <div className="checkout-page min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -428,19 +428,31 @@ const CheckoutPage = () => {
                     setShippingMethod('STANDARD');
                     setValue('shippingMethod', 'STANDARD');
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'STANDARD'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60'
+                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
                   }`}
                 >
                   <div>
                     <p className="font-medium">Tiêu chuẩn (GHN / GHTK)</p>
                     <p className="text-[11px] text-[var(--muted-foreground)]">3-5 ngày làm việc</p>
                   </div>
-                  <span className="text-xs font-semibold">
-                    {subtotal >= FREE_SHIPPING_THRESHOLD ? 'Miễn phí' : formatCurrency(SHIPPING_BASE_FEE)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold">
+                      {subtotal >= FREE_SHIPPING_THRESHOLD ? 'Miễn phí' : formatCurrency(SHIPPING_BASE_FEE)}
+                    </span>
+                    <input
+                      type="radio"
+                      value="STANDARD"
+                      checked={shippingMethod === 'STANDARD'}
+                      onChange={() => {
+                        setShippingMethod('STANDARD');
+                        setValue('shippingMethod', 'STANDARD');
+                      }}
+                      className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
+                    />
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -448,21 +460,33 @@ const CheckoutPage = () => {
                     setShippingMethod('FAST');
                     setValue('shippingMethod', 'FAST');
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'FAST'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60'
+                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
                   }`}
                 >
                   <div>
                     <p className="font-medium">Nhanh</p>
                     <p className="text-[11px] text-[var(--muted-foreground)]">2-3 ngày làm việc</p>
                   </div>
-                  <span className="text-xs font-semibold">
-                    {subtotal >= FREE_SHIPPING_THRESHOLD
-                      ? 'Miễn phí'
-                      : formatCurrency(SHIPPING_BASE_FEE + 10000)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold">
+                      {subtotal >= FREE_SHIPPING_THRESHOLD
+                        ? 'Miễn phí'
+                        : formatCurrency(SHIPPING_BASE_FEE + 10000)}
+                    </span>
+                    <input
+                      type="radio"
+                      value="FAST"
+                      checked={shippingMethod === 'FAST'}
+                      onChange={() => {
+                        setShippingMethod('FAST');
+                        setValue('shippingMethod', 'FAST');
+                      }}
+                      className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
+                    />
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -470,21 +494,33 @@ const CheckoutPage = () => {
                     setShippingMethod('EXPRESS');
                     setValue('shippingMethod', 'EXPRESS');
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'EXPRESS'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60'
+                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
                   }`}
                 >
                   <div>
                     <p className="font-medium">Express</p>
                     <p className="text-[11px] text-[var(--muted-foreground)]">Trong 24-48h</p>
                   </div>
-                  <span className="text-xs font-semibold">
-                    {subtotal >= FREE_SHIPPING_THRESHOLD
-                      ? 'Miễn phí'
-                      : formatCurrency(SHIPPING_BASE_FEE + 20000)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold">
+                      {subtotal >= FREE_SHIPPING_THRESHOLD
+                        ? 'Miễn phí'
+                        : formatCurrency(SHIPPING_BASE_FEE + 20000)}
+                    </span>
+                    <input
+                      type="radio"
+                      value="EXPRESS"
+                      checked={shippingMethod === 'EXPRESS'}
+                      onChange={() => {
+                        setShippingMethod('EXPRESS');
+                        setValue('shippingMethod', 'EXPRESS');
+                      }}
+                      className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
+                    />
+                  </div>
                 </button>
                 <p className="pt-1 text-[11px] text-[var(--muted-foreground)]">
                   Đơn từ {formatCurrency(FREE_SHIPPING_THRESHOLD)} được miễn phí vận chuyển.
@@ -512,7 +548,7 @@ const CheckoutPage = () => {
                     className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${
                       method.disabled
                         ? 'border-[var(--border)] bg-[var(--muted)]/40 text-[var(--muted-foreground)] cursor-not-allowed opacity-60'
-                        : 'border-[var(--border)] hover:border-[var(--primary)]/60'
+                        : 'border-[var(--border)] cursor-pointer hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
                     }`}
                   >
                     <div>
@@ -655,7 +691,7 @@ const CheckoutPage = () => {
               <button
                 type="submit"
                 disabled={submitting || items.length === 0}
-                className="mt-4 w-full rounded-full bg-[var(--primary)] py-3 text-sm font-semibold tracking-wide text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 w-full rounded-full bg-[var(--primary)] py-3 text-sm font-semibold tracking-wide text-[var(--primary-foreground)] transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:bg-[#E6F0FF]"
               >
                 {submitting ? 'Đang xử lý...' : 'Đặt hàng'}
               </button>

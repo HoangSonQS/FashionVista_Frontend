@@ -13,6 +13,14 @@ const navItems = [
       { label: 'Thêm sản phẩm', path: '/admin/products/new' },
     ],
   },
+  {
+    label: 'Bộ sưu tập',
+    path: '/admin/collections',
+    children: [
+      { label: 'Danh sách', path: '/admin/collections' },
+      { label: 'Thêm bộ sưu tập', path: '/admin/collections/new' },
+    ],
+  },
   { label: 'Đơn hàng', path: '/admin/orders' },
   { label: 'Người dùng', path: '/admin/users' },
 ];

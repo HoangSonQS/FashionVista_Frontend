@@ -13,7 +13,8 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const NAV_ITEMS = [
   { label: 'THE NEW', href: '/?section=new' },
-  { label: 'BỘ SƯU TẬP', href: '/?section=collections' },
+  // Dẫn tới trang danh sách bộ sưu tập public
+  { label: 'BỘ SƯU TẬP', href: '/collections' },
   { label: 'SALE', href: '/?section=sale' },
 ];
 

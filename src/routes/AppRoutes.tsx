@@ -5,6 +5,8 @@ import Login from '../pages/auth/Login';
 import ProductDetailPage from '../pages/public/ProductDetail';
 import ProductList from '../pages/public/ProductList';
 import SearchResultsPage from '../pages/public/SearchResults';
+import CollectionsPage from '../pages/public/Collections';
+import CollectionDetailPage from '../pages/public/CollectionDetail';
 import CartPage from '../pages/user/CartPage';
 import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
@@ -14,6 +16,8 @@ import ProductCreatePage from '../pages/admin/ProductCreate';
 import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminProductList from '../pages/admin/AdminProductList';
+import AdminCollectionCreate from '../pages/admin/AdminCollectionCreate';
+import AdminCollections from '../pages/admin/AdminCollections';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminUserDetail from '../pages/admin/AdminUserDetail';
@@ -31,6 +35,8 @@ export const AppRoutes = () => {
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetailPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/collections" element={<CollectionsPage />} />
+          <Route path="/collections/:slug" element={<CollectionDetailPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/cart" element={<CartPage />} />
@@ -51,6 +57,9 @@ export const AppRoutes = () => {
             <Route path="products" element={<AdminProductList />} />
             <Route path="products/new" element={<ProductCreatePage />} />
             <Route path="products/:id/edit" element={<ProductCreatePage />} />
+            <Route path="collections" element={<AdminCollections />} />
+            <Route path="collections/new" element={<AdminCollectionCreate />} />
+            <Route path="collections/:id/edit" element={<AdminCollectionCreate />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId/detail" element={<AdminUserDetail />} />
