@@ -4,9 +4,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { MapPin, Truck, CreditCard, Ticket } from 'lucide-react';
+import axios from 'axios';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { cartService } from '../../services/cartService';
+import { voucherService } from '../../services/voucherService';
+import { shippingService } from '../../services/shippingService';
 import type { CartResponse, CartItem } from '../../types/cart';
 import type { Address } from '../../types/user';
 import type { CheckoutRequest, PaymentMethod, ShippingMethod } from '../../types/checkout';
@@ -47,7 +50,12 @@ const CheckoutPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [voucherCode, setVoucherCode] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [voucherApplying, setVoucherApplying] = useState(false);
+  const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
+  const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
+  const [dynamicShippingFee, setDynamicShippingFee] = useState<number | null>(null);
+  const [, setLoadingShippingFee] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   const {
@@ -91,6 +99,7 @@ const CheckoutPage = () => {
           setValue('ward', defaultAddress.ward);
           setValue('district', defaultAddress.district);
           setValue('city', defaultAddress.city);
+          void fetchDynamicShipping(defaultAddress.id, shippingMethod);
         }
       } catch {
         // ignore profile/address errors
@@ -136,6 +145,7 @@ const CheckoutPage = () => {
   );
 
   const computedShippingFee = useMemo(() => {
+    if (dynamicShippingFee !== null) return dynamicShippingFee;
     if (subtotal === 0) return 0;
     if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
     switch (shippingMethod) {
@@ -147,9 +157,25 @@ const CheckoutPage = () => {
       default:
         return SHIPPING_BASE_FEE;
     }
-  }, [subtotal, shippingMethod]);
+  }, [dynamicShippingFee, subtotal, shippingMethod]);
 
   const total = Math.max(subtotal + computedShippingFee - discount, 0);
+
+  const fetchDynamicShipping = async (addrId: number | null, method: ShippingMethod) => {
+    if (!addrId) {
+      setDynamicShippingFee(null);
+      return;
+    }
+    setLoadingShippingFee(true);
+    try {
+      const fee = await shippingService.getFee(addrId, method);
+      setDynamicShippingFee(fee.fee ?? null);
+    } catch {
+      setDynamicShippingFee(null);
+    } finally {
+      setLoadingShippingFee(false);
+    }
+  };
 
   const handleSelectAddress = (address: Address) => {
     setSelectedAddressId(address.id);
@@ -160,21 +186,49 @@ const CheckoutPage = () => {
     setValue('ward', address.ward);
     setValue('district', address.district);
     setValue('city', address.city);
+    void fetchDynamicShipping(address.id, shippingMethod);
   };
 
-  const handleApplyVoucher = () => {
-    if (!voucherCode.trim()) {
+  const handleApplyVoucher = async () => {
+    const trimmed = voucherCode.trim();
+    if (!trimmed) {
       showToast('Vui lòng nhập mã voucher.', 'error');
       return;
     }
-    // Mock: giảm cố định 50.000₫, nhưng không vượt quá subtotal
-    const discountAmount = Math.min(50000, subtotal);
-    setDiscount(discountAmount);
-    showToast('Áp dụng voucher thành công.', 'success');
+    if (subtotal <= 0) {
+      showToast('Giỏ hàng trống, không thể áp dụng voucher.', 'error');
+      return;
+    }
+
+    setVoucherApplying(true);
+    try {
+      const result = await voucherService.validateVoucher(trimmed, subtotal);
+      const discountAmount = Math.min(result.discount ?? 0, subtotal);
+      setDiscount(discountAmount);
+      setAppliedVoucherCode(trimmed);
+      const message = result.message || 'Áp dụng voucher thành công.';
+      setVoucherMessage(message);
+      showToast(message, 'success');
+    } catch (error) {
+      setDiscount(0);
+      setAppliedVoucherCode(null);
+      setVoucherMessage(null);
+      let message = 'Không thể áp dụng voucher. Vui lòng thử mã khác.';
+      if (axios.isAxiosError(error)) {
+        message =
+          (error.response?.data as { message?: string } | undefined)?.message ??
+          message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      showToast(message, 'error');
+    } finally {
+      setVoucherApplying(false);
+    }
   };
 
   const onSubmit = async (values: CheckoutFormValues) => {
-    if (!selectedAddressId) {
+    if (addresses.length > 0 && !selectedAddressId) {
       showToast('Vui lòng chọn địa chỉ giao hàng.', 'error');
       return;
     }
@@ -193,14 +247,23 @@ const CheckoutPage = () => {
       notes: values.notes,
       paymentMethod: values.paymentMethod as PaymentMethod,
       shippingMethod: values.shippingMethod as ShippingMethod,
+      voucherCode: appliedVoucherCode ?? undefined,
     };
 
     setSubmitting(true);
-                try {
-                  const order = await orderService.checkout(payload);
-                  showToast('Đặt hàng thành công. Bạn có thể theo dõi tại Đơn hàng của tôi.', 'success');
-                  navigate('/orders', { state: { recentOrderNumber: order.orderNumber } });
-                } catch (error) {
+    try {
+      const order = await orderService.checkout(payload);
+
+      // Nếu chọn VNPay và backend trả về paymentUrl thì redirect sang VNPay
+      if (values.paymentMethod === 'VNPAY' && order.paymentUrl) {
+        showToast('Đang chuyển sang cổng thanh toán VNPay...', 'success');
+        window.location.href = order.paymentUrl;
+        return;
+      }
+
+      showToast('Đặt hàng thành công. Bạn có thể theo dõi tại Đơn hàng của tôi.', 'success');
+      navigate('/orders', { state: { recentOrderNumber: order.orderNumber } });
+    } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Không thể tạo đơn hàng. Vui lòng thử lại.';
       showToast(message, 'error');
@@ -231,9 +294,7 @@ const CheckoutPage = () => {
     {
       value: 'VNPAY',
       label: 'VNPay',
-      description: 'Thanh toán qua cổng VNPay.',
-      disabled: true,
-      badge: 'Đang bảo trì',
+      description: 'Thanh toán online an toàn qua cổng VNPay.',
     },
     {
       value: 'MOMO',
@@ -652,15 +713,24 @@ const CheckoutPage = () => {
                   <button
                     type="button"
                     onClick={handleApplyVoucher}
-                    className="rounded-full bg-[var(--card)] px-4 py-2 text-xs sm:text-sm font-medium text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--muted)] transition-colors"
+                    disabled={voucherApplying}
+                    className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium border transition-colors ${
+                      voucherApplying
+                        ? 'bg-[var(--muted)] cursor-not-allowed opacity-70 border-[var(--border)] text-[var(--muted-foreground)]'
+                        : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
+                    }`}
                   >
-                    Áp dụng
+                    {voucherApplying ? 'Đang áp dụng...' : 'Áp dụng'}
                   </button>
                 </div>
                 {discount > 0 && (
-                  <p className="text-[11px] text-[var(--success)]">
-                    Đã áp dụng giảm {formatCurrency(discount)} cho đơn hàng.
-                  </p>
+                  <div className="text-[11px] text-[var(--success)] space-y-1">
+                    <p>
+                      Đã áp dụng giảm {formatCurrency(discount)}
+                      {appliedVoucherCode ? ` (Mã: ${appliedVoucherCode})` : ''}.
+                    </p>
+                    {voucherMessage && <p>{voucherMessage}</p>}
+                  </div>
                 )}
               </div>
 

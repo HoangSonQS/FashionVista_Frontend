@@ -2,6 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import App from '../App';
 import Register from '../pages/auth/Register';
 import Login from '../pages/auth/Login';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 import ProductDetailPage from '../pages/public/ProductDetail';
 import ProductList from '../pages/public/ProductList';
 import SearchResultsPage from '../pages/public/SearchResults';
@@ -12,6 +14,8 @@ import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
 import UserOrdersPage from '../pages/user/UserOrders';
 import UserOrderDetailPage from '../pages/user/UserOrderDetail';
+import WishlistPage from '../pages/user/WishlistPage';
+import MyReviewsPage from '../pages/user/MyReviewsPage';
 import ProductCreatePage from '../pages/admin/ProductCreate';
 import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -44,11 +48,15 @@ export const AppRoutes = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<UserOrdersPage />} />
             <Route path="/orders/:orderNumber" element={<UserOrderDetailPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/reviews" element={<MyReviewsPage />} />
           </Route>
         </Route>
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin/login" element={<AdminLogin />} />
 
         <Route element={<AdminProtectedRoute />}>

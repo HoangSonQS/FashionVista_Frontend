@@ -12,6 +12,7 @@ export interface CheckoutRequest {
   notes?: string;
   paymentMethod: PaymentMethod;
   shippingMethod: ShippingMethod;
+  voucherCode?: string;
 }
 
 // Khớp với AddressResponse.java (và Address trong FE)
@@ -46,6 +47,14 @@ export interface OrderSummaryResponse {
   total: number;
   itemCount: number;
   createdAt: string;
+}
+
+export interface VoucherValidationResponse {
+  valid: boolean;
+  message: string;
+  discount: number;
+  subtotal: number;
+  finalTotal: number;
 }
 
 

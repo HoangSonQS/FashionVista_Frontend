@@ -42,6 +42,11 @@ export interface UpdateOrderStatusRequest {
   notifyCustomer?: boolean;
 }
 
+export interface UpdateTrackingNumberRequest {
+  trackingNumber: string;
+  notifyCustomer?: boolean;
+}
+
 export const adminOrderService = {
   async getAllOrders(params: AdminOrderListParams): Promise<AdminOrderListPage> {
     const response = await axiosClient.get<AdminOrderListPage>('/admin/orders', { params });
@@ -55,6 +60,11 @@ export const adminOrderService = {
 
   async updateOrderStatus(orderId: number, request: UpdateOrderStatusRequest): Promise<OrderResponse> {
     const response = await axiosClient.patch<OrderResponse>(`/admin/orders/${orderId}/status`, request);
+    return response.data;
+  },
+
+  async updateTrackingNumber(orderId: number, request: UpdateTrackingNumberRequest): Promise<OrderResponse> {
+    const response = await axiosClient.patch<OrderResponse>(`/admin/orders/${orderId}/tracking`, request);
     return response.data;
   },
 };

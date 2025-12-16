@@ -24,6 +24,9 @@ export interface OrderResponse {
   total: number;
   createdAt: string;
   items: OrderItem[];
+  paymentUrl?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
 }
 
 // Re-export để giữ tương thích ngược cho các import cũ

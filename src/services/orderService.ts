@@ -16,5 +16,10 @@ export const orderService = {
     const response = await axiosClient.get<OrderResponse>(`/orders/${orderNumber}`);
     return response.data;
   },
+
+  async cancel(orderNumber: string): Promise<OrderResponse> {
+    const response = await axiosClient.post<OrderResponse>(`/orders/${orderNumber}/cancel`);
+    return response.data;
+  },
 };
 
