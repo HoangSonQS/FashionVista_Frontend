@@ -145,9 +145,23 @@ const ProductDetailPage = () => {
       return;
     }
     try {
+      // Nếu biến thể đã có trong giỏ: chỉ mở giỏ để người dùng tự chỉnh số lượng & checkout
+      try {
+        const currentCart = await cartService.getCart();
+        const existingItem = currentCart.items.find((i) => i.variantId === selectedVariant.id);
+        if (existingItem) {
+          openDrawer({ cart: currentCart });
+          setStatus('Sản phẩm đã có trong giỏ hàng. Vui lòng kiểm tra và thanh toán.');
+          return;
+        }
+      } catch {
+        // ignore, tiếp tục addItem bên dưới
+      }
+
       const cart = await cartService.addItem(selectedVariant.sku, quantity);
       emitCartUpdated(cart);
-      navigate('/checkout');
+      openDrawer({ cart });
+      setStatus('Đã thêm sản phẩm vào giỏ hàng. Vui lòng kiểm tra và thanh toán.');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Không thể mua ngay lúc này.');
       if ((err as Error).message.includes('Unauthorized')) {
@@ -511,41 +525,84 @@ const ProductDetailPage = () => {
             </div>
           )}
 
-          <div className="space-y-2">
-            <p className="text-sm text-[var(--muted-foreground)]">Chọn biến thể</p>
-            <select
-              value={selectedVariant?.id ?? ''}
-              onChange={(e) => {
-                    const variant = availableVariants.find((item) => item.id === Number(e.target.value));
-                setSelectedVariant(variant ?? null);
-              }}
-                  className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            >
-              {filteredVariants.map((variant) => (
-                <option key={variant.id} value={variant.id}>
-                  {variant.size ?? 'Free size'} / {variant.color ?? 'Đa sắc'} - {variant.stock} còn lại
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Chỉ hiển thị select biến thể khi không có UI chọn size/màu phía trên */}
+          {uniqueSizes.length === 0 && uniqueColors.length === 0 && filteredVariants.length > 1 && (
+            <div className="space-y-2">
+              <p className="text-sm text-[var(--muted-foreground)]">Chọn biến thể</p>
+              <select
+                value={selectedVariant?.id ?? ''}
+                onChange={(e) => {
+                  const variant = availableVariants.find(
+                    (item) => item.id === Number(e.target.value),
+                  );
+                  setSelectedVariant(variant ?? null);
+                }}
+                className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              >
+                {filteredVariants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.size ?? 'Free size'} / {variant.color ?? 'Đa sắc'} - {variant.stock} còn lại
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min={1}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                  disabled={!selectedVariant || quantity <= 1}
+                  className="h-9 w-9 rounded-full border border-[var(--input-border)] bg-[var(--input-background)] text-lg leading-none flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--muted)]"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={1}
                   max={selectedVariant?.stock ?? 1}
-              value={quantity}
-                  onChange={(e) => setQuantity(Math.min(Number(e.target.value), selectedVariant?.stock ?? 1))}
+                  value={quantity}
+                  onChange={(e) => {
+                    const raw = Number(e.target.value);
+                    if (Number.isNaN(raw) || raw <= 0) {
+                      setQuantity(1);
+                      return;
+                    }
+                    const max = selectedVariant?.stock ?? 1;
+                    setQuantity(Math.min(raw, max));
+                  }}
                   className="w-20 rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-center text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-            <button
-              type="button"
-              onClick={handleAddToCart}
-                  disabled={!selectedVariant}
-                  className="flex-1 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Thêm vào giỏ
-            </button>
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuantity((prev) => {
+                      const max = selectedVariant?.stock ?? 1;
+                      return Math.min(prev + 1, max);
+                    })
+                  }
+                  disabled={!selectedVariant || quantity >= (selectedVariant?.stock ?? 1)}
+                  className="h-9 w-9 rounded-full border border-[var(--input-border)] bg-[var(--input-background)] text-lg leading-none flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--muted)]"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!selectedVariant}
+                className="flex-1 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] py-3 font-medium hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Thêm vào giỏ
+              </button>
+            </div>
+            {selectedVariant && (
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Còn {selectedVariant.stock} sản phẩm trong kho.
+              </p>
+            )}
           </div>
 
           <button

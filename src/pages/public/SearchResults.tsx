@@ -149,9 +149,23 @@ const SearchResultsPage = () => {
 
       if (!hasSelectableVariant) {
         const variant = availableVariants[0];
+
+        // Nếu đã có trong giỏ: chỉ mở giỏ (drawer) cho user tự chỉnh số lượng
+        try {
+          const currentCart = await cartService.getCart();
+          const existingItem = currentCart.items.find((i) => i.variantId === variant.id);
+          if (existingItem) {
+            openDrawer({ cart: currentCart });
+            return;
+          }
+        } catch {
+          // ignore, tiếp tục addItem bên dưới
+        }
+
+        // Chưa có trong giỏ: thêm 1 và mở giỏ
         const cart = await cartService.addItem(variant.sku, 1);
         emitCartUpdated(cart);
-        navigate('/checkout');
+        openDrawer({ cart });
       } else {
         openVariantSelection(product, availableVariants, 'buy');
       }
@@ -196,7 +210,8 @@ const SearchResultsPage = () => {
         openDrawer({ cart });
         showToast('Đã thêm vào giỏ hàng.', 'success');
       } else {
-        navigate('/checkout');
+        // Mua ngay: mở giỏ hàng (drawer) với item vừa thêm, user tự điều chỉnh rồi bấm checkout
+        openDrawer({ cart });
       }
       setVariantModal(null);
     } catch (err) {
