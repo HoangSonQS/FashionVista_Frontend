@@ -77,6 +77,8 @@ const SiteHeader = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const debouncedSearch = useDebouncedValue(searchTerm, 450);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [isOverHero, setIsOverHero] = useState(false);
 
   const customerName = useMemo(() => auth?.user?.fullName ?? 'Khách hàng', [auth]);
 
@@ -101,6 +103,46 @@ const SiteHeader = () => {
   useEffect(() => {
     setAccountMenuOpen(false);
     setMobileNavOpen(false);
+  }, [location.pathname]);
+
+  // Đổi màu logo / nav khi header nằm đè lên hero banner trang chủ
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (location.pathname !== '/') {
+      setIsOverHero(false);
+      return;
+    }
+
+    const updateHeroOverlap = () => {
+      const hero = document.getElementById('home-hero');
+      const header = headerRef.current;
+
+      // Ở vị trí top (chưa scroll) thì luôn coi như không over hero
+      if (!hero || !header || window.scrollY <= 0) {
+        setIsOverHero(false);
+        return;
+      }
+
+      const heroRect = hero.getBoundingClientRect();
+      const headerHeight = header.offsetHeight || 0;
+
+      // Header được xem là "đang nằm trên hero" nếu phần trên của hero
+      // nằm phía sau header và hero vẫn còn một phần trong viewport
+      const overlapping = heroRect.top < headerHeight && heroRect.bottom > 0;
+      setIsOverHero(overlapping);
+    };
+
+    updateHeroOverlap();
+    window.addEventListener('scroll', updateHeroOverlap);
+    window.addEventListener('resize', updateHeroOverlap);
+
+    return () => {
+      window.removeEventListener('scroll', updateHeroOverlap);
+      window.removeEventListener('resize', updateHeroOverlap);
+    };
   }, [location.pathname]);
 
   const loadCartCount = useCallback(async () => {
@@ -273,12 +315,16 @@ const SiteHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full">
+    <header ref={headerRef} className="sticky top-0 z-50 w-full">
       {/* Top dark grey bar */}
       <div className="h-1 bg-gray-800"></div>
       
-      {/* Main header with light blue background and vertical light streaks */}
-      <div className="relative bg-[#4DA3E8]/20 border-b-2 border-[#4DA3E8]">
+      {/* Main header with background đổi màu khi đè lên hero banner */}
+      <div
+        className={`relative border-b-2 border-[#4DA3E8] ${
+          isOverHero ? 'bg-[#4DA3E8]' : 'bg-[#E5F1FB]'
+        }`}
+      >
         {/* Vertical light streaks effect */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
@@ -295,7 +341,9 @@ const SiteHeader = () => {
             <div className="flex items-center gap-4 flex-shrink-0">
               <Link
                 to="/"
-                className="font-serif text-xl md:text-2xl font-bold uppercase tracking-wide text-[#4DA3E8]"
+                className={`font-serif text-xl md:text-2xl font-bold uppercase tracking-wide transition-colors ${
+                  isOverHero ? 'text-[var(--primary-foreground)]' : 'text-[#4DA3E8]'
+                }`}
               >
                 SIXTHSOUL
               </Link>
@@ -383,7 +431,9 @@ const SiteHeader = () => {
                         }
                       }, 200);
                     }}
-                    className="uppercase text-sm md:text-base font-medium tracking-wider text-[#4DA3E8] transition-colors hover:text-[#3A8BC7]"
+                    className={`uppercase text-sm md:text-base font-medium tracking-wider transition-colors ${
+                      isOverHero ? 'text-[var(--primary-foreground)] hover:text-white/80' : 'text-[#4DA3E8] hover:text-[#3A8BC7]'
+                    }`}
                   >
                     {item.label}
                   </Link>

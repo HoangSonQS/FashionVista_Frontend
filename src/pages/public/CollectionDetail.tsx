@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { collectionService } from '../../services/collectionService';
 import type { CollectionDetail } from '../../types/collection';
+import { ProductCard } from '../../components/common/ProductCard';
 
 const CollectionDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -128,46 +129,18 @@ const CollectionDetailPage = () => {
             </h2>
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {data.products.map((product) => (
-                <Link
+                <div
                   key={product.id}
-                  to={`/products/${product.slug}`}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden hover:-translate-y-1 transition-transform flex flex-col"
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden hover:-translate-y-1 transition-transform flex flex-col p-3"
                 >
-                  <div className="relative bg-[var(--background)] flex items-center justify-center overflow-hidden border-b border-[var(--border)] p-4 min-h-[220px]">
-                    {product.thumbnailUrl ? (
-                      <img
-                        src={product.thumbnailUrl}
-                        alt={product.name}
-                        className="max-h-[260px] w-full object-contain group-hover:scale-[1.03] transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)] text-xs">
-                        Đang cập nhật
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 space-y-2 flex-1 flex flex-col">
-                    <p className="text-xs tracking-[0.3em] uppercase text-[var(--muted-foreground)]">
-                      {product.category ?? 'SixthSoul'}
-                    </p>
-                    <p
-                      className="text-lg font-semibold"
-                      style={{ fontFamily: 'var(--font-serif)' }}
-                    >
-                      {product.name}
-                    </p>
-                    <div className="mt-auto pt-3 flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--primary)]">
-                        {product.price.toLocaleString('vi-VN')}₫
-                      </span>
-                      {product.compareAtPrice && (
-                        <span className="text-xs text-[var(--muted-foreground)] line-through">
-                          {product.compareAtPrice.toLocaleString('vi-VN')}₫
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
+                  <ProductCard
+                    slug={product.slug}
+                    name={product.name}
+                    price={product.price}
+                    compareAtPrice={product.compareAtPrice}
+                    thumbnailUrl={product.thumbnailUrl}
+                  />
+                </div>
               ))}
             </div>
           </>

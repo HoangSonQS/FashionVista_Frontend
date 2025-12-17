@@ -5,6 +5,7 @@ import { productService } from '../../services/productService';
 import type { CategorySummary, ProductListItem } from '../../types/product';
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
+import { ProductCard } from '../../components/common/ProductCard';
 
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
 
@@ -91,57 +92,10 @@ const HomePage = () => {
     }
   }, [section]);
 
-  const ProductCard = ({ product }: { product: ProductListItem }) => {
-    const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
-    const discountPercent = hasDiscount
-      ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
-      : 0;
-
-    return (
-      <div className="group relative">
-        <Link to={`/products/${product.slug}`} className="block">
-          <div className="relative overflow-hidden bg-white aspect-square">
-            {product.thumbnailUrl ? (
-              <img
-                src={product.thumbnailUrl}
-                alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
-                <span className="text-sm">No Image</span>
-              </div>
-            )}
-            {hasDiscount && (
-              <div className="absolute top-4 left-4 bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide">
-                -{discountPercent}%
-              </div>
-            )}
-          </div>
-        </Link>
-        <div className="mt-4 space-y-1">
-          <Link to={`/products/${product.slug}`}>
-            <h3 className="font-light text-sm text-[#4DA3E8] hover:underline transition-all line-clamp-2 tracking-wide">
-              {product.name}
-            </h3>
-          </Link>
-          <div className="flex items-baseline gap-2">
-            <span className="font-normal text-sm text-[#4DA3E8]">{formatCurrency(product.price)}</span>
-            {hasDiscount && (
-              <span className="text-xs text-gray-500 line-through font-light">
-                {formatCurrency(product.compareAtPrice!)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Hero Banner - ZARA Style */}
-      <section className="relative w-full">
+      <section id="home-hero" className="relative w-full">
         <div className="relative h-[85vh] min-h-[600px] bg-[#4DA3E8] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#4DA3E8]/40 via-[#4DA3E8]/20 to-transparent z-10" />
           <div className="absolute inset-0 flex items-center justify-center z-20">
@@ -183,7 +137,14 @@ const HomePage = () => {
               ) : newArrivals.length > 0 ? (
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {newArrivals.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.price}
+                      compareAtPrice={product.compareAtPrice}
+                      thumbnailUrl={product.thumbnailUrl}
+                    />
                   ))}
                 </div>
               ) : (
@@ -209,7 +170,14 @@ const HomePage = () => {
               ) : featuredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {featuredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.price}
+                      compareAtPrice={product.compareAtPrice}
+                      thumbnailUrl={product.thumbnailUrl}
+                    />
                   ))}
                 </div>
               ) : (

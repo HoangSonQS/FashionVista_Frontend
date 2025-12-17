@@ -9,6 +9,7 @@ import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
+import { ProductCard } from '../../components/common/ProductCard';
 
 const SearchResultsPage = () => {
   const navigate = useNavigate();
@@ -284,32 +285,16 @@ const SearchResultsPage = () => {
                 {results.map((product) => (
                   <div
                     key={product.slug}
-                    className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden shadow-lg hover:-translate-y-1 transition-transform flex flex-col"
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden shadow-lg hover:-translate-y-1 transition-transform flex flex-col p-3"
                   >
-                    <Link to={`/products/${product.slug}`}>
-                      <div className="bg-[var(--background)] relative flex items-center justify-center overflow-hidden border-b border-[var(--border)] p-4 min-h-[220px]">
-                        {product.thumbnailUrl ? (
-                          <img
-                            src={product.thumbnailUrl}
-                            alt={product.name}
-                            className="max-h-[260px] w-full object-contain group-hover:scale-[1.03] transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
-                            Đang cập nhật
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="p-4 space-y-2 flex-1 flex flex-col">
-                      <p className="text-xs tracking-[0.3em] uppercase text-[var(--muted-foreground)]">Sản phẩm</p>
-                      <Link
-                        to={`/products/${product.slug}`}
-                        className="text-lg font-semibold hover:underline"
-                        style={{ fontFamily: 'var(--font-serif)' }}
-                      >
-                        {product.name}
-                      </Link>
+                    <ProductCard
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.price}
+                      compareAtPrice={product.compareAtPrice}
+                      thumbnailUrl={product.thumbnailUrl}
+                    />
+                    <div className="mt-4 space-y-2 flex-1 flex flex-col">
                       <div className="mt-auto pt-4 space-y-2">
                         <button
                           type="button"
