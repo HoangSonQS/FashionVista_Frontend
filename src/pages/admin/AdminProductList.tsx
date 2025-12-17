@@ -117,6 +117,7 @@ const AdminProductList = () => {
               <th className="px-4 py-3 font-medium">SKU</th>
               <th className="px-4 py-3 font-medium">Danh mục</th>
               <th className="px-4 py-3 font-medium">Giá</th>
+              <th className="px-4 py-3 font-medium">Sale</th>
               <th className="px-4 py-3 font-medium">Trạng thái</th>
               <th className="px-4 py-3 font-medium">Thao tác</th>
             </tr>
@@ -140,6 +141,15 @@ const AdminProductList = () => {
                   <td className="px-4 py-3">{item.sku ?? '—'}</td>
                   <td className="px-4 py-3">{item.category ?? '—'}</td>
                   <td className="px-4 py-3">{item.price.toLocaleString('vi-VN')}₫</td>
+                  <td className="px-4 py-3">
+                    {typeof item.compareAtPrice === 'number' && item.compareAtPrice > item.price ? (
+                      <span className="inline-flex items-center rounded-full bg-[var(--error-bg)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--error)]">
+                        Sale
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[var(--muted-foreground)]">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${

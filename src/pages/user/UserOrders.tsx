@@ -50,6 +50,7 @@ const UserOrdersPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [dateFilter, setDateFilter] = useState<'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS'>('ALL');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -76,10 +77,27 @@ const UserOrdersPage = () => {
 
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
+    const now = new Date().getTime();
+
     return orders.filter((order) => {
+      // Lọc theo trạng thái
       if (statusFilter !== 'ALL' && order.status !== statusFilter) {
         return false;
       }
+
+      // Lọc theo khoảng thời gian
+      if (dateFilter !== 'ALL') {
+        const created = new Date(order.createdAt).getTime();
+        const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+        if (dateFilter === 'LAST_7_DAYS' && diffDays > 7) {
+          return false;
+        }
+        if (dateFilter === 'LAST_30_DAYS' && diffDays > 30) {
+          return false;
+        }
+      }
+
+      // Lọc theo từ khóa
       if (!term) return true;
       if (order.orderNumber.toLowerCase().includes(term)) return true;
       if (
@@ -93,7 +111,7 @@ const UserOrdersPage = () => {
       }
       return false;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, dateFilter]);
 
   const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
 
@@ -126,7 +144,7 @@ const UserOrdersPage = () => {
               className="flex-1 rounded-full border border-[var(--border)] bg-[var(--input-background)] px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -144,6 +162,15 @@ const UserOrdersPage = () => {
               <option value="RETURNED">Đã trả</option>
               <option value="REFUNDED">Đã hoàn tiền</option>
             </select>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value as 'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS')}
+              className="rounded-full border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            >
+              <option value="ALL">Mọi thời gian</option>
+              <option value="LAST_7_DAYS">7 ngày gần đây</option>
+              <option value="LAST_30_DAYS">30 ngày gần đây</option>
+            </select>
           </div>
         </section>
 
@@ -158,10 +185,41 @@ const UserOrdersPage = () => {
             </div>
           )}
 
+          {/* Empty states */}
           {!loading && !error && filteredOrders.length === 0 && (
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Bạn chưa có đơn hàng nào hoặc không tìm thấy đơn hàng phù hợp.
-            </p>
+            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-8 text-center space-y-3">
+              {orders.length === 0 && !search.trim() && statusFilter === 'ALL' && dateFilter === 'ALL' ? (
+                <>
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    Bạn chưa có đơn hàng nào.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/products')}
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-[var(--primary)] px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-colors"
+                  >
+                    Tiếp tục mua sắm
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    Không tìm thấy đơn hàng phù hợp với bộ lọc hiện tại.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      setStatusFilter('ALL');
+                      setDateFilter('ALL');
+                    }}
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-[var(--border)] px-4 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                </>
+              )}
+            </div>
           )}
 
           {!loading && !error && filteredOrders.length > 0 && (
@@ -188,6 +246,12 @@ const UserOrdersPage = () => {
                       </p>
                     </div>
                     <div className="flex flex-col items-start gap-1 sm:items-end">
+                      {/* Badge "Mới" cho đơn vừa tạo */}
+                      {(locationState?.recentOrderNumber === order.orderNumber) && (
+                        <span className="inline-flex items-center rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">
+                          Mới
+                        </span>
+                      )}
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(order.status)}`}
                       >

@@ -68,5 +68,12 @@ export const productService = {
     });
     return response.data;
   },
+
+  async getSaleProducts(limit: number = 24): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>('/products/sale', {
+      params: { limit },
+    });
+    return response.data;
+  },
 };
 

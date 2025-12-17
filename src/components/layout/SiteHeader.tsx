@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { label: 'THE NEW', href: '/?section=new' },
   // Dẫn tới trang danh sách bộ sưu tập public
   { label: 'BỘ SƯU TẬP', href: '/collections' },
-  { label: 'SALE', href: '/?section=sale' },
+  { label: 'SALE', href: '/sale' },
 ];
 
 const readAuthState = (): AuthResponse | null => {

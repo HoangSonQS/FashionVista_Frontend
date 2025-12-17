@@ -55,24 +55,8 @@ const HomePage = () => {
       if (activeTab !== 'sale') return;
       setLoadingSale(true);
       try {
-        // Get products with pagination, we'll filter for sale items
-        const response = await productService.getProducts({ page: 0 });
-        // Filter products with discount (compareAtPrice > price)
-        const sale = response.items.filter(
-          (p) => p.compareAtPrice && p.compareAtPrice > p.price
-        );
-        setSaleProducts(sale.slice(0, 8));
-        // If we need more sale products, load more pages
-        if (sale.length < 8 && response.totalPages > 1) {
-          for (let page = 1; page < Math.min(response.totalPages, 5); page++) {
-            const nextResponse = await productService.getProducts({ page });
-            const nextSale = nextResponse.items.filter(
-              (p) => p.compareAtPrice && p.compareAtPrice > p.price
-            );
-            setSaleProducts((prev) => [...prev, ...nextSale].slice(0, 8));
-            if (sale.length + nextSale.length >= 8) break;
-          }
-        }
+        const sale = await productService.getSaleProducts(8);
+        setSaleProducts(sale);
       } catch (error) {
         showToast('Không thể tải sản phẩm sale.', 'error');
       } finally {
@@ -203,7 +187,14 @@ const HomePage = () => {
               ) : saleProducts.length > 0 ? (
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {saleProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.price}
+                      compareAtPrice={product.compareAtPrice}
+                      thumbnailUrl={product.thumbnailUrl}
+                    />
                   ))}
                 </div>
               ) : (
@@ -235,7 +226,7 @@ const HomePage = () => {
               {categories.slice(0, 6).map((category) => (
                 <Link
                   key={category.slug}
-                  to={`/products?category=${category.slug}`}
+                  to={`/categories/${category.slug}`}
                   className="group text-center transition-opacity hover:opacity-70"
                 >
                   <div className="mb-3 aspect-square bg-[#4DA3E8]/10 overflow-hidden">

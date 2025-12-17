@@ -9,6 +9,8 @@ import ProductList from '../pages/public/ProductList';
 import SearchResultsPage from '../pages/public/SearchResults';
 import CollectionsPage from '../pages/public/Collections';
 import CollectionDetailPage from '../pages/public/CollectionDetail';
+import CategoryPage from '../pages/public/CategoryPage';
+import SalePage from '../pages/public/SalePage';
 import CartPage from '../pages/user/CartPage';
 import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
@@ -41,6 +43,8 @@ export const AppRoutes = () => {
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/collections" element={<CollectionsPage />} />
           <Route path="/collections/:slug" element={<CollectionDetailPage />} />
+          <Route path="/categories/:slug" element={<CategoryPage />} />
+          <Route path="/sale" element={<SalePage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/cart" element={<CartPage />} />
