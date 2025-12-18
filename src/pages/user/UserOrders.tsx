@@ -43,13 +43,17 @@ const getStatusBadgeClass = (status: string) => {
 const UserOrdersPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { recentOrderNumber?: string } | undefined;
+  const locationState = location.state as
+    | { recentOrderNumber?: string; statusFilter?: string }
+    | undefined;
 
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>(
+    locationState?.statusFilter || 'ALL',
+  );
   const [dateFilter, setDateFilter] = useState<'ALL' | 'LAST_7_DAYS' | 'LAST_30_DAYS'>('ALL');
 
   useEffect(() => {

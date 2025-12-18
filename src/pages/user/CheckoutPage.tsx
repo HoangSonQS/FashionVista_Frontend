@@ -261,7 +261,17 @@ const CheckoutPage = () => {
         return;
       }
 
-      showToast('Đặt hàng thành công. Bạn có thể theo dõi tại Đơn hàng của tôi.', 'success');
+      showToast(
+        `Đơn #${order.orderNumber} đã được tạo, xem chi tiết`,
+        'success',
+        6000,
+        {
+          label: 'Xem đơn',
+          onClick: () => {
+            navigate(`/orders/${order.orderNumber}`);
+          },
+        },
+      );
       navigate('/orders', { state: { recentOrderNumber: order.orderNumber } });
     } catch (error) {
       const message =

@@ -70,8 +70,7 @@ const CategoryPage = () => {
             </h1>
             {activeCategory && (
               <p className="mt-3 max-w-xl text-sm text-gray-600 font-light">
-                Khám phá các thiết kế trong danh mục&nbsp;
-                <span className="font-medium text-[#4DA3E8]">{activeCategory.name}</span>.
+                {activeCategory.description || `Khám phá các thiết kế trong danh mục ${activeCategory.name}.`}
               </p>
             )}
           </div>

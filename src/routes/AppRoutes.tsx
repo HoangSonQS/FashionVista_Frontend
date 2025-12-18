@@ -16,6 +16,7 @@ import CheckoutPage from '../pages/user/CheckoutPage';
 import ProfilePage from '../pages/user/ProfilePage';
 import UserOrdersPage from '../pages/user/UserOrders';
 import UserOrderDetailPage from '../pages/user/UserOrderDetail';
+import PaymentResultPage from '../pages/public/PaymentResult';
 import WishlistPage from '../pages/user/WishlistPage';
 import MyReviewsPage from '../pages/user/MyReviewsPage';
 import ProductCreatePage from '../pages/admin/ProductCreate';
@@ -45,6 +46,7 @@ export const AppRoutes = () => {
           <Route path="/collections/:slug" element={<CollectionDetailPage />} />
           <Route path="/categories/:slug" element={<CategoryPage />} />
           <Route path="/sale" element={<SalePage />} />
+          <Route path="/payment/result" element={<PaymentResultPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/cart" element={<CartPage />} />

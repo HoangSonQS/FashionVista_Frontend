@@ -11,6 +11,12 @@ import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 
+// Kết quả dùng ở trang search: gồm thông tin suggestion + giá để hiển thị card giống trang home
+type SearchResultItem = SearchSuggestion & {
+  price: number;
+  compareAtPrice?: number | null;
+};
+
 const SearchResultsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +24,7 @@ const SearchResultsPage = () => {
   const initialQuery = params.get('q') ?? params.get('search') ?? '';
 
   const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<SearchSuggestion[]>([]);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -37,6 +43,14 @@ const SearchResultsPage = () => {
 
   const currentQuery = params.get('q') ?? params.get('search') ?? '';
 
+  // Mỗi lần điều hướng tới trang tìm kiếm (hoặc thay đổi query),
+  // đảm bảo cuộn về đầu trang để không giữ vị trí cuộn cũ.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.search]);
+
   // Đồng bộ ô input với URL khi user thay đổi query từ header / back/forward
   useEffect(() => {
     setQuery((prev) => (prev === currentQuery ? prev : currentQuery));
@@ -51,8 +65,33 @@ const SearchResultsPage = () => {
     try {
       setError(null);
       setLoading(true);
-      const data = await productService.getSuggestions(trimmed);
-      setResults(data);
+      const suggestions = await productService.getSuggestions(trimmed);
+
+      // Lấy thêm chi tiết sản phẩm để có giá / giá gạch giống card ở trang home
+      const enriched = await Promise.all(
+        suggestions.map(async (item) => {
+          try {
+            const detail = await productService.getProduct(item.slug);
+            const primaryImage =
+              item.thumbnailUrl ||
+              detail.images.find((img) => img.primary)?.url ||
+              detail.images[0]?.url ||
+              null;
+
+            return {
+              ...item,
+              price: detail.price,
+              compareAtPrice: detail.compareAtPrice ?? null,
+              thumbnailUrl: primaryImage,
+            } as SearchResultItem;
+          } catch {
+            // Nếu lỗi lấy chi tiết một sản phẩm, bỏ qua sản phẩm đó
+            return null;
+          }
+        }),
+      );
+
+      setResults(enriched.filter((x): x is SearchResultItem => x !== null));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải kết quả tìm kiếm.');
       setResults([]);

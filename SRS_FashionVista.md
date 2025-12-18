@@ -290,15 +290,25 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - `Returned`: Khách trả hàng/RTS (Return To Sender).
 - `Refunded`: Hoàn tiền toàn phần/partial và ghi lại chứng từ.
 
-#### 3.4.2. Thông tin chi tiết một đơn **⏳ CÓ TRANG CHI TIẾT, THIẾU MỘT SỐ TRƯỜNG NÂNG CAO**
+#### 3.4.2. Thông tin chi tiết một đơn **⏳ ĐÃ CÓ TRANG CHI TIẾT ĐẦY ĐỦ CƠ BẢN, THIẾU MỘT SỐ TRƯỜNG NÂNG CAO**
 
-- Khách hàng: họ tên, email, phone, nhóm khách (New/VIP), ghi chú CSKH.
-- Địa chỉ nhúng kiểu JSON (shipping & billing), lịch sử chỉnh sửa.
-- Thanh toán: phương thức (COD/VNPay/MoMo), transactionId, trạng thái.
-- Vận chuyển: đơn vị ship, mã vận đơn, phí thực tế, tracking URL.
-- Ưu đãi: voucher, mã giảm giá, điểm loyalty, phần trăm chiết khấu.
-- Sản phẩm: danh sách items, biến thể (size/màu), ảnh snapshot, giá tại thời điểm mua, tồn kho snapshot.
-- Log thay đổi: thời gian, nhân viên thao tác, mô tả hành động.
+**Đã có trên trang User Order Detail:**
+- ✅ Status timeline (PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED) với visual indicator.
+- ✅ Địa chỉ giao hàng (shipping address) hiển thị rõ, parse JSON nếu cần.
+- ✅ Phương thức thanh toán (COD/VNPay/MoMo) + trạng thái thanh toán (PAID/PENDING/FAILED) hiển thị rõ.
+- ✅ Vận chuyển: mã vận đơn, tracking URL (nếu có), phí ship.
+- ✅ Sản phẩm: danh sách items với ảnh snapshot, biến thể (size/màu), giá tại thời điểm mua, số lượng, subtotal.
+- ✅ Tổng thanh toán: subtotal, phí ship, giảm giá, tổng cuối.
+- ✅ Tracking info: mã vận đơn + link tracking (nếu đang giao/đã giao).
+- ✅ Nút hủy đơn (nếu status cho phép).
+- ✅ Modal yêu cầu đổi trả (nếu đã giao).
+
+**Còn thiếu (sẽ bổ sung sau):**
+- ⏳ Khách hàng: email, phone, nhóm khách (New/VIP), ghi chú CSKH.
+- ⏳ Billing address (địa chỉ thanh toán riêng).
+- ⏳ TransactionId chi tiết từ payment gateway.
+- ⏳ Ưu đãi: voucher/mã giảm giá chi tiết, điểm loyalty, phần trăm chiết khấu cụ thể.
+- ⏳ Log thay đổi: timeline chi tiết với thời gian, nhân viên thao tác, mô tả hành động.
 
 #### 3.4.3. Luồng xử lý nhân viên **⏳ MỘT PHẦN (workflow cơ bản, chưa đủ RMA/đổi địa chỉ nâng cao)**
 
@@ -399,12 +409,18 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Chia sẻ wishlist
 - Thông báo khi sản phẩm yêu thích giảm giá
 
-### 3.8. Thông báo (Notifications) **⏳ MỘT PHẦN (email order đã có, in-app & promo chưa đầy đủ)**
+### 3.8. Thông báo (Notifications) **⏳ MỘT PHẦN (email order + in-app cơ bản đã có, promo/newsletter chưa)**
 
-- Thông báo đơn hàng (email, in-app)
-- Thông báo sản phẩm mới
-- Thông báo khuyến mãi
-- Newsletter subscription
+**Đã có:**
+- ✅ Email xác nhận đơn hàng (order confirmation email) khi đặt hàng thành công.
+- ✅ In-app notification cơ bản cho order creation: Toast notification với message "Đơn #... đã được tạo, xem chi tiết" và nút "Xem đơn" để navigate đến order detail.
+- ✅ Banner "Đặt hàng thành công" trên trang `/orders` khi vừa tạo đơn (hiển thị order number).
+
+**Còn thiếu:**
+- ⏳ Thông báo khi đơn đổi trạng thái (PENDING → CONFIRMED → SHIPPING → DELIVERED) qua in-app notification.
+- ⏳ Thông báo sản phẩm mới.
+- ⏳ Thông báo khuyến mãi (flash sale, voucher mới, etc.).
+- ⏳ Newsletter subscription.
 
 ### 3.9. Quản trị viên (Admin) **⏳ CÁC MÀN CHÍNH ĐÃ CÓ, TÍNH NĂNG NÂNG CAO/REPORT CHƯA ĐỦ**
 

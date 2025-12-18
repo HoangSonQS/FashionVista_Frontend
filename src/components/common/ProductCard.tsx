@@ -1,6 +1,13 @@
 import { Link } from 'react-router-dom';
 
-const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
+// Giá có thể bị thiếu trong một số API (ví dụ search suggestions),
+// nên cần hàm format chịu được undefined / null để tránh lỗi runtime.
+const formatCurrency = (value?: number | null) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '—';
+  }
+  return `${value.toLocaleString('vi-VN')}₫`;
+};
 
 export type BasicProductCardProps = {
   slug: string;

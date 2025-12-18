@@ -291,10 +291,15 @@ const ProductDetailPage = () => {
               </button>
             </div>
             <div className="flex items-center gap-3 mt-4">
+              {product.compareAtPrice && product.compareAtPrice > product.price && (
+                <span className="inline-flex items-center rounded-full bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide">
+                  SALE -{Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                </span>
+              )}
               <p className="text-2xl font-semibold text-[var(--primary)]">
                 {product.price.toLocaleString('vi-VN')}₫
               </p>
-              {product.compareAtPrice && (
+              {product.compareAtPrice && product.compareAtPrice > product.price && (
                 <p className="text-sm text-[var(--muted-foreground)] line-through">
                   {product.compareAtPrice.toLocaleString('vi-VN')}₫
                 </p>

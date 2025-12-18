@@ -4,15 +4,21 @@ import { createPortal } from 'react-dom';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface ToastProps {
   id: string;
   message: string;
   type?: ToastType;
   duration?: number;
   onClose: (id: string) => void;
+  action?: ToastAction;
 }
 
-const Toast = ({ id, message, type = 'info', duration = 4000, onClose }: ToastProps) => {
+const Toast = ({ id, message, type = 'info', duration = 4000, onClose, action }: ToastProps) => {
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
@@ -52,12 +58,30 @@ const Toast = ({ id, message, type = 'info', duration = 4000, onClose }: ToastPr
     }
   };
 
+  const handleActionClick = () => {
+    if (action) {
+      action.onClick();
+      onClose(id);
+    }
+  };
+
   return (
     <div
       className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg min-w-[300px] max-w-[400px] animate-in slide-in-from-right-full ${getStyles()}`}
     >
       <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
-      <p className="flex-1 text-sm font-medium">{message}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{message}</p>
+        {action && (
+          <button
+            type="button"
+            onClick={handleActionClick}
+            className="mt-2 text-xs font-semibold underline hover:no-underline transition-all"
+          >
+            {action.label}
+          </button>
+        )}
+      </div>
       <button
         type="button"
         onClick={() => onClose(id)}
@@ -70,8 +94,16 @@ const Toast = ({ id, message, type = 'info', duration = 4000, onClose }: ToastPr
   );
 };
 
+export interface ToastData {
+  id: string;
+  message: string;
+  type?: ToastType;
+  duration?: number;
+  action?: ToastAction;
+}
+
 interface ToastContainerProps {
-  toasts: Array<{ id: string; message: string; type?: ToastType; duration?: number }>;
+  toasts: ToastData[];
   onClose: (id: string) => void;
 }
 
@@ -87,6 +119,7 @@ export const ToastContainer = ({ toasts, onClose }: ToastContainerProps) => {
             message={toast.message}
             type={toast.type}
             duration={toast.duration}
+            action={toast.action}
             onClose={onClose}
           />
         </div>

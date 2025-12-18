@@ -227,9 +227,137 @@ const UserOrderDetailPage = () => {
                     Yêu cầu đổi trả
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => navigate('/orders', { state: { statusFilter: order.status } })}
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                >
+                  Xem các đơn khác cùng trạng thái →
+                </button>
                 {actionMessage && <span className="text-xs text-[var(--muted-foreground)]">{actionMessage}</span>}
               </div>
             </header>
+
+            {/* Status Timeline */}
+            <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-4">
+                Trạng thái đơn hàng
+              </h2>
+              <div className="space-y-3">
+                {[
+                  { key: 'PENDING', label: 'Chờ duyệt', desc: 'Đơn hàng đã được đặt, đang chờ xác nhận' },
+                  { key: 'CONFIRMED', label: 'Đã xác nhận', desc: 'Đơn hàng đã được xác nhận' },
+                  { key: 'PROCESSING', label: 'Đang xử lý', desc: 'Đơn hàng đang được chuẩn bị' },
+                  { key: 'SHIPPING', label: 'Đang giao', desc: 'Đơn hàng đang trên đường vận chuyển' },
+                  { key: 'DELIVERED', label: 'Đã giao', desc: 'Đơn hàng đã được giao thành công' },
+                ].map((step, index, arr) => {
+                  const isActive = step.key === order.status;
+                  const isCompleted = arr.findIndex((s) => s.key === order.status) > index;
+                  const isCancelled = order.status === 'CANCELLED' || order.status === 'REFUNDED';
+                  return (
+                    <div key={step.key} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div
+                          className={`h-3 w-3 rounded-full border-2 ${
+                            isCompleted
+                              ? 'bg-[var(--success)] border-[var(--success)]'
+                              : isActive
+                              ? 'bg-[var(--primary)] border-[var(--primary)]'
+                              : isCancelled
+                              ? 'bg-[var(--error)] border-[var(--error)]'
+                              : 'bg-transparent border-[var(--muted-foreground)]'
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1 pb-4 border-l border-[var(--border)] pl-3 -ml-[6px]">
+                        <p
+                          className={`text-sm font-medium ${
+                            isActive || isCompleted
+                              ? 'text-[var(--foreground)]'
+                              : 'text-[var(--muted-foreground)]'
+                          }`}
+                        >
+                          {step.label}
+                        </p>
+                        {isActive && <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{step.desc}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Shipping Address & Payment Info */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {order.shippingAddress && (
+                <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-3">
+                    Địa chỉ giao hàng
+                  </h2>
+                  <p className="text-sm text-[var(--foreground)] whitespace-pre-line">
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(order.shippingAddress);
+                        if (typeof parsed === 'object' && parsed !== null) {
+                          return [
+                            parsed.fullName,
+                            parsed.phone,
+                            parsed.address,
+                            parsed.ward && parsed.district && parsed.city
+                              ? `${parsed.ward}, ${parsed.district}, ${parsed.city}`
+                              : parsed.city || parsed.district || parsed.ward,
+                          ]
+                            .filter(Boolean)
+                            .join('\n');
+                        }
+                      } catch {
+                        // Not JSON, return as-is
+                      }
+                      return order.shippingAddress;
+                    })()}
+                  </p>
+                </div>
+              )}
+              <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-3">
+                  Phương thức thanh toán
+                </h2>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Phương thức</span>
+                    <span className="font-medium">
+                      {order.paymentMethod === 'COD'
+                        ? 'Thanh toán khi nhận hàng (COD)'
+                        : order.paymentMethod === 'VNPAY'
+                        ? 'VNPay'
+                        : order.paymentMethod === 'MOMO'
+                        ? 'MoMo'
+                        : order.paymentMethod}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Trạng thái</span>
+                    <span
+                      className={`font-medium ${
+                        order.paymentStatus === 'PAID'
+                          ? 'text-[var(--success)]'
+                          : order.paymentStatus === 'FAILED'
+                          ? 'text-[var(--error)]'
+                          : 'text-[var(--warning)]'
+                      }`}
+                    >
+                      {order.paymentStatus === 'PAID'
+                        ? 'Đã thanh toán'
+                        : order.paymentStatus === 'FAILED'
+                        ? 'Thanh toán thất bại'
+                        : order.paymentStatus === 'PENDING'
+                        ? 'Chờ thanh toán'
+                        : order.paymentStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Tracking Info */}
             {(order.status === 'SHIPPING' || order.status === 'DELIVERED') && order.trackingNumber && (
