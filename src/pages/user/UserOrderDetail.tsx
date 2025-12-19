@@ -262,46 +262,46 @@ const UserOrderDetailPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {[
-                    { key: 'PENDING', label: 'Chờ duyệt', desc: 'Đơn hàng đã được đặt, đang chờ xác nhận' },
-                    { key: 'CONFIRMED', label: 'Đã xác nhận', desc: 'Đơn hàng đã được xác nhận' },
-                    { key: 'PROCESSING', label: 'Đang xử lý', desc: 'Đơn hàng đang được chuẩn bị' },
-                    { key: 'SHIPPING', label: 'Đang giao', desc: 'Đơn hàng đang trên đường vận chuyển' },
-                    { key: 'DELIVERED', label: 'Đã giao', desc: 'Đơn hàng đã được giao thành công' },
-                  ].map((step, index, arr) => {
-                    const isActive = step.key === order.status;
+              <div className="space-y-3">
+                {[
+                  { key: 'PENDING', label: 'Chờ duyệt', desc: 'Đơn hàng đã được đặt, đang chờ xác nhận' },
+                  { key: 'CONFIRMED', label: 'Đã xác nhận', desc: 'Đơn hàng đã được xác nhận' },
+                  { key: 'PROCESSING', label: 'Đang xử lý', desc: 'Đơn hàng đang được chuẩn bị' },
+                  { key: 'SHIPPING', label: 'Đang giao', desc: 'Đơn hàng đang trên đường vận chuyển' },
+                  { key: 'DELIVERED', label: 'Đã giao', desc: 'Đơn hàng đã được giao thành công' },
+                ].map((step, index, arr) => {
+                  const isActive = step.key === order.status;
                     const currentIndex = arr.findIndex((s) => s.key === order.status);
                     const isCompleted = currentIndex > index;
-                    return (
-                      <div key={step.key} className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <div
-                            className={`h-3 w-3 rounded-full border-2 ${
-                              isCompleted
-                                ? 'bg-[var(--success)] border-[var(--success)]'
-                                : isActive
-                                ? 'bg-[var(--primary)] border-[var(--primary)]'
-                                : 'bg-transparent border-[var(--muted-foreground)]'
-                            }`}
-                          />
-                        </div>
-                        <div className="flex-1 pb-4 border-l border-[var(--border)] pl-3 -ml-[6px]">
-                          <p
-                            className={`text-sm font-medium ${
-                              isActive || isCompleted
-                                ? 'text-[var(--foreground)]'
-                                : 'text-[var(--muted-foreground)]'
-                            }`}
-                          >
-                            {step.label}
-                          </p>
-                          {isActive && <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{step.desc}</p>}
-                        </div>
+                  return (
+                    <div key={step.key} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div
+                          className={`h-3 w-3 rounded-full border-2 ${
+                            isCompleted
+                              ? 'bg-[var(--success)] border-[var(--success)]'
+                              : isActive
+                              ? 'bg-[var(--primary)] border-[var(--primary)]'
+                              : 'bg-transparent border-[var(--muted-foreground)]'
+                          }`}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex-1 pb-4 border-l border-[var(--border)] pl-3 -ml-[6px]">
+                        <p
+                          className={`text-sm font-medium ${
+                            isActive || isCompleted
+                              ? 'text-[var(--foreground)]'
+                              : 'text-[var(--muted-foreground)]'
+                          }`}
+                        >
+                          {step.label}
+                        </p>
+                        {isActive && <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{step.desc}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
               )}
             </div>
 

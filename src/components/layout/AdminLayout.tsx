@@ -11,6 +11,7 @@ const navItems = [
     children: [
       { label: 'Danh sách', path: '/admin/products' },
       { label: 'Thêm sản phẩm', path: '/admin/products/new' },
+      { label: 'Hiển thị sản phẩm', path: '/admin/product-visibility' },
     ],
   },
   {
@@ -23,6 +24,7 @@ const navItems = [
   },
   { label: 'Đơn hàng', path: '/admin/orders' },
   { label: 'Người dùng', path: '/admin/users' },
+  { label: 'Phí vận chuyển', path: '/admin/shipping-fee-configs' },
 ];
 
 const AdminLayout = () => {

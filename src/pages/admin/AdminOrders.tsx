@@ -141,8 +141,11 @@ const AdminOrders = () => {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderListResponse | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailOrder, setDetailOrder] = useState<OrderResponse | null>(null);
   const [orderDetail, setOrderDetail] = useState<OrderResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [viewDetailLoading, setViewDetailLoading] = useState(false);
   const [orderStatusForm, setOrderStatusForm] = useState('');
   const [paymentStatusForm, setPaymentStatusForm] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
@@ -157,6 +160,9 @@ const AdminOrders = () => {
   const [returnRefundAmount, setReturnRefundAmount] = useState<string>('');
   const [returnRefundMethod, setReturnRefundMethod] = useState<RefundMethod>('ORIGINAL');
   const { toasts, showToast, removeToast } = useToast();
+  const [exporting, setExporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   const filters = useMemo(
     () => ({
@@ -195,6 +201,63 @@ const AdminOrders = () => {
     });
   }, [filters, refreshKey, showToast]);
 
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const blob = await adminOrderService.exportOrders({
+        status: filters.status,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast('Xuất danh sách đơn hàng thành công.', 'success');
+    } catch {
+      showToast('Không thể xuất danh sách đơn hàng.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleBulkStatus = async (nextStatus: string) => {
+    if (selectedIds.length === 0) return;
+    try {
+      setBulkUpdating(true);
+      await adminOrderService.bulkUpdateStatus({
+        orderIds: selectedIds,
+        status: nextStatus,
+        notifyCustomer: false,
+      });
+      showToast(`Đã cập nhật ${selectedIds.length} đơn sang trạng thái ${nextStatus}.`, 'success');
+      setSelectedIds([]);
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      showToast('Không thể cập nhật hàng loạt.', 'error');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleViewDetail = async (order: AdminOrderListResponse) => {
+    setShowDetailModal(true);
+    setViewDetailLoading(true);
+    setDetailOrder(null);
+    try {
+      const detail = await adminOrderService.getOrderById(order.id);
+      setDetailOrder(detail);
+      // Không cần fetch return request vì modal xem chi tiết không hiển thị return request
+      // Chỉ modal cập nhật mới cần thông tin return request
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng.';
+      showToast(message, 'error');
+      setShowDetailModal(false);
+    } finally {
+      setViewDetailLoading(false);
+    }
+  };
+
   const handleOpenModal = async (order: AdminOrderListResponse) => {
     setSelectedOrder(order);
     setShowStatusModal(true);
@@ -222,23 +285,35 @@ const AdminOrders = () => {
     }
   };
 
+  const handleOpenUpdateFromDetail = () => {
+    if (!detailOrder) return;
+    const orderListItem = data?.content.find((o) => o.id === detailOrder.id);
+    if (orderListItem) {
+      setShowDetailModal(false);
+      void handleOpenModal(orderListItem);
+    }
+  };
+
   const fetchReturnRequest = async (orderId: number) => {
     setReturnLoading(true);
     setReturnError(null);
     setReturnRequest(null);
     try {
       const data = await adminReturnService.getByOrder(orderId);
-      setReturnRequest(data);
-      setReturnRefundAmount(data.refundAmount != null ? String(data.refundAmount) : '');
-      setReturnRefundMethod((data.refundMethod as RefundMethod) ?? 'ORIGINAL');
-    } catch (err) {
-      const status = (err as any)?.response?.status;
+      if (data) {
+        setReturnRequest(data);
+        setReturnRefundAmount(data.refundAmount != null ? String(data.refundAmount) : '');
+        setReturnRefundMethod((data.refundMethod as RefundMethod) ?? 'ORIGINAL');
+      } else {
+        // null nghĩa là đơn hàng chưa có yêu cầu đổi trả (404) - trạng thái bình thường
+        setReturnRequest(null);
+      }
+    } catch (err: any) {
+      // Chỉ xử lý các lỗi khác 404
       const message =
-        status === 400 || status === 404
-          ? 'Đơn chưa có yêu cầu đổi trả.'
-          : err instanceof Error
-            ? err.message
-            : 'Không thể tải yêu cầu đổi trả.';
+        err instanceof Error
+          ? err.message
+          : 'Không thể tải yêu cầu đổi trả.';
       setReturnError(message);
       setReturnRequest(null);
     } finally {
@@ -459,6 +534,49 @@ const AdminOrders = () => {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] disabled:opacity-50"
+        >
+          {exporting ? 'Đang xuất...' : 'Xuất CSV đơn hàng'}
+        </button>
+      </div>
+
+      {selectedIds.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm">
+          <span className="text-[var(--muted-foreground)]">
+            Đã chọn {selectedIds.length} đơn hàng
+          </span>
+          <button
+            type="button"
+            disabled={bulkUpdating}
+            onClick={() => handleBulkStatus('CONFIRMED')}
+            className="rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-50"
+          >
+            Chuyển sang Đã xác nhận
+          </button>
+          <button
+            type="button"
+            disabled={bulkUpdating}
+            onClick={() => handleBulkStatus('SHIPPING')}
+            className="rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-50"
+          >
+            Chuyển sang Đang giao
+          </button>
+          <button
+            type="button"
+            disabled={bulkUpdating}
+            onClick={() => handleBulkStatus('DELIVERED')}
+            className="rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)] disabled:opacity-50"
+          >
+            Chuyển sang Đã giao
+          </button>
+        </div>
+      )}
+
       {error && !loading && (
         <div className="rounded-xl border border-[var(--error)] bg-[var(--error-bg)] p-4 text-sm text-[var(--error)]">
           {error}
@@ -476,6 +594,20 @@ const AdminOrders = () => {
               <table className="w-full">
                 <thead className="bg-[var(--muted)]">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.3em] text-[var(--muted-foreground)]">
+                      <input
+                        type="checkbox"
+                        checked={data.content.length > 0 && selectedIds.length === data.content.length}
+                        onChange={() => {
+                          if (!data.content.length) return;
+                          setSelectedIds(
+                            selectedIds.length === data.content.length
+                              ? []
+                              : data.content.map((o) => o.id),
+                          );
+                        }}
+                      />
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.3em] text-[var(--muted-foreground)]">
                       Mã đơn
                     </th>
@@ -502,6 +634,17 @@ const AdminOrders = () => {
                 <tbody className="divide-y divide-[var(--border)]">
                   {data.content.map((order) => (
                     <tr key={order.id} className="hover:bg-[var(--muted)]/50 transition-colors">
+                      <td className="px-4 py-3 align-top">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order.id)}
+                          onChange={() => {
+                            setSelectedIds((prev) =>
+                              prev.includes(order.id) ? prev.filter((id) => id !== order.id) : [...prev, order.id],
+                            );
+                          }}
+                        />
+                      </td>
                       <td className="px-4 py-3 text-sm font-medium">{order.orderNumber}</td>
                       <td className="px-4 py-3 text-sm">
                         <div>
@@ -525,13 +668,22 @@ const AdminOrders = () => {
                         {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenModal(order)}
-                          className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--muted)] transition-colors"
-                        >
-                          Cập nhật
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleViewDetail(order)}
+                            className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--muted)] transition-colors"
+                          >
+                            Xem chi tiết
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(order)}
+                            className="rounded-lg border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--primary-hover)] transition-colors"
+                          >
+                            Cập nhật
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -646,7 +798,92 @@ const AdminOrders = () => {
                           <pre className="whitespace-pre-wrap text-sm font-sans">{renderShippingAddress(orderDetail.shippingAddress)}</pre>
                         </div>
                       )}
+                      {(orderDetail.billingAddress || orderDetail.customerEmail || orderDetail.customerPhone || orderDetail.customerGroup || orderDetail.transactionId || orderDetail.voucherDiscount) && (
+                        <div className="rounded-xl bg-[var(--muted)]/20 border border-[var(--border)] p-3 space-y-2">
+                          <p className="text-[var(--muted-foreground)] text-xs uppercase tracking-[0.2em]">Thông tin khách hàng</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {orderDetail.customerEmail && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Email</p>
+                                <p className="font-medium">{orderDetail.customerEmail}</p>
+                              </div>
+                            )}
+                            {orderDetail.customerPhone && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Số điện thoại</p>
+                                <p className="font-medium">{orderDetail.customerPhone}</p>
+                              </div>
+                            )}
+                            {orderDetail.customerGroup && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Nhóm khách</p>
+                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-[var(--primary)]/20 text-[var(--primary)]">
+                                  {orderDetail.customerGroup}
+                                </span>
+                              </div>
+                            )}
+                            {orderDetail.transactionId && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Mã giao dịch</p>
+                                <p className="font-mono text-xs">{orderDetail.transactionId}</p>
+                              </div>
+                            )}
+                          </div>
+                          {orderDetail.billingAddress && (
+                            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                              <p className="text-[var(--muted-foreground)] text-[10px] uppercase tracking-[0.2em]">Địa chỉ thanh toán</p>
+                              <pre className="whitespace-pre-wrap text-xs font-sans mt-1">{renderShippingAddress(orderDetail.billingAddress)}</pre>
+                            </div>
+                          )}
+                          {orderDetail.voucherDiscount && orderDetail.voucherDiscount > 0 && (
+                            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                              <p className="text-[var(--muted-foreground)] text-[10px] uppercase tracking-[0.2em]">Giảm giá voucher</p>
+                              <p className="text-sm font-semibold text-[var(--error)] mt-1">-{formatCurrency(orderDetail.voucherDiscount)}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
+
+                    {orderDetail.history && orderDetail.history.length > 0 && (
+                      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
+                        <p className="text-sm font-semibold">Lịch sử thay đổi</p>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {orderDetail.history.map((h, idx) => (
+                            <div key={idx} className="flex gap-3 text-xs border-l-2 border-[var(--border)] pl-3 pb-3 last:pb-0 last:border-0">
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold capitalize">{h.field === 'status' ? 'Trạng thái' : h.field === 'paymentStatus' ? 'Thanh toán' : h.field === 'trackingNumber' ? 'Mã vận đơn' : h.field}</span>
+                                  {h.oldValue && h.newValue && (
+                                    <>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="text-[var(--muted-foreground)] line-through">{h.oldValue}</span>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="font-medium text-[var(--primary)]">{h.newValue}</span>
+                                    </>
+                                  )}
+                                  {!h.oldValue && h.newValue && (
+                                    <>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="font-medium text-[var(--primary)]">{h.newValue}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {h.actor && (
+                                  <p className="text-[var(--muted-foreground)]">Bởi: {h.actor}</p>
+                                )}
+                                {h.note && (
+                                  <p className="text-[var(--muted-foreground)] italic">{h.note}</p>
+                                )}
+                                <p className="text-[var(--muted-foreground)] text-[10px]">
+                                  {new Date(h.createdAt).toLocaleString('vi-VN')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
                       <p className="text-sm font-semibold">Sản phẩm ({orderDetail.items.length})</p>
@@ -979,6 +1216,240 @@ const AdminOrders = () => {
                     >
                       {updatingId === selectedOrder.id ? 'Đang cập nhật...' : 'Lưu thay đổi'}
                     </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xem Chi Tiết (Read-only) */}
+      {showDetailModal && detailOrder && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--overlay)] px-4"
+          onClick={() => setShowDetailModal(false)}
+        >
+          <div
+            className="w-full max-w-5xl max-h-[90vh] rounded-3xl bg-[var(--card)] shadow-2xl border border-[var(--border)] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Đơn hàng</p>
+                <h3 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
+                  {detailOrder.orderNumber}
+                </h3>
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  Đặt ngày {new Date(detailOrder.createdAt).toLocaleString('vi-VN')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenUpdateFromDetail}
+                  className="rounded-full border border-[var(--primary)] bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors"
+                >
+                  Cập nhật
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDetailModal(false)}
+                  className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {viewDetailLoading && (
+                <p className="text-center text-sm text-[var(--muted-foreground)]">Đang tải chi tiết đơn hàng...</p>
+              )}
+
+              {!viewDetailLoading && detailOrder && (
+                <div className="grid gap-6 lg:grid-cols-[1.8fr_minmax(0,1.1fr)]">
+                  <div className="space-y-5">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <div>
+                          <p className="text-[var(--muted-foreground)] text-xs uppercase tracking-[0.2em]">
+                            Trạng thái đơn hàng
+                          </p>
+                          <span className={`mt-1 inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(detailOrder.status)}`}>
+                            {statusOptions.find((opt) => opt.value === detailOrder.status)?.label || detailOrder.status}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-[var(--muted-foreground)] text-xs uppercase tracking-[0.2em]">Thanh toán</p>
+                          <p className="mt-1 text-sm font-medium">{detailOrder.paymentMethod}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">{detailOrder.paymentStatus}</p>
+                        </div>
+                        <div>
+                          <p className="text-[var(--muted-foreground)] text-xs uppercase tracking-[0.2em]">Vận chuyển</p>
+                          <p className="mt-1 text-sm font-medium">{detailOrder.shippingMethod || 'N/A'}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="rounded-xl bg-[var(--muted)]/30 border border-[var(--border)] p-3 space-y-1">
+                          <p className="text-xs text-[var(--muted-foreground)]">Tạm tính</p>
+                          <p className="text-base font-semibold">{formatCurrency(detailOrder.subtotal)}</p>
+                        </div>
+                        <div className="rounded-xl bg-[var(--muted)]/30 border border-[var(--border)] p-3 space-y-1">
+                          <p className="text-xs text-[var(--muted-foreground)]">Phí ship</p>
+                          <p className="text-base font-semibold">
+                            {detailOrder.shippingFee === 0 ? 'Miễn phí' : formatCurrency(detailOrder.shippingFee)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-[var(--muted)]/30 border border-[var(--border)] p-3 space-y-1 col-span-2">
+                          <p className="text-xs text-[var(--muted-foreground)]">Tổng thanh toán</p>
+                          <p className="text-xl font-semibold">{formatCurrency(detailOrder.total)}</p>
+                        </div>
+                      </div>
+                      {detailOrder.shippingAddress && (
+                        <div className="rounded-xl bg-[var(--muted)]/20 border border-dashed border-[var(--border)] p-3 text-xs space-y-1">
+                          <p className="text-[var(--muted-foreground)] uppercase tracking-[0.2em] text-[10px]">Địa chỉ giao</p>
+                          <pre className="whitespace-pre-wrap text-sm font-sans">{renderShippingAddress(detailOrder.shippingAddress)}</pre>
+                        </div>
+                      )}
+                      {(detailOrder.billingAddress || detailOrder.customerEmail || detailOrder.customerPhone || detailOrder.customerGroup || detailOrder.transactionId || detailOrder.voucherDiscount) && (
+                        <div className="rounded-xl bg-[var(--muted)]/20 border border-[var(--border)] p-3 space-y-2">
+                          <p className="text-[var(--muted-foreground)] text-xs uppercase tracking-[0.2em]">Thông tin khách hàng</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {detailOrder.customerEmail && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Email</p>
+                                <p className="font-medium">{detailOrder.customerEmail}</p>
+                              </div>
+                            )}
+                            {detailOrder.customerPhone && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Số điện thoại</p>
+                                <p className="font-medium">{detailOrder.customerPhone}</p>
+                              </div>
+                            )}
+                            {detailOrder.customerGroup && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Nhóm khách</p>
+                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-[var(--primary)]/20 text-[var(--primary)]">
+                                  {detailOrder.customerGroup}
+                                </span>
+                              </div>
+                            )}
+                            {detailOrder.transactionId && (
+                              <div>
+                                <p className="text-[var(--muted-foreground)]">Mã giao dịch</p>
+                                <p className="font-mono text-xs">{detailOrder.transactionId}</p>
+                              </div>
+                            )}
+                          </div>
+                          {detailOrder.billingAddress && (
+                            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                              <p className="text-[var(--muted-foreground)] text-[10px] uppercase tracking-[0.2em]">Địa chỉ thanh toán</p>
+                              <pre className="whitespace-pre-wrap text-xs font-sans mt-1">{renderShippingAddress(detailOrder.billingAddress)}</pre>
+                            </div>
+                          )}
+                          {detailOrder.voucherDiscount && detailOrder.voucherDiscount > 0 && (
+                            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                              <p className="text-[var(--muted-foreground)] text-[10px] uppercase tracking-[0.2em]">Giảm giá voucher</p>
+                              <p className="text-sm font-semibold text-[var(--error)] mt-1">-{formatCurrency(detailOrder.voucherDiscount)}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {detailOrder.history && detailOrder.history.length > 0 && (
+                      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
+                        <p className="text-sm font-semibold">Lịch sử thay đổi</p>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {detailOrder.history.map((h, idx) => (
+                            <div key={idx} className="flex gap-3 text-xs border-l-2 border-[var(--border)] pl-3 pb-3 last:pb-0 last:border-0">
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold capitalize">{h.field === 'status' ? 'Trạng thái' : h.field === 'paymentStatus' ? 'Thanh toán' : h.field === 'trackingNumber' ? 'Mã vận đơn' : h.field}</span>
+                                  {h.oldValue && h.newValue && (
+                                    <>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="text-[var(--muted-foreground)] line-through">{h.oldValue}</span>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="font-medium text-[var(--primary)]">{h.newValue}</span>
+                                    </>
+                                  )}
+                                  {!h.oldValue && h.newValue && (
+                                    <>
+                                      <span className="text-[var(--muted-foreground)]">→</span>
+                                      <span className="font-medium text-[var(--primary)]">{h.newValue}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {h.actor && (
+                                  <p className="text-[var(--muted-foreground)]">Bởi: {h.actor}</p>
+                                )}
+                                {h.note && (
+                                  <p className="text-[var(--muted-foreground)] italic">{h.note}</p>
+                                )}
+                                <p className="text-[var(--muted-foreground)] text-[10px]">
+                                  {new Date(h.createdAt).toLocaleString('vi-VN')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
+                      <p className="text-sm font-semibold">Sản phẩm ({detailOrder.items.length})</p>
+                      <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        {detailOrder.items.map((item) => (
+                          <div key={item.id} className="flex items-start justify-between gap-3 text-xs border-b border-[var(--border)] pb-2 last:border-0">
+                            <div>
+                              <p className="font-medium">{item.productName}</p>
+                              {(item.color || item.size) && (
+                                <p className="text-[var(--muted-foreground)]">
+                                  {item.color && `Màu: ${item.color}`} {item.size && `• Size: ${item.size}`}
+                                </p>
+                              )}
+                              <p className="text-[var(--muted-foreground)]">SL: {item.quantity}</p>
+                            </div>
+                            <p className="text-sm font-semibold">{formatCurrency(item.subtotal)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-4">
+                    <p className="text-sm font-semibold">Thông tin đơn hàng</p>
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <p className="text-[var(--muted-foreground)]">Mã đơn hàng</p>
+                        <p className="font-mono font-semibold">{detailOrder.orderNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-[var(--muted-foreground)]">Ngày đặt</p>
+                        <p>{new Date(detailOrder.createdAt).toLocaleString('vi-VN')}</p>
+                      </div>
+                      {detailOrder.trackingNumber && (
+                        <div>
+                          <p className="text-[var(--muted-foreground)]">Mã vận đơn</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-mono">{detailOrder.trackingNumber}</p>
+                            {detailOrder.trackingUrl && (
+                              <a
+                                href={detailOrder.trackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[var(--primary)] hover:underline text-[10px]"
+                              >
+                                Theo dõi
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

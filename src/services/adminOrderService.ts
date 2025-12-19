@@ -47,9 +47,25 @@ export interface UpdateTrackingNumberRequest {
   notifyCustomer?: boolean;
 }
 
+export interface BulkUpdateOrderStatusRequest {
+  orderIds: number[];
+  status: string;
+  paymentStatus?: string;
+  notes?: string;
+  notifyCustomer?: boolean;
+}
+
 export const adminOrderService = {
   async getAllOrders(params: AdminOrderListParams): Promise<AdminOrderListPage> {
     const response = await axiosClient.get<AdminOrderListPage>('/admin/orders', { params });
+    return response.data;
+  },
+
+  async exportOrders(params: { status?: string }): Promise<Blob> {
+    const response = await axiosClient.get('/admin/orders/export', {
+      params,
+      responseType: 'blob',
+    });
     return response.data;
   },
 
@@ -66,6 +82,10 @@ export const adminOrderService = {
   async updateTrackingNumber(orderId: number, request: UpdateTrackingNumberRequest): Promise<OrderResponse> {
     const response = await axiosClient.patch<OrderResponse>(`/admin/orders/${orderId}/tracking`, request);
     return response.data;
+  },
+
+  async bulkUpdateStatus(request: BulkUpdateOrderStatusRequest): Promise<void> {
+    await axiosClient.patch('/admin/orders/bulk-status', request);
   },
 };
 

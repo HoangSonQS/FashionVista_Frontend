@@ -17,6 +17,8 @@ import ProfilePage from '../pages/user/ProfilePage';
 import UserOrdersPage from '../pages/user/UserOrders';
 import UserOrderDetailPage from '../pages/user/UserOrderDetail';
 import PaymentResultPage from '../pages/public/PaymentResult';
+import PaymentSuccessPage from '../pages/public/PaymentSuccessPage';
+import PaymentFailedPage from '../pages/public/PaymentFailedPage';
 import WishlistPage from '../pages/user/WishlistPage';
 import MyReviewsPage from '../pages/user/MyReviewsPage';
 import ProductCreatePage from '../pages/admin/ProductCreate';
@@ -28,6 +30,8 @@ import AdminCollections from '../pages/admin/AdminCollections';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminUserDetail from '../pages/admin/AdminUserDetail';
+import AdminProductVisibility from '../pages/admin/AdminProductVisibility';
+import AdminShippingFeeConfig from '../pages/admin/AdminShippingFeeConfig';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
@@ -47,6 +51,8 @@ export const AppRoutes = () => {
           <Route path="/categories/:slug" element={<CategoryPage />} />
           <Route path="/sale" element={<SalePage />} />
           <Route path="/payment/result" element={<PaymentResultPage />} />
+          <Route path="/checkout/success" element={<PaymentSuccessPage />} />
+          <Route path="/checkout/failed" element={<PaymentFailedPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/cart" element={<CartPage />} />
@@ -71,12 +77,14 @@ export const AppRoutes = () => {
             <Route path="products" element={<AdminProductList />} />
             <Route path="products/new" element={<ProductCreatePage />} />
             <Route path="products/:id/edit" element={<ProductCreatePage />} />
+            <Route path="product-visibility" element={<AdminProductVisibility />} />
             <Route path="collections" element={<AdminCollections />} />
             <Route path="collections/new" element={<AdminCollectionCreate />} />
             <Route path="collections/:id/edit" element={<AdminCollectionCreate />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId/detail" element={<AdminUserDetail />} />
+            <Route path="shipping-fee-configs" element={<AdminShippingFeeConfig />} />
           </Route>
         </Route>
 

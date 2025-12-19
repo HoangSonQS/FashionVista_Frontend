@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminProductService } from '../../services/adminProductService';
-import type { ProductListItem, ProductListResponse } from '../../types/product';
+import type { ProductListItem, ProductListResponse, ProductImportResult } from '../../types/product';
+import { useToast } from '../../hooks/useToast';
+import { ToastContainer } from '../../components/common/Toast';
 
 const statusOptions = [
   { label: 'Tất cả', value: '' },
@@ -11,6 +13,7 @@ const statusOptions = [
 ];
 
 const AdminProductList = () => {
+  const { toasts, showToast, removeToast } = useToast();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(0);
@@ -18,6 +21,11 @@ const AdminProductList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importResult, setImportResult] = useState<ProductImportResult | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const filters = useMemo(
     () => ({
@@ -42,7 +50,7 @@ const AdminProductList = () => {
       }
     };
     fetchProducts().catch(() => setError('Không thể tải danh sách sản phẩm.'));
-  }, [filters]);
+  }, [filters, refreshKey]);
 
   const handleToggleStatus = async (item: ProductListItem) => {
     const nextStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -64,6 +72,60 @@ const AdminProductList = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await adminProductService.downloadTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'product_template.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast('Không thể tải template.', 'error');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const blob = await adminProductService.exportProducts({
+        search: filters.search,
+        status: filters.status,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast('Xuất file thành công.', 'success');
+    } catch (err) {
+      showToast('Không thể xuất file.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!file) {
+      showToast('Vui lòng chọn file CSV để import.', 'warning');
+      return;
+    }
+    try {
+      setImporting(true);
+      const result = await adminProductService.importProducts(file);
+      setImportResult(result);
+      showToast(`Import xong: +${result.createdCount} tạo, +${result.updatedCount} cập nhật`, 'success');
+      // reload data từ server để thấy product mới
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      showToast('Không thể import sản phẩm.', 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -79,6 +141,69 @@ const AdminProductList = () => {
         >
           + Thêm sản phẩm
         </Link>
+      </div>
+
+      <div className="bg-[var(--card)] rounded-xl shadow-sm border border-[var(--border)] p-4 md:p-6 mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-foreground)] px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            >
+              Tải template CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {exporting ? 'Đang xuất...' : 'Xuất CSV'}
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-t lg:border-t-0 border-[var(--border)] pt-4 lg:pt-0 w-full lg:w-auto">
+            <div className="flex items-center gap-3 text-xs md:text-sm text-[var(--muted-foreground)] w-full lg:w-auto">
+              <span className="whitespace-nowrap font-medium">Import CSV:</span>
+              <label className="flex-1 lg:flex-none cursor-pointer">
+                <span className="sr-only">Chọn file CSV</span>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-xs md:text-sm text-[var(--muted-foreground)] file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs md:file:text-sm file:font-medium file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:bg-[var(--primary)]/15"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)]/10 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {importing ? 'Đang import...' : 'Thực hiện import'}
+            </button>
+          </div>
+        </div>
+        {importResult && (
+          <div className="text-xs text-[var(--muted-foreground)] space-y-1">
+            <p>
+              Đã tạo: {importResult.createdCount} | Đã cập nhật: {importResult.updatedCount}{' '}
+              {importResult.errors.length > 0 ? `(Lỗi: ${importResult.errors.length})` : ''}
+            </p>
+            {importResult.errors.length > 0 && (
+              <details className="text-[var(--error)]">
+                <summary>Lỗi import</summary>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {importResult.errors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -213,6 +338,7 @@ const AdminProductList = () => {
           </div>
         </div>
       )}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

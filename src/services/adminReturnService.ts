@@ -14,9 +14,17 @@ export const adminReturnService = {
     return response.data;
   },
 
-  async getByOrder(orderId: number): Promise<ReturnRequestResponse> {
-    const response = await axiosClient.get<ReturnRequestResponse>(`/admin/returns/by-order/${orderId}`);
-    return response.data;
+  async getByOrder(orderId: number): Promise<ReturnRequestResponse | null> {
+    try {
+      const response = await axiosClient.get<ReturnRequestResponse>(`/admin/returns/by-order/${orderId}`);
+      return response.data;
+    } catch (error: any) {
+      // 404 là trạng thái bình thường khi đơn hàng chưa có yêu cầu đổi trả
+      if (error?.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   async updateStatus(id: number, payload: UpdateReturnStatusPayload): Promise<ReturnRequestResponse> {

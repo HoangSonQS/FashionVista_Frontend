@@ -7,6 +7,9 @@ export interface ProductListItem {
   compareAtPrice?: number;
   status: string;
   featured: boolean;
+  isVisible?: boolean;
+  variantsCount?: number;
+  visibleUpdatedAt?: string;
   category?: string | null;
   thumbnailUrl?: string | null;
   sizes?: string[] | null;
@@ -54,6 +57,12 @@ export interface ProductListResponse {
   totalPages: number;
   page: number;
   size: number;
+}
+
+export interface ProductImportResult {
+  createdCount: number;
+  updatedCount: number;
+  errors: string[];
 }
 
 export interface CategorySummary {

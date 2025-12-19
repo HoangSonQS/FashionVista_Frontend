@@ -282,11 +282,18 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Không cho xoá sản phẩm có order; chỉ đổi trạng thái.
 - Khi đổi giá/tồn kho: kiểm tra các đơn Pending, giỏ hàng đang giữ; ghi log thay đổi.
 
-#### 3.2.9. Import/Export **❌ CHƯA IMPLEMENT**
+#### 3.2.9. Import/Export **✅ ĐÃ IMPLEMENT (CSV)**
 
-- Template Excel chứa thông tin sản phẩm + variants + stock.
+- Template CSV chứa thông tin sản phẩm + variants + stock.
 - Import hỗ trợ update (match theo SKU) và tạo mới, ghi log kết quả.
-- Export để đồng bộ với kho/marketplace; cho phép lọc trước khi export.
+- Export CSV theo filter (search/status/featured/visible).
+- API:
+  - `GET /api/admin/products/export-template` — tải template CSV
+  - `GET /api/admin/products/export` — export CSV
+  - `POST /api/admin/products/import` — import CSV (create/update theo SKU)
+- Frontend:
+  - Nút Tải template / Export / Import (CSV) trên `AdminProductList`
+  - Hiển thị kết quả import (created/updated/errors)
 
 #### 3.2.10. Danh sách sản phẩm **✅ ĐÃ IMPLEMENT (filter/search/bulk đơn giản)**
 
@@ -294,7 +301,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Search theo tên, SKU, barcode.
 - Bulk actions: đổi category, bật/tắt hiển thị, set featured, export, gắn collection.
 
-#### 3.2.11. Product Visibility Management **⏳ ĐANG IMPLEMENT (Backend đã xong, Frontend đang làm)**
+#### 3.2.11. Product Visibility Management **✅ ĐÃ IMPLEMENT**
 
 **Mục tiêu:**  
 Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của sản phẩm trên trang Product List, tách bạch với dữ liệu gốc của sản phẩm.
@@ -350,6 +357,15 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 - Cho phép hiển thị badge cảnh báo (ví dụ: “No image”, “No inventory”) ngay trong bảng.
 - Khi đổi visibility thành công, hiển thị toast “Cập nhật hiển thị sản phẩm thành công”.
+
+**Implementation**
+- Backend:
+  - Migration: `add_product_visibility.sql`
+  - Entity/DTO/Service/Controller: `Product.java`, `ProductListItemDto.java`, `ProductService.java`, `ProductServiceImpl.java`, `AdminProductController.java`
+- Frontend:
+  - Page: `AdminProductVisibility.tsx` (search, filter Visible/Hidden, status, toggle, bulk toggle, pagination, toast)
+  - Routes: `/admin/product-visibility` (AppRoutes)
+  - Service/Types: `adminProductService.ts` (updateVisibility, bulk), `types/product.ts` (isVisible, variantsCount, visibleUpdatedAt)
 
 #### 3.2.12. Bộ sưu tập (Collections)
 
@@ -439,12 +455,16 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
   - Có cấu hình “giữ tồn” cho đơn Pending trong X phút.
 - Khi hủy/Returned/Refunded: tự động trả tồn và ghi lại phiếu nhập kho ngược.
 
-#### 3.4.5. Tích hợp đơn vị vận chuyển **❌ CHƯA TÍCH HỢP HÃNG SHIP**
+#### 3.4.5. Tích hợp đơn vị vận chuyển **✅ ĐÃ THÊM MOCK API (GHN/GHTK/J&T)**
 
-- API tạo vận đơn GHN/GHTK/J&T: truyền cân nặng, COD, địa chỉ, gói dịch vụ.
-- Nhận webhook trạng thái (Picked up, In transit, Delivered, Return) → auto update đơn.
-- Cho phép huỷ vận đơn (nếu hãng hỗ trợ) và tạo lại khi đổi địa chỉ.
-- Lưu file vận đơn/nhãn PDF để in trực tiếp.
+- Admin API:
+  - `POST /api/admin/shipping/{orderNumber}/create` — tạo vận đơn (mock, sinh trackingNumber dạng `{CARRIER}-XXXXXXXX`)
+  - `POST /api/admin/shipping/{orderNumber}/cancel` — hủy vận đơn (mock, clear tracking)
+  - `POST /api/admin/shipping/webhook` — nhận trạng thái PickedUp/InTransit/Delivered/Return và cập nhật order.status tương ứng
+- Public API:
+  - `GET /api/shipping/fee` — trả phí mock (30.000 VND)
+- Trạng thái mapping (mock): PickedUp/InTransit → SHIPPING, Delivered → DELIVERED, Return → RETURNED
+- Chưa tích hợp carrier thật; hiện là mock cho luồng quản trị.
 
 #### 3.4.6. Quản lý thanh toán **⏳ VNPay cơ bản; Momo/partial refund chưa**
 
@@ -461,11 +481,14 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Badge "Mới" cho đơn vừa tạo (hiển thị dựa trên orderNumber vừa đặt).
 - Bulk actions: duyệt hàng loạt, in hàng loạt, cập nhật trạng thái. **(chưa implement)**
 
-#### 3.4.8. In ấn & xuất dữ liệu **❌ CHƯA IMPLEMENT**
+#### 3.4.8. In ấn & xuất dữ liệu **✅ ĐÃ THÊM BẢN HTML/CSV CƠ BẢN**
 
-- In hóa đơn VAT, phiếu giao hàng, packing slip, tem sản phẩm.
-- Xuất Excel/CSV theo filter hiện tại để gửi kế toán/kho.
-- Sinh vận đơn giấy theo template từng hãng.
+- Admin API:
+  - `GET /api/admin/orders/{orderNumber}/invoice` — HTML đơn giản (invoice)
+  - `GET /api/admin/orders/{orderNumber}/delivery-note` — HTML đơn giản (phiếu giao hàng)
+  - `GET /api/admin/orders/{orderNumber}/packing-slip` — HTML đơn giản (packing slip)
+  - `GET /api/admin/orders/export` — CSV danh sách đơn (filter status)
+- Chưa sinh PDF thực tế; hiện trả về HTML/CSV đơn giản để tải/in nhanh.
 
 #### 3.4.9. Edge cases quan trọng **⏳ MỘT PHẦN (hủy + trả tồn cơ bản; RTS/partial refund chưa)**
 

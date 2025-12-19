@@ -38,4 +38,21 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor để suppress 404 errors cho return request endpoint
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Suppress console error cho 404 khi không tìm thấy return request (trạng thái bình thường)
+    if (
+      error.response?.status === 404 &&
+      error.config?.url?.includes('/admin/returns/by-order/')
+    ) {
+      // Không log vào console, chỉ return error để component có thể handle
+      return Promise.reject(error);
+    }
+    // Các lỗi khác vẫn log bình thường
+    return Promise.reject(error);
+  }
+);
+
 

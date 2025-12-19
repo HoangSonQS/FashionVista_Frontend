@@ -9,10 +9,11 @@ import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { cartService } from '../../services/cartService';
 import { voucherService } from '../../services/voucherService';
-import { shippingService } from '../../services/shippingService';
+import { shippingFeeConfigService } from '../../services/shippingFeeConfigService';
 import type { CartResponse, CartItem } from '../../types/cart';
 import type { Address } from '../../types/user';
 import type { CheckoutRequest, PaymentMethod, ShippingMethod } from '../../types/checkout';
+import type { ShippingFeeConfig } from '../../types/shipping';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
 
@@ -30,9 +31,6 @@ const checkoutSchema = z.object({
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-
-const SHIPPING_BASE_FEE = 30000;
-const FREE_SHIPPING_THRESHOLD = 1_000_000;
 
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
 
@@ -54,8 +52,7 @@ const CheckoutPage = () => {
   const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
-  const [dynamicShippingFee, setDynamicShippingFee] = useState<number | null>(null);
-  const [, setLoadingShippingFee] = useState(false);
+  const [shippingFeeConfigs, setShippingFeeConfigs] = useState<ShippingFeeConfig[]>([]);
   const { toasts, showToast, removeToast } = useToast();
 
   const {
@@ -99,7 +96,8 @@ const CheckoutPage = () => {
           setValue('ward', defaultAddress.ward);
           setValue('district', defaultAddress.district);
           setValue('city', defaultAddress.city);
-          void fetchDynamicShipping(defaultAddress.id, shippingMethod);
+          // Không gọi fetchDynamicShipping khi load trang ban đầu
+          // Chỉ dùng giá từ configs, user có thể chọn địa chỉ để tính giá động sau
         }
       } catch {
         // ignore profile/address errors
@@ -108,6 +106,29 @@ const CheckoutPage = () => {
 
     void loadUser();
   }, [setValue]);
+
+  // Load shipping fee configs - chỉ load một lần khi mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadShippingFeeConfigs = async () => {
+      try {
+        const configs = await shippingFeeConfigService.getAll();
+        // Chỉ set state nếu component vẫn còn mount
+        if (isMounted) {
+          setShippingFeeConfigs(configs);
+        }
+      } catch {
+        // Ignore error, sẽ dùng giá mặc định
+      }
+    };
+    
+    void loadShippingFeeConfigs();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Load giỏ hàng (chỉ các item đã chọn)
   useEffect(() => {
@@ -144,39 +165,103 @@ const CheckoutPage = () => {
     [items],
   );
 
+  // Tính phí vận chuyển từ configs
+  // Phân biệt 3 trạng thái: chưa load cart, cart rỗng, cart có sản phẩm
   const computedShippingFee = useMemo(() => {
-    if (dynamicShippingFee !== null) return dynamicShippingFee;
-    if (subtotal === 0) return 0;
-    if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-    switch (shippingMethod) {
-      case 'FAST':
-        return SHIPPING_BASE_FEE + 10000;
-      case 'EXPRESS':
-        return SHIPPING_BASE_FEE + 20000;
-      case 'STANDARD':
-      default:
-        return SHIPPING_BASE_FEE;
+    // Trạng thái 1: Cart chưa load hoặc rỗng → chưa tính
+    if (loadingCart || items.length === 0 || subtotal <= 0) {
+      return null;
     }
-  }, [dynamicShippingFee, subtotal, shippingMethod]);
 
-  const total = Math.max(subtotal + computedShippingFee - discount, 0);
-
-  const fetchDynamicShipping = async (addrId: number | null, method: ShippingMethod) => {
-    if (!addrId) {
-      setDynamicShippingFee(null);
-      return;
+    // Trạng thái 2: Chưa có configs → chưa tính (đợi configs load xong)
+    if (shippingFeeConfigs.length === 0) {
+      return null;
     }
-    setLoadingShippingFee(true);
-    try {
-      const fee = await shippingService.getFee(addrId, method);
-      setDynamicShippingFee(fee.fee ?? null);
-    } catch {
-      setDynamicShippingFee(null);
-    } finally {
-      setLoadingShippingFee(false);
+  
+    // Trạng thái 3: Đã có đủ dữ liệu → tính từ configs
+    const config = shippingFeeConfigs.find((c) => c.method === shippingMethod);
+  
+    // Nếu không tìm thấy config cho method này → dùng giá mặc định
+    if (!config) {
+      const defaultFees: Record<ShippingMethod, number> = {
+        STANDARD: 30000,
+        FAST: 40000,
+        EXPRESS: 50000,
+      };
+      return defaultFees[shippingMethod];
     }
-  };
+  
+    // Chỉ check threshold khi đã có config hợp lệ
+    const threshold = config.freeShippingThreshold;
+    const fee = config.baseFee;
+  
+    // Debug log (có thể xóa sau)
+    console.log('[computedShippingFee]', {
+      method: shippingMethod,
+      subtotal,
+      threshold,
+      fee,
+      willBeFree: threshold > 0 && subtotal >= threshold,
+    });
+  
+    // Chỉ miễn phí khi: có sản phẩm VÀ subtotal >= threshold VÀ threshold > 0
+    if (threshold > 0 && subtotal >= threshold) {
+      return 0;
+    }
+  
+    return fee;
+  }, [loadingCart, items.length, subtotal, shippingMethod, shippingFeeConfigs]);
 
+  const total =
+  computedShippingFee === null
+    ? subtotal - discount
+    : Math.max(subtotal + computedShippingFee - discount, 0);
+
+  // Function để hiển thị label phí vận chuyển
+  // CHỈ hiển thị giá từ configs, KHÔNG tự check threshold (để tránh bị "Miễn phí" đè lên)
+  // Logic check threshold chỉ ở computedShippingFee để tính tổng
+  const getShippingFeeLabel = useMemo(() => {
+    return (method: ShippingMethod): string => {
+      // Trạng thái 1: Cart chưa load hoặc rỗng → hiển thị giá mặc định
+      if (loadingCart || items.length === 0 || subtotal <= 0) {
+        const defaultFees: Record<ShippingMethod, number> = {
+          STANDARD: 30000,
+          FAST: 40000,
+          EXPRESS: 50000,
+        };
+        return formatCurrency(defaultFees[method]);
+      }
+
+      // Trạng thái 2: Chưa có configs → hiển thị giá mặc định
+      if (shippingFeeConfigs.length === 0) {
+        const defaultFees: Record<ShippingMethod, number> = {
+          STANDARD: 30000,
+          FAST: 40000,
+          EXPRESS: 50000,
+        };
+        return formatCurrency(defaultFees[method]);
+      }
+
+      // Trạng thái 3: Đã có configs → hiển thị giá từ configs (KHÔNG check threshold)
+      const config = shippingFeeConfigs.find((c) => c.method === method);
+      
+      // Nếu không tìm thấy config cho method này → dùng giá mặc định
+      if (!config) {
+        const defaultFees: Record<ShippingMethod, number> = {
+          STANDARD: 30000,
+          FAST: 40000,
+          EXPRESS: 50000,
+        };
+        return formatCurrency(defaultFees[method]);
+      }
+
+      // CHỈ hiển thị giá từ configs, KHÔNG check threshold ở đây
+      // Threshold chỉ được check trong computedShippingFee để tính tổng
+      return formatCurrency(config.baseFee);
+    };
+  }, [loadingCart, items.length, subtotal, shippingFeeConfigs]);
+
+  // Xử lý khi user chọn địa chỉ
   const handleSelectAddress = (address: Address) => {
     setSelectedAddressId(address.id);
     setValue('addressId', address.id);
@@ -186,7 +271,7 @@ const CheckoutPage = () => {
     setValue('ward', address.ward);
     setValue('district', address.district);
     setValue('city', address.city);
-    void fetchDynamicShipping(address.id, shippingMethod);
+    // Không cần gọi API tính phí động, chỉ dùng giá từ configs
   };
 
   const handleApplyVoucher = async () => {
@@ -496,8 +581,9 @@ const CheckoutPage = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingMethod('STANDARD');
-                    setValue('shippingMethod', 'STANDARD');
+                    const newMethod = 'STANDARD';
+                    setShippingMethod(newMethod);
+                    setValue('shippingMethod', newMethod);
                   }}
                   className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'STANDARD'
@@ -511,15 +597,16 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold">
-                      {subtotal >= FREE_SHIPPING_THRESHOLD ? 'Miễn phí' : formatCurrency(SHIPPING_BASE_FEE)}
+                      {getShippingFeeLabel('STANDARD')}
                     </span>
                     <input
                       type="radio"
                       value="STANDARD"
                       checked={shippingMethod === 'STANDARD'}
                       onChange={() => {
-                        setShippingMethod('STANDARD');
-                        setValue('shippingMethod', 'STANDARD');
+                        const newMethod = 'STANDARD';
+                        setShippingMethod(newMethod);
+                        setValue('shippingMethod', newMethod);
                       }}
                       className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
                     />
@@ -528,8 +615,9 @@ const CheckoutPage = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingMethod('FAST');
-                    setValue('shippingMethod', 'FAST');
+                    const newMethod = 'FAST';
+                    setShippingMethod(newMethod);
+                    setValue('shippingMethod', newMethod);
                   }}
                   className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'FAST'
@@ -543,17 +631,16 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold">
-                      {subtotal >= FREE_SHIPPING_THRESHOLD
-                        ? 'Miễn phí'
-                        : formatCurrency(SHIPPING_BASE_FEE + 10000)}
+                      {getShippingFeeLabel('FAST')}
                     </span>
                     <input
                       type="radio"
                       value="FAST"
                       checked={shippingMethod === 'FAST'}
                       onChange={() => {
-                        setShippingMethod('FAST');
-                        setValue('shippingMethod', 'FAST');
+                        const newMethod = 'FAST';
+                        setShippingMethod(newMethod);
+                        setValue('shippingMethod', newMethod);
                       }}
                       className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
                     />
@@ -562,8 +649,9 @@ const CheckoutPage = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingMethod('EXPRESS');
-                    setValue('shippingMethod', 'EXPRESS');
+                    const newMethod = 'EXPRESS';
+                    setShippingMethod(newMethod);
+                    setValue('shippingMethod', newMethod);
                   }}
                   className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
                     shippingMethod === 'EXPRESS'
@@ -577,24 +665,29 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold">
-                      {subtotal >= FREE_SHIPPING_THRESHOLD
-                        ? 'Miễn phí'
-                        : formatCurrency(SHIPPING_BASE_FEE + 20000)}
+                      {getShippingFeeLabel('EXPRESS')}
                     </span>
                     <input
                       type="radio"
                       value="EXPRESS"
                       checked={shippingMethod === 'EXPRESS'}
                       onChange={() => {
-                        setShippingMethod('EXPRESS');
-                        setValue('shippingMethod', 'EXPRESS');
+                        const newMethod = 'EXPRESS';
+                        setShippingMethod(newMethod);
+                        setValue('shippingMethod', newMethod);
                       }}
                       className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
                     />
                   </div>
                 </button>
                 <p className="pt-1 text-[11px] text-[var(--muted-foreground)]">
-                  Đơn từ {formatCurrency(FREE_SHIPPING_THRESHOLD)} được miễn phí vận chuyển.
+                  Đơn từ{' '}
+                  {formatCurrency(
+                    shippingFeeConfigs.length > 0
+                      ? shippingFeeConfigs[0].freeShippingThreshold
+                      : 1_000_000
+                  )}{' '}
+                  được miễn phí vận chuyển.
                 </p>
               </div>
             </section>
@@ -753,9 +846,9 @@ const CheckoutPage = () => {
                 <div className="flex justify-between">
                   <span className="text-[var(--muted-foreground)]">Phí vận chuyển</span>
                   <span>
-                    {computedShippingFee === 0
-                      ? 'Miễn phí'
-                      : formatCurrency(computedShippingFee)}
+                    {/* Luôn dùng getShippingFeeLabel để hiển thị (nhất quán với buttons) */}
+                    {/* computedShippingFee chỉ dùng để tính tổng, không dùng để hiển thị */}
+                    {getShippingFeeLabel(shippingMethod)}
                   </span>
                 </div>
                 <div className="flex justify-between">
