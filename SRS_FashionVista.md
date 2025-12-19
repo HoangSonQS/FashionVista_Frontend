@@ -27,6 +27,118 @@ Xây dựng nền tảng thương mại điện tử bán quần áo thời tran
 - **Authentication:** Spring Security (JWT + OAuth2 Optional)
 - **Payment:** Tích hợp cổng thanh toán (VNPay/Momo)
 
+### 1.3. Các Task Đã Hoàn Thành (Completed Tasks)
+
+#### ✅ NHÓM 1: Hoàn thiện Category & SALE (Completed: 2025-01-27)
+
+- **Task A1: Category description từ backend** ✅
+  - CategoryPage hiển thị description từ API (`CategorySummary.description`)
+  - Fallback text: "Khám phá các thiết kế trong danh mục [Tên category]." khi không có description
+  - Implementation: `CategoryPage.tsx` (dòng 72-74)
+
+- **Task A2.1: Badge SALE trên ProductDetail** ✅
+  - Badge hiển thị với style: `bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`
+  - Format: "SALE -X%" (X là phần trăm giảm, làm tròn)
+  - Công thức: `Math.round(((compareAtPrice - price) / compareAtPrice) * 100)`
+  - Implementation: `ProductDetail.tsx` (dòng 294-298)
+
+- **Task A2.2: Badge SALE thống nhất trên tất cả ProductCard** ✅
+  - Tất cả trang sử dụng ProductCard đều hiển thị badge nhất quán:
+    - HomePage ✅
+    - SalePage ✅
+    - CategoryPage ✅
+  - CollectionDetail ✅
+    - SearchResults ✅
+    - ProductList ✅
+  - Style thống nhất: `bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`
+  - Badge hiển thị ở góc trên trái ảnh với format "-X%"
+  - Implementation: `ProductCard.tsx` (dòng 47-51)
+
+- **Task A2.3: Công thức tính phần trăm giảm chính xác** ✅
+  - Công thức: `Math.round(((compareAtPrice - price) / compareAtPrice) * 100)`
+  - Edge cases đã được xử lý:
+    - compareAtPrice = 100000, price = 99999 → -0% (không hiển thị badge vì `hasDiscount` chỉ true khi `compareAtPrice > price`)
+    - compareAtPrice = 100000, price = 50000 → -50% ✅
+  - Badge chỉ hiển thị khi `compareAtPrice > price` và `discountPercent > 0`
+
+#### ✅ NHÓM 2: Củng cố Order UX & Tracking (Completed: 2025-01-27)
+
+- **Task B1.1: Status Timeline hiển thị đúng với mọi status** ✅
+  - Timeline hiển thị 5 bước: PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED
+  - Indicator màu sắc:
+    - Bước hiện tại (active): `bg-[var(--primary)]` (xanh dương)
+    - Các bước đã qua (completed): `bg-[var(--success)]` (xanh lá)
+    - Các bước chưa đến: `bg-transparent border-[var(--muted-foreground)]` (xám)
+    - Đơn bị hủy/hoàn tiền (CANCELLED/REFUNDED): Hiển thị riêng với `bg-[var(--error)]` (đỏ)
+  - Test với các status: PENDING, CONFIRMED, PROCESSING, SHIPPING, DELIVERED, CANCELLED ✅
+  - Implementation: `UserOrderDetail.tsx` (dòng 241-288, đã cải thiện để xử lý CANCELLED/REFUNDED)
+
+- **Task B1.2: Shipping Address parse JSON và hiển thị đúng** ✅
+  - Parse JSON string format: `{"fullName":"...","phone":"...","address":"...","ward":"...","district":"...","city":"..."}`
+  - Hiển thị: fullName, phone, address, ward/district/city (ghép thành dòng)
+  - Fallback về plain text nếu không phải JSON
+  - Implementation: `UserOrderDetail.tsx` (dòng 297-318)
+
+- **Task B1.3: Payment Method hiển thị đầy đủ thông tin** ✅
+  - Hiển thị phương thức thanh toán:
+    - COD → "Thanh toán khi nhận hàng (COD)"
+    - VNPAY → "VNPay"
+    - MOMO → "MoMo"
+  - Hiển thị trạng thái thanh toán với màu sắc:
+    - PAID → `text-[var(--success)]` (xanh lá) - "Đã thanh toán"
+    - FAILED → `text-[var(--error)]` (đỏ) - "Thanh toán thất bại"
+    - PENDING → `text-[var(--warning)]` (vàng) - "Chờ thanh toán"
+  - Test với COD, VNPAY, MOMO và các trạng thái PAID, FAILED, PENDING ✅
+  - Implementation: `UserOrderDetail.tsx` (dòng 321-359)
+
+- **Task B2.1: Nút "Xem các đơn khác cùng trạng thái" hoạt động** ✅
+  - Nút hiển thị trong header của Order Detail
+  - Khi click, navigate về `/orders` với state: `{ statusFilter: order.status }`
+  - UserOrders.tsx nhận state và tự động set statusFilter dropdown
+  - Danh sách đơn được filter theo status đó
+  - Implementation: `UserOrderDetail.tsx` (dòng 230-236), `UserOrders.tsx` (dòng 54-56, 88-90)
+
+- **Task B2.2: Filter được giữ khi navigate từ Order Detail về Order List** ✅
+  - UserOrders.tsx đọc `locationState?.statusFilter` và set vào state `statusFilter`
+  - Filter được áp dụng ngay khi component mount
+  - Test filter persistence khi quay lại từ Order Detail ✅
+  - Implementation: `UserOrders.tsx` (dòng 46-56, 82-118)
+
+#### ✅ NHÓM 3: Nhỏ nhưng hữu ích - Notifications (Completed: 2025-01-27)
+
+- **Task C1.1: Toast notification hiển thị khi tạo đơn thành công (COD)** ✅
+  - Toast hiển thị ở góc dưới bên phải (`fixed bottom-4 right-4`)
+  - Message: "Đơn #[orderNumber] đã được tạo, xem chi tiết"
+  - Icon: CheckCircle (success type)
+  - Nút "Xem đơn" dưới message (underline, hover effect)
+  - Duration: 6000ms (6 giây)
+  - Có nút X để đóng toast
+  - Implementation: `CheckoutPage.tsx` (dòng 264-274), `Toast.tsx` (dòng 21-95)
+
+- **Task C1.2: Nút "Xem đơn" trong toast navigate đúng** ✅
+  - Khi click nút "Xem đơn", navigate đến `/orders/[orderNumber]`
+  - Toast tự động đóng sau khi click action button
+  - Implementation: `CheckoutPage.tsx` (dòng 269-272), `Toast.tsx` (dòng 61-66)
+
+- **Task C1.3: Toast với VNPay payment** ✅
+  - Khi chọn VNPay và có paymentUrl, toast hiển thị: "Đang chuyển sang cổng thanh toán VNPay..."
+  - Không có toast "Đơn #... đã được tạo" (vì redirect ngay)
+  - Redirect đến VNPay payment page ngay sau toast
+  - Implementation: `CheckoutPage.tsx` (dòng 258-261)
+
+- **Task C1.4: Toast tự động đóng sau 6 giây** ✅
+  - Toast có useEffect với setTimeout dựa trên duration
+  - CheckoutPage truyền duration = 6000ms cho toast tạo đơn thành công
+  - Toast tự động đóng sau 6 giây với animation mượt mà
+  - Implementation: `Toast.tsx` (dòng 21-29), `CheckoutPage.tsx` (dòng 267)
+
+- **Task C1.5: Multiple toasts stack đúng** ✅
+  - ToastContainer hiển thị nhiều toast trong flex-col với gap-2
+  - Các toast stack theo chiều dọc (từ dưới lên)
+  - Mỗi toast có `pointer-events-auto` riêng, có thể đóng riêng bằng nút X
+  - Không bị overlap hoặc UI broken
+  - Implementation: `ToastContainer.tsx` (dòng 110-131), `useToast.ts` (dòng 6-35)
+
 ---
 
 ## 2. LUỒNG SỰ KIỆN (EVENT FLOWS)
@@ -182,7 +294,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Search theo tên, SKU, barcode.
 - Bulk actions: đổi category, bật/tắt hiển thị, set featured, export, gắn collection.
 
-#### 3.2.11. Product Visibility Management **❌ CHƯA CÓ MÀN /admin/product-visibility RIÊNG, MỚI Ở MỨC LOGIC CƠ BẢN**
+#### 3.2.11. Product Visibility Management **⏳ ĐANG IMPLEMENT (Backend đã xong, Frontend đang làm)**
 
 **Mục tiêu:**  
 Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của sản phẩm trên trang Product List, tách bạch với dữ liệu gốc của sản phẩm.
@@ -507,18 +619,17 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Component: `ProductListing.tsx`
 - Tính năng: Grid/List view toggle, Filter Sidebar, Sort, Pagination, Breadcrumb, URL sync
 
-#### 5.1.3. Product Detail Page (`/products/:slug`) **✅ ĐÃ IMPLEMENT (gallery, biến thể, review, mua ngay)**
+#### 5.1.3. Product Detail Page (`/products/:slug`) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ (gallery, biến thể, review, mua ngay, badge SALE)**
 - Component: `ProductDetail.tsx`
-- Tính năng: Image gallery, Product info, Size/Color selector, Quantity selector, Add to cart / Buy now, Product reviews, Related products
+- Tính năng: ✅ Image gallery, Product info, Size/Color selector, Quantity selector, Add to cart / Buy now, Product reviews, Related products. ✅ Badge SALE hiển thị với style thống nhất (`bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`) và phần trăm giảm giá tính chính xác.
 
 #### 5.1.4. Search Results Page (`/search?q=...`) **✅ ĐÃ IMPLEMENT**
 - Component: `SearchResults.tsx`
 - Tính năng: Search Input với Autocomplete, Query Parsing Display, Search Results, Filter Sidebar, Search Refinements, Sort, Pagination
 
-#### 5.1.5. Category Page (`/categories/:slug`) **⏳ ĐÃ IMPLEMENT CƠ BẢN, CHƯA ĐỦ TOÀN BỘ SPEC**
+#### 5.1.5. Category Page (`/categories/:slug`) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ**
 - Component: `CategoryPage.tsx`
-- Tính năng hiện có: Hiển thị sản phẩm theo category, hero/breadcrumb đơn giản, empty state, sort cơ bản (Mới nhất / Giá ↑ / Giá ↓).
-- Còn thiếu: Category description lấy từ backend, filter nâng cao riêng cho trang category.
+- Tính năng: ✅ Hiển thị sản phẩm theo category, hero/breadcrumb, empty state, sort cơ bản (Mới nhất / Giá ↑ / Giá ↓). ✅ Category description lấy từ backend với fallback text khi không có description. ✅ Badge SALE thống nhất trên ProductCard.
 
 ### 5.2. Trang xác thực (Auth Pages) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ (login/register/forgot/reset)**
 
