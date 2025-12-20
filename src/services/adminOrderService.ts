@@ -1,5 +1,5 @@
 import { axiosClient } from './axiosClient';
-import type { OrderResponse } from '../types/order';
+import type { OrderResponse, RefundResponse } from '../types/order';
 
 export interface AdminOrderListResponse {
   id: number;
@@ -86,6 +86,21 @@ export const adminOrderService = {
 
   async bulkUpdateStatus(request: BulkUpdateOrderStatusRequest): Promise<void> {
     await axiosClient.patch('/admin/orders/bulk-status', request);
+  },
+
+  async createPartialRefund(orderId: number, request: {
+    amount: number;
+    refundMethod: 'ORIGINAL' | 'MANUAL_CASH';
+    reason?: string;
+    itemIds?: number[];
+  }): Promise<RefundResponse> {
+    const response = await axiosClient.post<RefundResponse>(`/admin/orders/${orderId}/refund`, request);
+    return response.data;
+  },
+
+  async getRefundsByOrderId(orderId: number): Promise<RefundResponse[]> {
+    const response = await axiosClient.get<RefundResponse[]>(`/admin/orders/${orderId}/refunds`);
+    return response.data;
   },
 };
 

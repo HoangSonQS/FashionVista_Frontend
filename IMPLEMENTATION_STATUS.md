@@ -150,17 +150,40 @@
 
 ---
 
-### Task D15: Partial refund ⏳ PENDING
+### Task D15: Partial refund ✅ HOÀN THÀNH
 
-**Status:** Chưa bắt đầu
+**Backend:** ✅
+- Entity: `Refund` (order, amount, refundMethod, reason, refundedItemIds, refundedBy, createdAt)
+- Migration: `V7__create_refunds_and_add_refund_amount.sql` (tạo bảng refunds, thêm refund_amount vào payments)
+- Repository: `RefundRepository.findByOrderIdOrderByCreatedAtDesc()`
+- DTOs: `PartialRefundRequest`, `RefundResponse`
+- Service: `AdminOrderService.createPartialRefund()`, `getRefundsByOrderId()`
+- Endpoints: `POST /api/admin/orders/:id/refund`, `GET /api/admin/orders/:id/refunds`
+- Validation: chỉ cho refund khi paymentStatus = PAID, không cho vượt quá payment amount
+- Logic: cập nhật payment.refundAmount, paymentStatus (REFUND_PENDING/REFUNDED), order.status (REFUNDED nếu hoàn hết)
+- Ghi Order History tự động
+
+**Frontend:** ✅
+- `AdminOrders.tsx`: nút "Hoàn tiền" trong modal update (chỉ hiện khi paymentStatus = PAID)
+- Modal hoàn tiền:
+  - Chọn items để hoàn (tùy chọn, checkbox)
+  - Nhập số tiền hoàn
+  - Chọn phương thức (ORIGINAL / MANUAL_CASH)
+  - Nhập lý do hoàn tiền
+  - Hiển thị lịch sử refund
+- Service: `adminOrderService.createPartialRefund()`, `getRefundsByOrderId()`
+- Types: `RefundResponse` trong `order.ts`
+- Validation: số tiền > 0, không vượt quá order.total
+
+**Test Guide:** `TEST_GUIDE_D15_PARTIAL_REFUND.md`
 
 ---
 
 ## Tổng kết
 
-- **Task đã hoàn thành:** D1, D2, D3, D4, D6, D7, D8, D9 (8 tasks)
+- **Task đã hoàn thành:** D1, D2, D3, D4, D6, D7, D8, D9, D15 (9 tasks)
 - **Task đang làm:** 0
-- **Task chưa bắt đầu:** D10, D11, D12, D13, D14, D15, D16
+- **Task chưa bắt đầu:** D10, D11, D12, D13, D14, D16
 
 **Ưu tiên tiếp theo:**
 1. Task D10: Thông báo khi đơn đổi trạng thái

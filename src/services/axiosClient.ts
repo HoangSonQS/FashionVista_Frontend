@@ -47,7 +47,9 @@ axiosClient.interceptors.response.use(
       error.response?.status === 404 &&
       error.config?.url?.includes('/admin/returns/by-order/')
     ) {
-      // Không log vào console, chỉ return error để component có thể handle
+      // Đánh dấu để component biết đây là 404 hợp lệ (không có return request)
+      // Component sẽ handle và return null, không cần log vào console
+      error.isExpected404 = true;
       return Promise.reject(error);
     }
     // Các lỗi khác vẫn log bình thường

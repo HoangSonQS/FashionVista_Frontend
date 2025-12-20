@@ -346,18 +346,8 @@ const CheckoutPage = () => {
         return;
       }
 
-      showToast(
-        `Đơn #${order.orderNumber} đã được tạo, xem chi tiết`,
-        'success',
-        6000,
-        {
-          label: 'Xem đơn',
-          onClick: () => {
-            navigate(`/orders/${order.orderNumber}`);
-          },
-        },
-      );
-      navigate('/orders', { state: { recentOrderNumber: order.orderNumber } });
+      // Với COD và các phương thức khác: redirect đến success page
+      navigate(`/checkout/success?orderNumber=${order.orderNumber}`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Không thể tạo đơn hàng. Vui lòng thử lại.';

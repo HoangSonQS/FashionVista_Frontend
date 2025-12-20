@@ -43,6 +43,17 @@ export interface OrderResponse {
   }>;
 }
 
+export interface RefundResponse {
+  id: number;
+  orderNumber: string;
+  amount: number;
+  refundMethod: 'ORIGINAL' | 'MANUAL_CASH';
+  reason?: string | null;
+  refundedItemIds?: number[] | null;
+  refundedBy?: string | null;
+  createdAt: string;
+}
+
 // Re-export để giữ tương thích ngược cho các import cũ
 export type { CheckoutRequest } from './checkout';
 

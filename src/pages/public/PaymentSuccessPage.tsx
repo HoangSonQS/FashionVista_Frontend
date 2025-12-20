@@ -7,10 +7,18 @@ const PaymentSuccessPage = () => {
   const orderNumber = searchParams.get('orderNumber');
 
   useEffect(() => {
+    // Scroll to top khi component mount
     if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     }
   }, []);
+
+  useEffect(() => {
+    // Scroll to top khi orderNumber thay đổi (khi navigate từ trang khác)
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  }, [orderNumber]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-12">

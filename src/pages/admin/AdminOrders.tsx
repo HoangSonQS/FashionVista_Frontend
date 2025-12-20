@@ -163,6 +163,13 @@ const AdminOrders = () => {
   const [exporting, setExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundAmount, setRefundAmount] = useState<string>('');
+  const [refundMethod, setRefundMethod] = useState<'ORIGINAL' | 'MANUAL_CASH'>('ORIGINAL');
+  const [refundReason, setRefundReason] = useState<string>('');
+  const [selectedRefundItemIds, setSelectedRefundItemIds] = useState<number[]>([]);
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refunds, setRefunds] = useState<Array<import('../../types/order').RefundResponse>>([]);
 
   const filters = useMemo(
     () => ({
@@ -274,7 +281,14 @@ const AdminOrders = () => {
       setOrderStatusForm(detail.status);
       setPaymentStatusForm(detail.paymentStatus);
       setTrackingNumber(detail.trackingNumber || '');
-      await fetchReturnRequest(detail.id);
+      // Chỉ gọi API return request khi order status liên quan đến return (tránh 404 không cần thiết)
+      if (
+        detail.status === 'RETURN_REQUESTED' ||
+        detail.status === 'RETURN_APPROVED' ||
+        detail.status === 'REFUNDED'
+      ) {
+        await fetchReturnRequest(detail.id);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng.';
       showToast(message, 'error');
@@ -294,6 +308,76 @@ const AdminOrders = () => {
     }
   };
 
+  const handleOpenRefundModal = async (order: AdminOrderListResponse | OrderResponse) => {
+    setShowRefundModal(true);
+    setRefundAmount('');
+    setRefundMethod('ORIGINAL');
+    setRefundReason('');
+    setSelectedRefundItemIds([]);
+    try {
+      const orderId = 'id' in order ? order.id : order.id;
+      const refundsList = await adminOrderService.getRefundsByOrderId(orderId);
+      setRefunds(refundsList);
+      // Tính số tiền còn lại có thể hoàn
+      if (orderDetail) {
+        const totalRefunded = refundsList.reduce((sum, r) => sum + r.amount, 0);
+        const remainingAmount = orderDetail.total - totalRefunded;
+        // Set default refund amount = số tiền còn lại (nếu > 0)
+        if (remainingAmount > 0) {
+          setRefundAmount(String(remainingAmount));
+        } else if (refundsList.length === 0) {
+          // Nếu chưa có refund nào, set = tổng đơn
+          setRefundAmount(String(orderDetail.total));
+        }
+      }
+    } catch (err) {
+      showToast('Không thể tải lịch sử hoàn tiền.', 'error');
+    }
+  };
+
+  const handleCreateRefund = async () => {
+    if (!orderDetail) return;
+    const amountValue = Number(refundAmount.trim());
+    if (isNaN(amountValue) || amountValue <= 0) {
+      showToast('Vui lòng nhập số tiền hoàn hợp lệ.', 'error');
+      return;
+    }
+    // Tính số tiền còn lại có thể hoàn
+    const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
+    const remainingAmount = orderDetail.total - totalRefunded;
+    if (amountValue > remainingAmount) {
+      showToast(
+        `Số tiền hoàn không được vượt quá số tiền còn lại (${remainingAmount.toLocaleString('vi-VN')} VND).`,
+        'error'
+      );
+      return;
+    }
+    try {
+      setRefundLoading(true);
+      await adminOrderService.createPartialRefund(orderDetail.id, {
+        amount: amountValue,
+        refundMethod,
+        reason: refundReason.trim() || undefined,
+        itemIds: selectedRefundItemIds.length > 0 ? selectedRefundItemIds : undefined,
+      });
+      showToast('Hoàn tiền thành công.', 'success');
+      setShowRefundModal(false);
+      // Refresh order detail
+      if (selectedOrder) {
+        const detail = await adminOrderService.getOrderById(selectedOrder.id);
+        setOrderDetail(detail);
+        const refundsList = await adminOrderService.getRefundsByOrderId(selectedOrder.id);
+        setRefunds(refundsList);
+      }
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể hoàn tiền.';
+      showToast(message, 'error');
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
   const fetchReturnRequest = async (orderId: number) => {
     setReturnLoading(true);
     setReturnError(null);
@@ -309,6 +393,13 @@ const AdminOrders = () => {
         setReturnRequest(null);
       }
     } catch (err: any) {
+      // 404 là trạng thái bình thường khi đơn hàng chưa có yêu cầu đổi trả
+      if (err?.response?.status === 404 || err?.isExpected404) {
+        setReturnRequest(null);
+        setReturnError(null);
+        // Không log error vào console cho 404
+        return;
+      }
       // Chỉ xử lý các lỗi khác 404
       const message =
         err instanceof Error
@@ -1030,30 +1121,41 @@ const AdminOrders = () => {
                       </div>
                     )}
 
-                    {/* Return Request Section */}
-                    <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/10 p-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold">Yêu cầu đổi trả</p>
-                        {returnRequest && (
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getReturnStatusColor(
-                              returnRequest.status,
-                            )}`}
-                          >
-                            {RETURN_STATUS_LABEL[returnRequest.status]}
-                          </span>
+                    {/* Return Request Section - Chỉ hiển thị khi order status liên quan đến return hoặc có return request */}
+                    {(orderDetail.status === 'RETURN_REQUESTED' ||
+                      orderDetail.status === 'RETURN_APPROVED' ||
+                      orderDetail.status === 'REFUNDED' ||
+                      returnRequest ||
+                      returnLoading) && (
+                      <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)]/10 p-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold">Yêu cầu đổi trả</p>
+                          {returnRequest && (
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getReturnStatusColor(
+                                returnRequest.status,
+                              )}`}
+                            >
+                              {RETURN_STATUS_LABEL[returnRequest.status]}
+                            </span>
+                          )}
+                        </div>
+
+                        {returnLoading && (
+                          <p className="text-xs text-[var(--muted-foreground)]">Đang tải yêu cầu đổi trả...</p>
                         )}
-                      </div>
 
-                      {returnLoading && (
-                        <p className="text-xs text-[var(--muted-foreground)]">Đang tải yêu cầu đổi trả...</p>
-                      )}
+                        {!returnLoading && returnError && (
+                          <p className="text-xs text-[var(--muted-foreground)]">{returnError}</p>
+                        )}
 
-                      {!returnLoading && returnError && (
-                        <p className="text-xs text-[var(--muted-foreground)]">{returnError}</p>
-                      )}
+                        {!returnLoading && !returnRequest && !returnError && (
+                          <p className="text-xs text-[var(--muted-foreground)]">
+                            Đơn hàng này chưa có yêu cầu đổi trả.
+                          </p>
+                        )}
 
-                      {!returnLoading && returnRequest && (
+                        {!returnLoading && returnRequest && (
                         <div className="space-y-3">
                           <div className="space-y-1 text-xs">
                             <p className="font-semibold">Lý do</p>
@@ -1183,7 +1285,8 @@ const AdminOrders = () => {
                           </div>
                         </div>
                       )}
-                    </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 text-xs font-medium text-[var(--muted-foreground)]">
@@ -1207,6 +1310,16 @@ const AdminOrders = () => {
                       />
                       Gửi email thông báo cho khách hàng
                     </label>
+
+                    {orderDetail && (orderDetail.paymentStatus === 'PAID' || orderDetail.paymentStatus === 'REFUND_PENDING') && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenRefundModal(orderDetail)}
+                        className="w-full rounded-full border-2 border-[var(--primary)] bg-transparent py-3 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors"
+                      >
+                        Hoàn tiền
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -1453,6 +1566,182 @@ const AdminOrders = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Hoàn tiền */}
+      {showRefundModal && orderDetail && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--overlay)] px-4"
+          onClick={() => setShowRefundModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-3xl bg-[var(--card)] shadow-2xl border border-[var(--border)] overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold">Hoàn tiền</h2>
+                <p className="text-sm text-[var(--muted-foreground)]">Đơn hàng: {orderDetail.orderNumber}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRefundModal(false)}
+                className="rounded-lg p-1 hover:bg-[var(--muted)] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {/* Lịch sử hoàn tiền */}
+              {refunds.length > 0 && (
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4 space-y-2">
+                  <p className="text-sm font-semibold">Lịch sử hoàn tiền</p>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {refunds.map((refund) => (
+                      <div key={refund.id} className="text-xs border-b border-[var(--border)] pb-2 last:border-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{formatCurrency(refund.amount)}</span>
+                          <span className="text-[var(--muted-foreground)]">
+                            {new Date(refund.createdAt).toLocaleString('vi-VN')}
+                          </span>
+                        </div>
+                        {refund.reason && (
+                          <p className="text-[var(--muted-foreground)] italic mt-1">{refund.reason}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Chọn items để hoàn (optional) */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Chọn sản phẩm cần hoàn (tùy chọn)</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto border border-[var(--border)] rounded-lg p-2">
+                  {orderDetail.items.map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--muted)]/50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedRefundItemIds.includes(item.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRefundItemIds([...selectedRefundItemIds, item.id]);
+                          } else {
+                            setSelectedRefundItemIds(selectedRefundItemIds.filter((id) => id !== item.id));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-[var(--border)]"
+                      />
+                      <div className="flex-1 text-xs">
+                        <p className="font-medium">{item.productName}</p>
+                        <p className="text-[var(--muted-foreground)]">
+                          {formatCurrency(item.subtotal)} • SL: {item.quantity}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  Để trống nếu muốn hoàn toàn bộ đơn hàng
+                </p>
+              </div>
+
+              {/* Số tiền hoàn */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">
+                  Số tiền hoàn <span className="text-[var(--error)]">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  placeholder="Nhập số tiền hoàn"
+                  min="0"
+                  max={orderDetail.total}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+                <div className="space-y-1 text-xs text-[var(--muted-foreground)]">
+                  <p>Tổng tiền đơn hàng: {formatCurrency(orderDetail.total)}</p>
+                  {refunds.length > 0 && (
+                    <>
+                      <p>
+                        Đã hoàn: {formatCurrency(refunds.reduce((sum, r) => sum + r.amount, 0))}
+                      </p>
+                      <p className="font-medium text-[var(--primary)]">
+                        Còn lại có thể hoàn: {formatCurrency(orderDetail.total - refunds.reduce((sum, r) => sum + r.amount, 0))}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Phương thức hoàn tiền */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">
+                  Phương thức hoàn tiền <span className="text-[var(--error)]">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRefundMethod('ORIGINAL')}
+                    className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                      refundMethod === 'ORIGINAL'
+                        ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-transparent'
+                        : 'border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]'
+                    }`}
+                  >
+                    Hoàn về phương thức gốc
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRefundMethod('MANUAL_CASH')}
+                    className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                      refundMethod === 'MANUAL_CASH'
+                        ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-transparent'
+                        : 'border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]'
+                    }`}
+                  >
+                    Hoàn tiền mặt
+                  </button>
+                </div>
+              </div>
+
+              {/* Lý do hoàn tiền */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Lý do hoàn tiền (tùy chọn)</label>
+                <textarea
+                  rows={3}
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Nhập lý do hoàn tiền..."
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--border)] px-6 py-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRefundModal(false)}
+                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-semibold hover:bg-[var(--muted)] transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateRefund}
+                disabled={refundLoading || !refundAmount.trim()}
+                className="flex-1 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {refundLoading ? 'Đang xử lý...' : 'Xác nhận hoàn tiền'}
+              </button>
             </div>
           </div>
         </div>
