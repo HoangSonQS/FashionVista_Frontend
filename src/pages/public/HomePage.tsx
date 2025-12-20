@@ -229,12 +229,20 @@ const HomePage = () => {
                   to={`/categories/${category.slug}`}
                   className="group text-center transition-opacity hover:opacity-70"
                 >
-                  <div className="mb-3 aspect-square bg-[#4DA3E8]/10 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center bg-[#4DA3E8]/5 group-hover:bg-[#4DA3E8]/15 transition-colors">
-                      <span className="text-xs text-[#4DA3E8] uppercase tracking-wider">
-                        {category.name.charAt(0)}
-                      </span>
-                    </div>
+                  <div className="mb-3 aspect-square bg-[#4DA3E8]/10 overflow-hidden rounded-sm">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-[#4DA3E8]/5 group-hover:bg-[#4DA3E8]/15 transition-colors">
+                        <span className="text-xs text-[#4DA3E8] uppercase tracking-wider">
+                          {category.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-xs font-light text-[#4DA3E8] tracking-wide uppercase">
                     {category.name}

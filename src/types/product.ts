@@ -9,6 +9,7 @@ export interface ProductListItem {
   featured: boolean;
   isVisible?: boolean;
   variantsCount?: number;
+  totalStock?: number;
   visibleUpdatedAt?: string;
   category?: string | null;
   thumbnailUrl?: string | null;
@@ -70,6 +71,7 @@ export interface CategorySummary {
   name: string;
   slug: string;
   description?: string | null;
+  image?: string | null;
 }
 
 export interface SearchSuggestion {

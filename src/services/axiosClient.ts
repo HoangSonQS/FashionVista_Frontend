@@ -19,6 +19,12 @@ axiosClient.interceptors.request.use((config) => {
     return config;
   }
 
+  // Don't override Content-Type if it's FormData (axios will set it automatically with boundary)
+  const isFormData = config.data instanceof FormData;
+  if (isFormData) {
+    delete config.headers['Content-Type'];
+  }
+
   const isAdminEndpoint = normalized.startsWith('/admin/');
   const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
   const raw = localStorage.getItem(storageKey);

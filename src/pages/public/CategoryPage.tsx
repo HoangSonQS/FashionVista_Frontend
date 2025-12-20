@@ -61,25 +61,41 @@ const CategoryPage = () => {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Hero / header section */}
-      <section className="border-b border-gray-200 bg-[#F5FAFF]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 md:flex-row md:items-end md:justify-between md:py-10">
+      <section className={`border-b border-gray-200 ${activeCategory?.image ? 'relative overflow-hidden' : 'bg-[#F5FAFF]'}`}>
+        {activeCategory?.image && (
+          <>
+            <div className="absolute inset-0">
+              <img
+                src={activeCategory.image}
+                alt={activeCategory.name}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent" />
+            </div>
+          </>
+        )}
+        <div className={`relative mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 md:flex-row md:items-end md:justify-between md:py-10 ${activeCategory?.image ? 'text-white' : ''}`}>
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[#4DA3E8] mb-2">Danh mục</p>
-            <h1 className="text-3xl md:text-4xl font-light text-[#1F3A4D] tracking-wide">
+            <p className={`text-xs uppercase tracking-[0.3em] mb-2 ${activeCategory?.image ? 'text-white/90' : 'text-[#4DA3E8]'}`}>
+              Danh mục
+            </p>
+            <h1 className={`text-3xl md:text-4xl font-light tracking-wide ${activeCategory?.image ? 'text-white' : 'text-[#1F3A4D]'}`}>
               {title}
             </h1>
             {activeCategory && (
-              <p className="mt-3 max-w-xl text-sm text-gray-600 font-light">
+              <p className={`mt-3 max-w-xl text-sm font-light ${activeCategory?.image ? 'text-white/90' : 'text-gray-600'}`}>
                 {activeCategory.description || `Khám phá các thiết kế trong danh mục ${activeCategory.name}.`}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className={`flex items-center gap-2 text-xs ${activeCategory?.image ? 'text-white/80' : 'text-gray-500'}`}>
             <Link to="/" className="hover:underline">
               Trang chủ
             </Link>
             <span>/</span>
-            <span className="text-gray-700">{activeCategory?.name ?? 'Danh mục'}</span>
+            <span className={activeCategory?.image ? 'text-white' : 'text-gray-700'}>
+              {activeCategory?.name ?? 'Danh mục'}
+            </span>
           </div>
         </div>
       </section>

@@ -12,6 +12,7 @@ const navItems = [
       { label: 'Danh sách', path: '/admin/products' },
       { label: 'Thêm sản phẩm', path: '/admin/products/new' },
       { label: 'Hiển thị sản phẩm', path: '/admin/product-visibility' },
+      { label: 'Danh mục', path: '/admin/categories' },
     ],
   },
   {
@@ -23,7 +24,9 @@ const navItems = [
     ],
   },
   { label: 'Đơn hàng', path: '/admin/orders' },
+  { label: 'Thanh toán', path: '/admin/payments' },
   { label: 'Người dùng', path: '/admin/users' },
+  { label: 'Voucher', path: '/admin/vouchers' },
   { label: 'Phí vận chuyển', path: '/admin/shipping-fee-configs' },
 ];
 
