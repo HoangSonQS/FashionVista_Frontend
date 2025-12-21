@@ -475,15 +475,18 @@ const ProductDetailPage = () => {
               <p className="text-sm text-[var(--muted-foreground)]">Size</p>
               <div className="flex flex-wrap gap-2">
                     {uniqueSizes.map((size) => {
-                      // Tìm biến thể có size này và còn hàng
-                      const variantWithSize = availableVariants.find((v) => v.size === size);
+                      // Tìm biến thể khớp với size mới và color hiện tại (nếu có)
+                      // Nếu không tìm thấy, fallback về variant đầu tiên có size này
+                      const matchingVariant = availableVariants.find(
+                        (v) => v.size === size && (!selectedVariant?.color || v.color === selectedVariant.color)
+                      ) || availableVariants.find((v) => v.size === size);
                       return (
                   <button
                     key={size}
                     type="button"
                           onClick={() => {
-                            if (variantWithSize) {
-                              setSelectedVariant(variantWithSize);
+                            if (matchingVariant) {
+                              setSelectedVariant(matchingVariant);
                     }
                           }}
                     className={`px-3 py-1 rounded-full border ${
@@ -505,15 +508,18 @@ const ProductDetailPage = () => {
               <p className="text-sm text-[var(--muted-foreground)]">Màu sắc</p>
               <div className="flex flex-wrap gap-2">
                     {uniqueColors.map((color) => {
-                      // Tìm biến thể có color này và còn hàng
-                      const variantWithColor = availableVariants.find((v) => v.color === color);
+                      // Tìm biến thể khớp với color mới và size hiện tại (nếu có)
+                      // Nếu không tìm thấy, fallback về variant đầu tiên có color này
+                      const matchingVariant = availableVariants.find(
+                        (v) => v.color === color && (!selectedVariant?.size || v.size === selectedVariant.size)
+                      ) || availableVariants.find((v) => v.color === color);
                       return (
                   <button
                     key={color}
                     type="button"
                           onClick={() => {
-                            if (variantWithColor) {
-                              setSelectedVariant(variantWithColor);
+                            if (matchingVariant) {
+                              setSelectedVariant(matchingVariant);
                     }
                           }}
                     className={`px-3 py-1 rounded-full border ${

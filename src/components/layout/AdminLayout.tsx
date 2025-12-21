@@ -12,6 +12,7 @@ const navItems = [
       { label: 'Danh sách', path: '/admin/products' },
       { label: 'Thêm sản phẩm', path: '/admin/products/new' },
       { label: 'Hiển thị sản phẩm', path: '/admin/product-visibility' },
+      { label: 'Biến thể', path: '/admin/product-variants' },
       { label: 'Danh mục', path: '/admin/categories' },
     ],
   },

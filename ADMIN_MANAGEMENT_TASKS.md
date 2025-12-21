@@ -146,36 +146,18 @@
 
 ### NHÓM 2: Quản lý Danh mục và Bộ sưu tập
 
-#### Task M4: Trang quản lý Danh mục (Categories) ⏳ CHƯA ĐỦ
+#### Task M4: Trang quản lý Danh mục (Categories) ✅ HOÀN THÀNH
 
-**Trạng thái hiện tại:**
-- ✅ API `GET /api/categories` (public, chỉ đọc)
-- ❌ Chưa có API admin CRUD categories
-- ❌ Chưa có trang admin quản lý categories
+**Trạng thái:** ✅ Đã hoàn thành
+- ✅ API admin CRUD categories
+- ✅ Trang `/admin/categories` với đầy đủ chức năng
+- ✅ Upload image từ máy tính hoặc URL, tích hợp Cloudinary
+- ✅ Tự động xóa ảnh trên Cloudinary khi xóa category
+- ✅ Search, filter, pagination
+- ✅ Optimistic update cho edit
+- ✅ Hiển thị ảnh category trên trang home và public category pages
 
-**Yêu cầu:**
-- Trang `/admin/categories`
-- List, thêm/sửa/xóa danh mục
-- Quản lý slug, description, image
-- Hiển thị số sản phẩm trong mỗi danh mục
-
-**Cần làm:**
-1. Backend:
-   - [ ] API `GET /api/admin/categories` (list với pagination)
-   - [ ] API `POST /api/admin/categories` (tạo category)
-   - [ ] API `PATCH /api/admin/categories/:id` (cập nhật)
-   - [ ] API `DELETE /api/admin/categories/:id` (xóa - validation: không cho xóa nếu có sản phẩm)
-   - [ ] Thêm field `image` vào Category entity (nếu chưa có)
-
-2. Frontend:
-   - [ ] Trang `AdminCategories.tsx`
-   - [ ] Bảng list categories: Name, Slug, Description, Product Count
-   - [ ] Modal thêm/sửa category
-   - [ ] Upload image cho category
-   - [ ] Validation: không cho xóa nếu có sản phẩm
-
-**Ưu tiên:** Cao  
-**Thời gian ước tính:** 6-8 giờ
+**Test Guide:** `TEST_GUIDE_M4_CATEGORIES.md`
 
 ---
 
@@ -248,37 +230,18 @@
 
 ---
 
-#### Task M7: Trang quản lý Thanh toán (Payments) ⏳ CHƯA CÓ
+#### Task M7: Trang quản lý Thanh toán (Payments) ✅ HOÀN THÀNH
 
-**Trạng thái hiện tại:**
-- ✅ Payment được tạo tự động khi checkout
-- ✅ Payment info hiển thị trong Order Detail
-- ❌ Chưa có trang riêng để quản lý payments
+**Trạng thái:** ✅ Đã hoàn thành
+- ✅ Trang `/admin/payments` với đầy đủ chức năng
+- ✅ List payments với search, filter theo method và status
+- ✅ Sort theo createdAt DESC (mới nhất trước)
+- ✅ Modal chi tiết payment với cập nhật trạng thái
+- ✅ Đồng bộ COD payments khi order chuyển sang DELIVERED
+- ✅ Validation: COD không thể set PAID nếu order chưa DELIVERED
+- ✅ Nút "Đồng bộ COD đã giao" để sync các đơn cũ
 
-**Yêu cầu:**
-- Trang `/admin/payments`
-- List tất cả payments với filter
-- Xem chi tiết payment
-- Xác nhận thanh toán thủ công (cho COD/Bank Transfer)
-- Xem transaction history
-
-**Cần làm:**
-1. Backend:
-   - [ ] API `GET /api/admin/payments` (list với filter: status, method, date range)
-   - [ ] API `GET /api/admin/payments/:id` (chi tiết payment)
-   - [ ] API `PATCH /api/admin/payments/:id/confirm` (xác nhận thanh toán thủ công)
-   - [ ] API `GET /api/admin/payments/:id/refunds` (lịch sử refunds)
-
-2. Frontend:
-   - [ ] Trang `AdminPayments.tsx`
-   - [ ] Bảng list payments: Order, Method, Amount, Status, Date
-   - [ ] Filter: Status, Method, Date range
-   - [ ] Modal chi tiết payment
-   - [ ] Nút "Xác nhận thanh toán" (cho COD/Bank Transfer)
-   - [ ] Hiển thị refund history
-
-**Ưu tiên:** Trung bình  
-**Thời gian ước tính:** 6-8 giờ
+**Test Guide:** `TEST_GUIDE_M16_M7.md`
 
 ---
 
@@ -484,36 +447,18 @@
 
 ---
 
-#### Task M16: Trang quản lý Voucher (Vouchers) ⏳ CHƯA CÓ
+#### Task M16: Trang quản lý Voucher (Vouchers) ✅ HOÀN THÀNH
 
-**Trạng thái hiện tại:**
-- ✅ API `GET /api/vouchers/validate` (public, chỉ validate)
-- ❌ Chưa có API admin CRUD vouchers
-- ❌ Chưa có trang admin quản lý vouchers
+**Trạng thái:** ✅ Đã hoàn thành
+- ✅ Trang `/admin/vouchers` với đầy đủ chức năng CRUD
+- ✅ Hỗ trợ 3 loại voucher: PERCENT, FIXED_AMOUNT, FREESHIP
+- ✅ Quản lý thời hạn (startsAt, expiresAt) với xử lý timezone đúng
+- ✅ Theo dõi số lần sử dụng (usedCount, usageLimit)
+- ✅ Search, filter theo trạng thái
+- ✅ Hiển thị trạng thái thông minh (Đang hoạt động, Hết hạn, Chưa bắt đầu, Đã hết lượt, Vô hiệu hóa)
+- ✅ Fix bug: usedCount chỉ tăng sau khi order được tạo thành công
 
-**Yêu cầu:**
-- Trang `/admin/vouchers`
-- List, thêm/sửa/xóa voucher
-- Quản lý: code, discount type (percentage/fixed), value, min order, max discount, expiry
-- Theo dõi số lần sử dụng
-
-**Cần làm:**
-1. Backend:
-   - [ ] API `GET /api/admin/vouchers` (list với filter)
-   - [ ] API `POST /api/admin/vouchers` (tạo voucher)
-   - [ ] API `PATCH /api/admin/vouchers/:id` (cập nhật)
-   - [ ] API `DELETE /api/admin/vouchers/:id` (xóa)
-   - [ ] API `GET /api/admin/vouchers/:id/usage` (thống kê sử dụng)
-
-2. Frontend:
-   - [ ] Trang `AdminVouchers.tsx`
-   - [ ] Bảng list vouchers: Code, Type, Value, Min Order, Usage, Expiry, Status
-   - [ ] Modal thêm/sửa voucher
-   - [ ] Filter: Status, Expiry, Type
-   - [ ] Hiển thị số lần sử dụng
-
-**Ưu tiên:** Cao  
-**Thời gian ước tính:** 8-10 giờ
+**Test Guide:** `TEST_GUIDE_M16_M7.md`
 
 ---
 
@@ -677,11 +622,9 @@
 - ✅ Order History (D7)
 - ✅ Partial Refund (D15)
 - ✅ Shipping Fee Configs
-
-### Cần làm (Ưu tiên cao)
-1. **M4: Quản lý Danh mục (Categories)** - 6-8 giờ
-2. **M16: Quản lý Voucher (Vouchers)** - 8-10 giờ
-3. **M7: Quản lý Thanh toán (Payments)** - 6-8 giờ
+- ✅ **M4: Quản lý Danh mục (Categories)** ✅ HOÀN THÀNH
+- ✅ **M16: Quản lý Voucher (Vouchers)** ✅ HOÀN THÀNH
+- ✅ **M7: Quản lý Thanh toán (Payments)** ✅ HOÀN THÀNH
 
 ### Cần làm (Ưu tiên trung bình)
 4. **M1: Quản lý Biến thể Sản phẩm** - 6-8 giờ
@@ -709,10 +652,10 @@
 
 **Gợi ý thứ tự ưu tiên:**
 
-**Phase 1 (Ưu tiên cao - 20-26 giờ):**
-1. M4: Quản lý Danh mục
-2. M16: Quản lý Voucher
-3. M7: Quản lý Thanh toán
+**Phase 1 (Ưu tiên cao) ✅ HOÀN THÀNH:**
+1. ✅ M4: Quản lý Danh mục
+2. ✅ M16: Quản lý Voucher
+3. ✅ M7: Quản lý Thanh toán
 
 **Phase 2 (Ưu tiên trung bình - 58-72 giờ):**
 4. M1: Quản lý Biến thể Sản phẩm
@@ -729,5 +672,5 @@
 
 ---
 
-**Tổng thời gian ước tính:** 115-148 giờ
+**Tổng thời gian ước tính còn lại:** 95-122 giờ (đã hoàn thành 20-26 giờ)
 

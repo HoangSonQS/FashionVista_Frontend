@@ -179,14 +179,77 @@
 
 ---
 
+## NHÓM 7: Quản lý Admin - Categories, Vouchers, Payments
+
+### Task M4: Category Management ✅ HOÀN THÀNH
+
+**Backend:** ✅
+- Migration: `V9__alter_categories_image_to_text.sql`, `V10__add_cloudinary_public_id_to_categories.sql`
+- Entity: `Category.java` (image TEXT, cloudinaryPublicId)
+- Service/Controller: `AdminCategoryService`, `AdminCategoryController`
+- Cloudinary integration: upload và xóa ảnh tự động
+- Endpoints: `GET/POST/PATCH/DELETE /api/admin/categories`
+
+**Frontend:** ✅
+- Trang `AdminCategories.tsx`: CRUD đầy đủ
+- Upload ảnh từ máy tính hoặc URL
+- Search với debounce, filter, pagination
+- Optimistic update cho edit
+- Hiển thị ảnh category trên home và public category pages
+
+**Test Guide:** `TEST_GUIDE_M4_CATEGORIES.md`
+
+---
+
+### Task M16: Voucher Management ✅ HOÀN THÀNH
+
+**Backend:** ✅
+- Service/Controller: `AdminVoucherService`, `AdminVoucherController`
+- Hỗ trợ PERCENT, FIXED_AMOUNT, FREESHIP
+- Fix bug: `usedCount` chỉ tăng sau khi order được tạo thành công
+- Endpoints: `GET/POST/PATCH/DELETE /api/admin/vouchers`
+
+**Frontend:** ✅
+- Trang `AdminVouchers.tsx`: CRUD đầy đủ
+- Form tạo/sửa voucher với validation
+- Fix timezone handling cho datetime-local inputs
+- Hiển thị trạng thái thông minh (active, expired, usage exceeded, etc.)
+- Search, filter, pagination
+
+**Test Guide:** `TEST_GUIDE_M16_M7.md`
+
+---
+
+### Task M7: Payment Management ✅ HOÀN THÀNH
+
+**Backend:** ✅
+- Service/Controller: `AdminPaymentService`, `AdminPaymentController`
+- Sort mặc định theo createdAt DESC
+- Update payment status với validation (COD phải DELIVERED mới được PAID)
+- Sync COD payments khi order chuyển sang DELIVERED
+- Endpoint sync: `POST /api/admin/payments/sync-cod-delivered`
+- Endpoints: `GET /api/admin/payments`, `PATCH /api/admin/payments/:id/status`
+
+**Frontend:** ✅
+- Trang `AdminPayments.tsx`: list, search, filter
+- Modal chi tiết payment với cập nhật trạng thái
+- Nút "Đồng bộ COD đã giao"
+- Hiển thị số tiền đã hoàn (refundAmount)
+
+**Test Guide:** `TEST_GUIDE_M16_M7.md`
+
+---
+
 ## Tổng kết
 
-- **Task đã hoàn thành:** D1, D2, D3, D4, D6, D7, D8, D9, D15 (9 tasks)
+- **Task đã hoàn thành:** D1, D2, D3, D4, D6, D7, D8, D9, D15, **M4, M16, M7** (12 tasks)
 - **Task đang làm:** 0
-- **Task chưa bắt đầu:** D10, D11, D12, D13, D14, D16
+- **Task chưa bắt đầu:** D10, D11, D12, D13, D14, D16, M1, M2, M3, M5, M6, M9, M10, M12, M13, M14, M15, M17, M18, M19, M20, M21
 
 **Ưu tiên tiếp theo:**
-1. Task D10: Thông báo khi đơn đổi trạng thái
-2. Task D11: Newsletter subscription
-3. Task D12: Các trang tĩnh
+1. **M1: Quản lý Biến thể Sản phẩm** (6-8 giờ)
+2. **M2: Quản lý Hình ảnh Sản phẩm** (8-10 giờ)
+3. **M5: Quản lý Sản phẩm trong Bộ sưu tập** (8-10 giờ)
+4. **M6: Quản lý Chi tiết Đơn hàng** (8-10 giờ)
+5. **M9: Trang quản lý Return Requests** (6-8 giờ)
 
