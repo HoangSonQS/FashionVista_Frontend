@@ -367,6 +367,12 @@ const AdminProductList = () => {
                         >
                           Chỉnh sửa
                         </Link>
+                        <Link
+                          to={`/admin/products/${item.id}/images`}
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)]"
+                        >
+                          Quản lý ảnh
+                        </Link>
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(item)}

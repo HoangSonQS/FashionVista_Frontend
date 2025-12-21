@@ -36,6 +36,7 @@ import AdminCategories from '../pages/admin/AdminCategories';
 import AdminVouchers from '../pages/admin/AdminVouchers';
 import AdminPayments from '../pages/admin/AdminPayments';
 import AdminProductVariants from '../pages/admin/AdminProductVariants';
+import AdminProductImages from '../pages/admin/AdminProductImages';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
@@ -86,6 +87,7 @@ export const AppRoutes = () => {
                 <Route path="vouchers" element={<AdminVouchers />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="product-variants" element={<AdminProductVariants />} />
+                <Route path="products/:productId/images" element={<AdminProductImages />} />
             <Route path="collections" element={<AdminCollections />} />
             <Route path="collections/new" element={<AdminCollectionCreate />} />
             <Route path="collections/:id/edit" element={<AdminCollectionCreate />} />
