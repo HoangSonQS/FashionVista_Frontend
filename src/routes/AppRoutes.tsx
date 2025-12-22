@@ -27,6 +27,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminProductList from '../pages/admin/AdminProductList';
 import AdminCollectionCreate from '../pages/admin/AdminCollectionCreate';
 import AdminCollections from '../pages/admin/AdminCollections';
+import AdminCollectionProducts from '../pages/admin/AdminCollectionProducts';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminUserDetail from '../pages/admin/AdminUserDetail';
@@ -91,6 +92,7 @@ export const AppRoutes = () => {
             <Route path="collections" element={<AdminCollections />} />
             <Route path="collections/new" element={<AdminCollectionCreate />} />
             <Route path="collections/:id/edit" element={<AdminCollectionCreate />} />
+            <Route path="collections/:id/products" element={<AdminCollectionProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId/detail" element={<AdminUserDetail />} />

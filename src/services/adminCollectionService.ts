@@ -1,5 +1,6 @@
 import { axiosClient } from './axiosClient';
 import type { CollectionDetail, CollectionSummary } from '../types/collection';
+import type { ProductListItem } from '../types/product';
 
 export interface AdminCollectionQuery {
   keyword?: string;
@@ -65,6 +66,51 @@ export const adminCollectionService = {
   async setProducts(id: number, productIds: number[]): Promise<void> {
     await axiosClient.put(`/admin/collections/${id}/products`, { productIds });
   },
+
+  // Collection Products Management
+  async getCollectionProducts(
+    id: number,
+    params: { page?: number; size?: number }
+  ): Promise<AdminPagedProductResponse> {
+    const response = await axiosClient.get<AdminPagedProductResponse>(
+      `/admin/collections/${id}/products`,
+      { params }
+    );
+    return response.data;
+  },
+
+  async addProductToCollection(collectionId: number, productId: number): Promise<void> {
+    await axiosClient.post(`/admin/collections/${collectionId}/products/${productId}`);
+  },
+
+  async removeProductFromCollection(collectionId: number, productId: number): Promise<void> {
+    await axiosClient.delete(`/admin/collections/${collectionId}/products/${productId}`);
+  },
+
+  async reorderCollectionProducts(collectionId: number, productIds: number[]): Promise<void> {
+    await axiosClient.patch(`/admin/collections/${collectionId}/products/reorder`, {
+      productIds,
+    });
+  },
+
+  async bulkAddRemoveProducts(
+    collectionId: number,
+    addProductIds?: number[],
+    removeProductIds?: number[]
+  ): Promise<void> {
+    await axiosClient.post(`/admin/collections/${collectionId}/products/bulk`, {
+      addProductIds: addProductIds || [],
+      removeProductIds: removeProductIds || [],
+    });
+  },
 };
+
+export interface AdminPagedProductResponse {
+  content: ProductListItem[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 

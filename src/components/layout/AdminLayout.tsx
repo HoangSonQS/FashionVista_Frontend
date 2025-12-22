@@ -36,6 +36,9 @@ const AdminLayout = () => {
   const location = useLocation();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   
   const adminInfo = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -111,11 +114,206 @@ const AdminLayout = () => {
   // Handler để đóng menu khi click vào menu item
   const handleMenuClick = () => {
     setIsMenuOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
+  // Swipe handlers cho mobile
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && isMobileMenuOpen) {
+      // Swipe left để đóng menu
+      setIsMobileMenuOpen(false);
+    } else if (isRightSwipe && !isMobileMenuOpen) {
+      // Swipe right để mở menu (chỉ khi ở cạnh trái màn hình)
+      if (touchStart < 20) {
+        setIsMobileMenuOpen(true);
+      }
+    }
+  };
+
+  // Đóng mobile menu khi click vào overlay
+  const handleOverlayClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Đóng mobile menu khi resize về desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const renderMenuContent = (isMobile: boolean = false) => (
+    <>
+      <div className={`h-full flex flex-col p-6 transition-opacity duration-300 ${isMobile ? 'opacity-100' : isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {/* Header */}
+        <div className="flex-shrink-0 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)] mb-1">Admin</p>
+              <h1 className="text-2xl font-semibold text-[var(--primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                SixthSoul
+              </h1>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">Control center</p>
+            </div>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-lg hover:bg-[var(--muted)] transition-colors"
+                aria-label="Đóng menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation - có thể scroll nếu quá dài */}
+        <nav 
+          className={`flex-1 overflow-y-auto space-y-2 ${!isMobile && !isMenuOpen ? 'overflow-x-hidden' : ''}`}
+          style={{
+            scrollbarWidth: (isMobile || isMenuOpen) ? 'thin' : 'none',
+            msOverflowStyle: (isMobile || isMenuOpen) ? 'auto' : 'none',
+          }}
+        >
+          {navItems.map((item) =>
+            item.children ? (
+              <div key={item.path} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSubmenu(item.path)}
+                  className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors"
+                  style={{
+                    backgroundColor: 'var(--primary-foreground)',
+                    color: 'var(--primary)',
+                    border: 'none',
+                    padding: '0.5rem 0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 400,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--primary-foreground)';
+                    e.currentTarget.style.color = 'var(--primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--primary-foreground)';
+                    e.currentTarget.style.color = 'var(--primary)';
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span className="transition-transform duration-200" style={{ transform: openSubmenus[item.path] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                    <ChevronDown className="h-4 w-4" />
+                  </span>
+                </button>
+                {/* Submenu với animation */}
+                <div
+                  className="overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    maxHeight: openSubmenus[item.path] ? '500px' : '0',
+                    opacity: openSubmenus[item.path] ? 1 : 0,
+                  }}
+                >
+                  <div className="ml-4 space-y-1 border-l border-[var(--border)] pl-4 pt-1">
+                    {item.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          onClick={handleMenuClick}
+                          className="block rounded-lg px-3 py-1 text-xs text-[var(--primary)] transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={handleMenuClick}
+                className="block rounded-lg px-3 py-2 text-sm text-[var(--primary)] transition-colors"
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
+        </nav>
+
+        {/* Footer - cố định ở dưới */}
+        <div className="flex-shrink-0 mt-8 pt-4 border-t border-[var(--border)] text-center">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">{adminInfo?.user?.fullName ?? 'Admin'}</p>
+            <p className="text-xs text-[var(--muted-foreground)] break-words">{adminInfo?.user?.email ?? 'admin@sixthsoul.com'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-3 w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm hover:bg-[var(--muted)] transition-colors text-center bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)]"
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] relative">
-      {/* Sidebar với absolute positioning */}
+    <div 
+      className="min-h-screen bg-[var(--background)] text-[var(--foreground)] relative"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Mobile Menu Button */}
+      <button
+        type="button"
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-30 p-2 rounded-lg bg-[var(--card)] border border-[var(--border)] shadow-lg hover:bg-[var(--muted)] transition-colors"
+        aria-label="Mở menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+          onClick={handleOverlayClick}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside 
+        className={`md:hidden fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-40 shadow-lg transition-transform duration-300 ease-in-out w-64 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {renderMenuContent(true)}
+      </aside>
+
+      {/* Desktop Sidebar với absolute positioning */}
       <aside 
         className={`hidden md:block fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-10 shadow-lg transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'w-64' : 'w-12'
@@ -151,108 +349,12 @@ const AdminLayout = () => {
           {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
 
-        <div className={`h-full flex flex-col p-6 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          {/* Header */}
-          <div className="flex-shrink-0 mb-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)] mb-1">Admin</p>
-            <h1 className="text-2xl font-semibold text-[var(--primary)]" style={{ fontFamily: 'var(--font-serif)' }}>
-              SixthSoul
-            </h1>
-            <p className="text-xs text-[var(--muted-foreground)] mt-1">Control center</p>
-          </div>
-
-          {/* Navigation - có thể scroll nếu quá dài */}
-          <nav 
-            className={`flex-1 overflow-y-auto space-y-2 ${!isMenuOpen ? 'overflow-x-hidden' : ''}`}
-            style={{
-              scrollbarWidth: isMenuOpen ? 'thin' : 'none',
-              msOverflowStyle: isMenuOpen ? 'auto' : 'none',
-            }}
-          >
-            {navItems.map((item) =>
-              item.children ? (
-                <div key={item.path} className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleSubmenu(item.path)}
-                    className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors"
-                    style={{
-                      backgroundColor: 'var(--primary-foreground)',
-                      color: 'var(--primary)',
-                      border: 'none',
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 400,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--primary-foreground)';
-                      e.currentTarget.style.color = 'var(--primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--primary-foreground)';
-                      e.currentTarget.style.color = 'var(--primary)';
-                    }}
-                  >
-                    <span>{item.label}</span>
-                    <span className="transition-transform duration-200" style={{ transform: openSubmenus[item.path] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                      <ChevronDown className="h-4 w-4" />
-                    </span>
-                  </button>
-                  {/* Submenu với animation */}
-                  <div
-                    className="overflow-hidden transition-all duration-300 ease-in-out"
-                    style={{
-                      maxHeight: openSubmenus[item.path] ? '500px' : '0',
-                      opacity: openSubmenus[item.path] ? 1 : 0,
-                    }}
-                  >
-                    <div className="ml-4 space-y-1 border-l border-[var(--border)] pl-4 pt-1">
-                      {item.children.map((child) => (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                          onClick={handleMenuClick}
-                          className="block rounded-lg px-3 py-1 text-xs text-[var(--primary)] transition-colors"
-                          >
-                            {child.label}
-                          </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={handleMenuClick}
-                  className="block rounded-lg px-3 py-2 text-sm text-[var(--primary)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ),
-            )}
-          </nav>
-
-          {/* Footer - cố định ở dưới */}
-          <div className="flex-shrink-0 mt-8 pt-4 border-t border-[var(--border)] text-center">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{adminInfo?.user?.fullName ?? 'Admin'}</p>
-              <p className="text-xs text-[var(--muted-foreground)] break-words">{adminInfo?.user?.email ?? 'admin@sixthsoul.com'}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-3 w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm hover:bg-[var(--muted)] transition-colors text-center bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)]"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
+        {renderMenuContent(false)}
       </aside>
 
       {/* Main content với padding-left để tránh bị che bởi sidebar */}
       <div className={`md:transition-all md:duration-300 flex flex-col min-h-screen ${isMenuOpen ? 'md:pl-64' : 'md:pl-12'}`}>
-        <header className="flex items-center justify-between border-b border-[var(--border)] px-4 md:px-8 py-4 bg-[var(--card)]/80 backdrop-blur sticky top-0 z-5">
+        <header className="flex items-center justify-between border-b border-[var(--border)] px-4 md:px-8 py-4 bg-[var(--card)]/80 backdrop-blur sticky top-0 z-5 pl-14 md:pl-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-[var(--muted-foreground)]">Control center</p>
             <h2 className="text-lg font-semibold">Bảng điều khiển</h2>

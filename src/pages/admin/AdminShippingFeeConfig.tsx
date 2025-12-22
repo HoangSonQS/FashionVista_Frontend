@@ -174,7 +174,7 @@ export default function AdminShippingFeeConfig() {
         </div>
       </div>
 
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

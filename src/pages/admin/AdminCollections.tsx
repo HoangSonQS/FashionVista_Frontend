@@ -178,6 +178,13 @@ const AdminCollections = () => {
                   <td className="px-4 py-3 space-x-2">
                     <button
                       type="button"
+                      onClick={() => navigate(`/admin/collections/${item.id}/products`)}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)] mr-2"
+                    >
+                      Quản lý sản phẩm
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => navigate(`/admin/collections/${item.id}/edit`)}
                       className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-3 py-1 text-xs hover:bg-[var(--muted)]"
                     >
