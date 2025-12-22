@@ -102,5 +102,33 @@ export const adminOrderService = {
     const response = await axiosClient.get<RefundResponse[]>(`/admin/orders/${orderId}/refunds`);
     return response.data;
   },
+
+  // Order Items Management
+  async updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<OrderResponse> {
+    const response = await axiosClient.patch<OrderResponse>(
+      `/admin/orders/${orderId}/items/${itemId}`,
+      { quantity }
+    );
+    return response.data;
+  },
+
+  async deleteOrderItem(orderId: number, itemId: number): Promise<OrderResponse> {
+    const response = await axiosClient.delete<OrderResponse>(
+      `/admin/orders/${orderId}/items/${itemId}`
+    );
+    return response.data;
+  },
+
+  async addOrderItem(orderId: number, request: {
+    productId: number;
+    variantId?: number;
+    quantity: number;
+  }): Promise<OrderResponse> {
+    const response = await axiosClient.post<OrderResponse>(
+      `/admin/orders/${orderId}/items`,
+      request
+    );
+    return response.data;
+  },
 };
 

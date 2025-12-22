@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Edit2, Trash2, X, Check, Search, Plus } from 'lucide-react';
 import {
   adminOrderService,
   type AdminOrderListResponse,
@@ -6,9 +7,12 @@ import {
   type UpdateTrackingNumberRequest,
 } from '../../services/adminOrderService';
 import { adminReturnService } from '../../services/adminReturnService';
+import { adminProductService } from '../../services/adminProductService';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
-import type { OrderResponse } from '../../types/order';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import type { OrderResponse, OrderItem } from '../../types/order';
+import type { ProductListItem, ProductDetail } from '../../types/product';
 import type { RefundMethod, ReturnRequestResponse, ReturnStatus } from '../../types/return';
 
 type Palette = 'info' | 'success' | 'warning' | 'danger' | 'refund';
@@ -147,6 +151,18 @@ const AdminOrders = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [viewDetailLoading, setViewDetailLoading] = useState(false);
   const [orderStatusForm, setOrderStatusForm] = useState('');
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [updatingItem, setUpdatingItem] = useState(false);
+  const [addItemSearch, setAddItemSearch] = useState('');
+  const [addItemOptions, setAddItemOptions] = useState<ProductListItem[]>([]);
+  const [loadingAddItemProducts, setLoadingAddItemProducts] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductListItem | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<{ id: number; size?: string; color?: string } | null>(null);
+  const [productDetail, setProductDetail] = useState<ProductDetail | null>(null);
+  const [addItemQuantity, setAddItemQuantity] = useState('1');
+  const [loadingProductDetail, setLoadingProductDetail] = useState(false);
+  const debouncedAddItemSearch = useDebouncedValue(addItemSearch, 400);
   const [paymentStatusForm, setPaymentStatusForm] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
   const [notifyCustomer, setNotifyCustomer] = useState(true);
@@ -207,6 +223,33 @@ const AdminOrders = () => {
       showToast(message, 'error');
     });
   }, [filters, refreshKey, showToast]);
+
+  // Search products for add item modal
+  useEffect(() => {
+    if (!showAddItemModal || !debouncedAddItemSearch.trim()) {
+      setAddItemOptions([]);
+      return;
+    }
+
+    const searchProducts = async () => {
+      try {
+        setLoadingAddItemProducts(true);
+        const response = await adminProductService.getProducts({
+          search: debouncedAddItemSearch.trim(),
+          page: 0,
+          size: 20,
+        });
+        setAddItemOptions(response.items);
+      } catch (err) {
+        showToast('Không thể tìm kiếm sản phẩm.', 'error');
+      } finally {
+        setLoadingAddItemProducts(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchProducts, 400);
+    return () => clearTimeout(timeoutId);
+  }, [debouncedAddItemSearch, showAddItemModal, orderDetail, showToast]);
 
   const handleExport = async () => {
     try {
@@ -513,7 +556,169 @@ const AdminOrders = () => {
     }
   };
 
+  const handleUpdateItemQuantity = async (orderId: number, itemId: number, newQuantity: number) => {
+    if (newQuantity < 1) {
+      showToast('Số lượng phải lớn hơn 0.', 'error');
+      return;
+    }
+
+    try {
+      setUpdatingItem(true);
+      const updated = await adminOrderService.updateOrderItem(orderId, itemId, newQuantity);
+      setOrderDetail(updated);
+      setEditingItemId(null);
+      showToast('Đã cập nhật số lượng sản phẩm.', 'success');
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Không thể cập nhật số lượng.';
+      showToast(message, 'error');
+    } finally {
+      setUpdatingItem(false);
+    }
+  };
+
+  const handleDeleteItem = async (orderId: number, itemId: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi đơn hàng?')) {
+      return;
+    }
+
+    try {
+      setUpdatingItem(true);
+      const updated = await adminOrderService.deleteOrderItem(orderId, itemId);
+      setOrderDetail(updated);
+      showToast('Đã xóa sản phẩm khỏi đơn hàng.', 'success');
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Không thể xóa sản phẩm.';
+      showToast(message, 'error');
+    } finally {
+      setUpdatingItem(false);
+    }
+  };
+
+  const handleAddItem = async (productId: number, variantId: number | undefined, quantity: number) => {
+    if (!orderDetail) return;
+
+    try {
+      setUpdatingItem(true);
+      const updated = await adminOrderService.addOrderItem(orderDetail.id, {
+        productId,
+        variantId,
+        quantity,
+      });
+      setOrderDetail(updated);
+      setShowAddItemModal(false);
+      showToast('Đã thêm sản phẩm vào đơn hàng.', 'success');
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Không thể thêm sản phẩm.';
+      showToast(message, 'error');
+    } finally {
+      setUpdatingItem(false);
+    }
+  };
+
   const formatCurrency = (value: number) => value.toLocaleString('vi-VN') + '₫';
+
+  // OrderItemRow Component
+  const OrderItemRow = ({
+    item,
+    orderStatus,
+    onUpdate,
+    onDelete,
+  }: {
+    item: OrderItem;
+    orderStatus: string;
+    onUpdate: (quantity: number) => void;
+    onDelete: () => void;
+  }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [quantityInput, setQuantityInput] = useState(item.quantity.toString());
+    const canEdit = orderStatus === 'PENDING' || orderStatus === 'CONFIRMED';
+
+    const handleSave = () => {
+      const newQuantity = parseInt(quantityInput, 10);
+      if (isNaN(newQuantity) || newQuantity < 1) {
+        showToast('Số lượng không hợp lệ.', 'error');
+        return;
+      }
+      onUpdate(newQuantity);
+      setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+      setQuantityInput(item.quantity.toString());
+      setIsEditing(false);
+    };
+
+    return (
+      <div className="flex items-start justify-between gap-3 text-xs border-b border-[var(--border)] pb-2 last:border-0">
+        <div className="flex-1">
+          <p className="font-medium">{item.productName}</p>
+          {(item.color || item.size) && (
+            <p className="text-[var(--muted-foreground)]">
+              {item.color && `Màu: ${item.color}`} {item.size && `• Size: ${item.size}`}
+            </p>
+          )}
+          {isEditing ? (
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="number"
+                min="1"
+                value={quantityInput}
+                onChange={(e) => setQuantityInput(e.target.value)}
+                className="w-20 px-2 py-1 border border-[var(--border)] rounded text-xs"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave();
+                  if (e.key === 'Escape') handleCancel();
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSave}
+                className="p-1 text-green-600 hover:bg-green-50 rounded"
+                title="Lưu"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                title="Hủy"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <p className="text-[var(--muted-foreground)]">SL: {item.quantity}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold">{formatCurrency(item.subtotal)}</p>
+          {canEdit && !isEditing && (
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="p-1 text-[var(--primary)] hover:bg-[var(--muted)] rounded"
+                title="Chỉnh sửa số lượng"
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                title="Xóa"
+                disabled={updatingItem}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderShippingAddress = (snapshot?: string | null) => {
     if (!snapshot) return 'Không có thông tin';
@@ -977,21 +1182,34 @@ const AdminOrders = () => {
                     )}
 
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
-                      <p className="text-sm font-semibold">Sản phẩm ({orderDetail.items.length})</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold">Sản phẩm ({orderDetail.items.length})</p>
+                        {(orderDetail.status === 'PENDING' || orderDetail.status === 'CONFIRMED') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // TODO: Open add item modal
+                              setShowAddItemModal(true);
+                            }}
+                            className="text-xs px-2 py-1 rounded-lg border border-[var(--border)] hover:bg-[var(--muted)] transition-colors flex items-center gap-1"
+                          >
+                            <span>+</span> Thêm sản phẩm
+                          </button>
+                        )}
+                      </div>
                       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                         {orderDetail.items.map((item) => (
-                          <div key={item.id} className="flex items-start justify-between gap-3 text-xs border-b border-[var(--border)] pb-2 last:border-0">
-                            <div>
-                              <p className="font-medium">{item.productName}</p>
-                              {(item.color || item.size) && (
-                                <p className="text-[var(--muted-foreground)]">
-                                  {item.color && `Màu: ${item.color}`} {item.size && `• Size: ${item.size}`}
-                                </p>
-                              )}
-                              <p className="text-[var(--muted-foreground)]">SL: {item.quantity}</p>
-                            </div>
-                            <p className="text-sm font-semibold">{formatCurrency(item.subtotal)}</p>
-                          </div>
+                          <OrderItemRow
+                            key={item.id}
+                            item={item}
+                            orderStatus={orderDetail.status}
+                            onUpdate={(newQuantity) => {
+                              handleUpdateItemQuantity(orderDetail.id, item.id, newQuantity);
+                            }}
+                            onDelete={() => {
+                              handleDeleteItem(orderDetail.id, item.id);
+                            }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -1741,6 +1959,225 @@ const AdminOrders = () => {
                 className="flex-1 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {refundLoading ? 'Đang xử lý...' : 'Xác nhận hoàn tiền'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal */}
+      {showAddItemModal && orderDetail && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--overlay)] px-4"
+          onClick={() => {
+            setShowAddItemModal(false);
+            setAddItemSearch('');
+            setAddItemOptions([]);
+            setSelectedProduct(null);
+            setSelectedVariant(null);
+            setAddItemQuantity('1');
+          }}
+        >
+          <div
+            className="w-full max-w-2xl rounded-3xl bg-[var(--card)] shadow-2xl border border-[var(--border)] overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold">Thêm sản phẩm vào đơn hàng</h2>
+                <p className="text-sm text-[var(--muted-foreground)]">Đơn hàng: {orderDetail.orderNumber}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddItemModal(false);
+                  setAddItemSearch('');
+                  setAddItemOptions([]);
+                  setSelectedProduct(null);
+                  setSelectedVariant(null);
+                  setProductDetail(null);
+                  setAddItemQuantity('1');
+                }}
+                className="rounded-lg p-1 hover:bg-[var(--muted)] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {/* Search Products */}
+              <div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted-foreground)] w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    value={addItemSearch}
+                    onChange={(e) => setAddItemSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  />
+                </div>
+              </div>
+
+              {/* Product List */}
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {loadingAddItemProducts ? (
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">Đang tìm kiếm...</div>
+                ) : addItemOptions.length === 0 ? (
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">
+                    {addItemSearch.trim() ? 'Không tìm thấy sản phẩm nào.' : 'Nhập từ khóa để tìm kiếm sản phẩm.'}
+                  </div>
+                ) : (
+                  addItemOptions.map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setSelectedVariant(null);
+                        setProductDetail(null);
+                        setLoadingProductDetail(true);
+                        adminProductService.getProduct(product.id).then((detail) => {
+                          setProductDetail(detail);
+                          // Auto-select first variant if available
+                          if (detail.variants && detail.variants.length > 0) {
+                            const firstVariant = detail.variants[0];
+                            setSelectedVariant({
+                              id: firstVariant.id,
+                              size: firstVariant.size || undefined,
+                              color: firstVariant.color || undefined,
+                            });
+                          }
+                          setLoadingProductDetail(false);
+                        }).catch(() => {
+                          setLoadingProductDetail(false);
+                        });
+                      }}
+                      className={`p-3 border border-[var(--border)] rounded-lg cursor-pointer transition-colors ${
+                        selectedProduct?.id === product.id
+                          ? 'bg-[var(--primary)]/10 border-[var(--primary)]'
+                          : 'hover:bg-[var(--muted)]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {product.thumbnailUrl && (
+                          <img
+                            src={product.thumbnailUrl}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-[var(--muted-foreground)]">
+                            {product.sku} • {product.price.toLocaleString('vi-VN')} ₫
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Selected Product Details */}
+              {selectedProduct && (
+                <div className="border-t border-[var(--border)] pt-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold mb-2">Sản phẩm đã chọn: {selectedProduct.name}</p>
+                    {loadingProductDetail ? (
+                      <p className="text-xs text-[var(--muted-foreground)]">Đang tải thông tin...</p>
+                    ) : (
+                      <>
+                        {/* Variant Selection */}
+                        {productDetail && productDetail.variants && productDetail.variants.length > 0 && (
+                          <div className="mb-3">
+                            <label className="block text-xs text-[var(--muted-foreground)] mb-2">Chọn biến thể:</label>
+                            <div className="flex flex-wrap gap-2">
+                              {productDetail.variants.map((variant) => (
+                                <button
+                                  key={variant.id}
+                                  type="button"
+                                  onClick={() => setSelectedVariant({
+                                    id: variant.id,
+                                    size: variant.size || undefined,
+                                    color: variant.color || undefined,
+                                  })}
+                                  className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                                    selectedVariant?.id === variant.id
+                                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]'
+                                      : 'border-[var(--border)] hover:bg-[var(--muted)]'
+                                  }`}
+                                >
+                                  {variant.size && variant.color
+                                    ? `${variant.size} / ${variant.color}`
+                                    : variant.size || variant.color || 'Mặc định'}
+                                  {variant.stock !== undefined && (
+                                    <span className="ml-1 text-[var(--muted-foreground)]">
+                                      ({variant.stock})
+                                    </span>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quantity Input */}
+                        <div>
+                          <label className="block text-xs text-[var(--muted-foreground)] mb-1">Số lượng</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={addItemQuantity}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '' || /^\d+$/.test(val)) {
+                                setAddItemQuantity(val);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end border-t border-[var(--border)] px-6 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddItemModal(false);
+                  setAddItemSearch('');
+                  setAddItemOptions([]);
+                  setSelectedProduct(null);
+                  setSelectedVariant(null);
+                  setProductDetail(null);
+                  setAddItemQuantity('1');
+                }}
+                className="px-4 py-2 border border-[var(--border)] rounded-lg hover:bg-[var(--muted)] transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!selectedProduct) {
+                    showToast('Vui lòng chọn sản phẩm.', 'error');
+                    return;
+                  }
+                  const quantity = parseInt(addItemQuantity, 10);
+                  if (isNaN(quantity) || quantity < 1) {
+                    showToast('Số lượng không hợp lệ.', 'error');
+                    return;
+                  }
+                  handleAddItem(selectedProduct.id, selectedVariant?.id, quantity);
+                }}
+                disabled={!selectedProduct || updatingItem || loadingProductDetail}
+                className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
+              >
+                {updatingItem ? 'Đang thêm...' : 'Thêm sản phẩm'}
               </button>
             </div>
           </div>
