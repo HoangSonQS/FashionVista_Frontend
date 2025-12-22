@@ -26,6 +26,7 @@ const navItems = [
   },
   { label: 'Đơn hàng', path: '/admin/orders' },
   { label: 'Đổi trả', path: '/admin/returns' },
+  { label: 'Đánh giá', path: '/admin/reviews' },
   { label: 'Thanh toán', path: '/admin/payments' },
   { label: 'Người dùng', path: '/admin/users' },
   { label: 'Voucher', path: '/admin/vouchers' },
@@ -190,12 +191,8 @@ const AdminLayout = () => {
         </div>
 
         {/* Navigation - có thể scroll nếu quá dài */}
-        <nav 
-          className={`flex-1 overflow-y-auto space-y-2 ${!isMobile && !isMenuOpen ? 'overflow-x-hidden' : ''}`}
-          style={{
-            scrollbarWidth: (isMobile || isMenuOpen) ? 'thin' : 'none',
-            msOverflowStyle: (isMobile || isMenuOpen) ? 'auto' : 'none',
-          }}
+        <nav
+          className={`admin-menu-scroll flex-1 overflow-y-auto space-y-2`}
         >
           {navItems.map((item) =>
             item.children ? (

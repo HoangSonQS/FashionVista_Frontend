@@ -1183,7 +1183,7 @@ const AdminOrders = () => {
 
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold">Sản phẩm ({orderDetail.items.length})</p>
+                      <p className="text-sm font-semibold">Sản phẩm ({orderDetail.items.length})</p>
                         {(orderDetail.status === 'PENDING' || orderDetail.status === 'CONFIRMED') && (
                           <button
                             type="button"
@@ -1196,7 +1196,7 @@ const AdminOrders = () => {
                             <span>+</span> Thêm sản phẩm
                           </button>
                         )}
-                      </div>
+                            </div>
                       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                         {orderDetail.items.map((item) => (
                           <OrderItemRow

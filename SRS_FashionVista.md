@@ -877,6 +877,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - ✅ M2: Quản lý Hình ảnh Sản phẩm (Product Images)
 - ✅ M5: Quản lý Sản phẩm trong Bộ sưu tập (Collection Products)
 - ✅ M6: Quản lý Chi tiết Đơn hàng (Order Items)
+- ✅ M9: Trang quản lý Yêu cầu Trả hàng (Return Requests)
 
 1. ⏳ Advanced Filtering System: Hybrid Filter (Fixed + EAV + JSONB), Precomputed Filter Table, Dynamic filter options, Filter counts và suggestions — mới có filter cố định (category/price/size/color); chưa có EAV/hybrid/precomputed.
 2. ⏳ Advanced Search: Dictionary-based query parsing, Autocomplete với suggestions, Search analytics, Search refinements — autocomplete/gợi ý đã có; parser/analytics/refinements chưa đủ.

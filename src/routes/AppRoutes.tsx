@@ -39,6 +39,7 @@ import AdminPayments from '../pages/admin/AdminPayments';
 import AdminProductVariants from '../pages/admin/AdminProductVariants';
 import AdminProductImages from '../pages/admin/AdminProductImages';
 import AdminReturns from '../pages/admin/AdminReturns';
+import AdminReviews from '../pages/admin/AdminReviews';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
@@ -96,6 +97,7 @@ export const AppRoutes = () => {
             <Route path="collections/:id/products" element={<AdminCollectionProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="returns" element={<AdminReturns />} />
+            <Route path="reviews" element={<AdminReviews />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId/detail" element={<AdminUserDetail />} />
             <Route path="shipping-fee-configs" element={<AdminShippingFeeConfig />} />
