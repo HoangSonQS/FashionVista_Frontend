@@ -872,6 +872,12 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ### Phase 2: Enhanced Features **⏳ ĐANG LÀM / MỘT PHẦN**
 
+**Các mục đã hoàn thành trong Phase 2 (admin):**
+- ✅ M1: Quản lý Biến thể Sản phẩm (Product Variants)
+- ✅ M2: Quản lý Hình ảnh Sản phẩm (Product Images)
+- ✅ M5: Quản lý Sản phẩm trong Bộ sưu tập (Collection Products)
+- ✅ M6: Quản lý Chi tiết Đơn hàng (Order Items)
+
 1. ⏳ Advanced Filtering System: Hybrid Filter (Fixed + EAV + JSONB), Precomputed Filter Table, Dynamic filter options, Filter counts và suggestions — mới có filter cố định (category/price/size/color); chưa có EAV/hybrid/precomputed.
 2. ⏳ Advanced Search: Dictionary-based query parsing, Autocomplete với suggestions, Search analytics, Search refinements — autocomplete/gợi ý đã có; parser/analytics/refinements chưa đủ.
 3. ⏳ Payment gateway integration (VNPay, Momo) — VNPay cơ bản đã tích hợp; Momo chưa.

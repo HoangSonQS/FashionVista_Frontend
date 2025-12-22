@@ -25,6 +25,7 @@ const navItems = [
     ],
   },
   { label: 'Đơn hàng', path: '/admin/orders' },
+  { label: 'Đổi trả', path: '/admin/returns' },
   { label: 'Thanh toán', path: '/admin/payments' },
   { label: 'Người dùng', path: '/admin/users' },
   { label: 'Voucher', path: '/admin/vouchers' },

@@ -7,7 +7,7 @@ import type {
 } from '../types/return';
 
 export const adminReturnService = {
-  async list(params?: { status?: ReturnStatus; page?: number; size?: number }): Promise<PageResponse<ReturnRequestResponse>> {
+  async list(params?: { status?: ReturnStatus; search?: string; page?: number; size?: number }): Promise<PageResponse<ReturnRequestResponse>> {
     const response = await axiosClient.get<PageResponse<ReturnRequestResponse>>('/admin/returns', {
       params,
     });
