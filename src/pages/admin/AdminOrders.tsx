@@ -565,7 +565,6 @@ const AdminOrders = () => {
       setUpdatingItem(true);
       const updated = await adminOrderService.updateOrderItem(orderId, itemId, newQuantity);
       setOrderDetail(updated);
-      setEditingItemId(null);
       showToast('Đã cập nhật số lượng sản phẩm.', 'success');
     } catch (err: any) {
       const message = err?.response?.data?.message || err?.message || 'Không thể cập nhật số lượng.';
