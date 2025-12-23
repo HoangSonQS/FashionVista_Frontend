@@ -9,7 +9,7 @@ import { adminUserService, type AdminUserListResponse } from '../../services/adm
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { Plus, Minus, TrendingUp, X, Search } from 'lucide-react';
+import { Plus, Minus, X, Search } from 'lucide-react';
 
 const TRANSACTION_TYPES: { label: string; value: string }[] = [
   { label: 'Tất cả', value: '' },

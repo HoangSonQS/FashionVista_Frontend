@@ -41,10 +41,6 @@ const AdminCollections = () => {
     void fetchCollections();
   }, [filters]);
 
-  const resetForm = () => {
-    // no inline form now
-  };
-
   const handleToggleVisible = async (item: CollectionSummary) => {
     try {
       await adminCollectionService.updateVisibility(item.id, !item.visible);

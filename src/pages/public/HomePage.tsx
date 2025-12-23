@@ -7,8 +7,6 @@ import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 
-const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
-
 type TabType = 'new' | 'collection' | 'sale';
 
 const HomePage = () => {

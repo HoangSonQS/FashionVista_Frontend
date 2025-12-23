@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Edit2, Trash2, X, Check, Search, Plus } from 'lucide-react';
+import { Edit2, Trash2, X, Check, Search } from 'lucide-react';
 import {
   adminOrderService,
   type AdminOrderListResponse,
@@ -152,7 +152,6 @@ const AdminOrders = () => {
   const [viewDetailLoading, setViewDetailLoading] = useState(false);
   const [orderStatusForm, setOrderStatusForm] = useState('');
   const [showAddItemModal, setShowAddItemModal] = useState(false);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [updatingItem, setUpdatingItem] = useState(false);
   const [addItemSearch, setAddItemSearch] = useState('');
   const [addItemOptions, setAddItemOptions] = useState<ProductListItem[]>([]);
@@ -358,7 +357,7 @@ const AdminOrders = () => {
     setRefundReason('');
     setSelectedRefundItemIds([]);
     try {
-      const orderId = 'id' in order ? order.id : order.id;
+      const orderId = order.id;
       const refundsList = await adminOrderService.getRefundsByOrderId(orderId);
       setRefunds(refundsList);
       // Tính số tiền còn lại có thể hoàn

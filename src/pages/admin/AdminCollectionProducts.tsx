@@ -386,12 +386,14 @@ const AdminCollectionProducts = () => {
               <thead className="bg-[var(--muted)]">
                 <tr>
                   <th className="w-12 p-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={data && selectedProducts.size === data.content.length && data.content.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-[var(--border)]"
-                    />
+                  <input
+                    type="checkbox"
+                    checked={
+                      !!data && selectedProducts.size === data.content.length && data.content.length > 0
+                    }
+                    onChange={handleSelectAll}
+                    className="rounded border-[var(--border)]"
+                  />
                   </th>
                   <th className="w-12 p-3 text-left"></th>
                   <th className="p-3 text-left">Sản phẩm</th>

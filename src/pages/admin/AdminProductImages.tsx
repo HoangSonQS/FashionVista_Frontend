@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, memo } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { adminProductImageService, type AdminProductImageResponse } from '../../services/adminProductImageService';
 import { adminProductService } from '../../services/adminProductService';

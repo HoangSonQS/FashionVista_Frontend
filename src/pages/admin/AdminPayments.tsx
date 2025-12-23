@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   adminPaymentService,
   type AdminPaymentResponse,
@@ -11,11 +10,10 @@ import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const AdminPayments = () => {
-  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 400);
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [paymentStatus, setPaymentStatus] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('');
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | ''>('');
   const [page, setPage] = useState(0);
   const [data, setData] = useState<{
     content: AdminPaymentResponse[];
@@ -170,7 +168,7 @@ const AdminPayments = () => {
         <select
           value={paymentMethod}
           onChange={(e) => {
-            setPaymentMethod(e.target.value);
+            setPaymentMethod((e.target.value as PaymentMethod) || '');
             setPage(0);
           }}
           className="rounded-xl border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
@@ -184,7 +182,7 @@ const AdminPayments = () => {
         <select
           value={paymentStatus}
           onChange={(e) => {
-            setPaymentStatus(e.target.value);
+            setPaymentStatus((e.target.value as PaymentStatus) || '');
             setPage(0);
           }}
           className="rounded-xl border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"

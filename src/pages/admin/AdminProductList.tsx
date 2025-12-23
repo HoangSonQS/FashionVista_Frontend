@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { adminProductService } from '../../services/adminProductService';
-import type { ProductListItem, ProductListResponse, ProductImportResult, ProductDetail, ProductVariant } from '../../types/product';
+import type { ProductListItem, ProductListResponse, ProductImportResult, ProductVariant } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
 

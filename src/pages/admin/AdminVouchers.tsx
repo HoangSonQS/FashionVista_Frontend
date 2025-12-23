@@ -3,7 +3,6 @@ import {
   adminVoucherService,
   type AdminVoucherResponse,
   type VoucherCreateRequest,
-  type VoucherUpdateRequest,
   type VoucherType,
 } from '../../services/adminVoucherService';
 import { useToast } from '../../hooks/useToast';
@@ -62,7 +61,6 @@ const AdminVouchers = () => {
     expiresAt: undefined,
   });
   const [submitting, setSubmitting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { toasts, showToast, removeToast } = useToast();
 
   const filters = useMemo(
@@ -91,7 +89,7 @@ const AdminVouchers = () => {
     };
 
     void fetchVouchers();
-  }, [filters, showToast, refreshKey]);
+  }, [filters, showToast]);
 
   const handleOpenModal = (voucher?: AdminVoucherResponse) => {
     if (voucher) {

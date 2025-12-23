@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { adminUserService } from '../../services/adminUserService';
 import { useToast } from '../../hooks/useToast';
 import { ToastContainer } from '../../components/common/Toast';
-import { ArrowLeft, Mail, Phone, Calendar, User, Lock, Gift, MapPin, ShoppingBag, Heart, Star, Activity, Download } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar, User, Gift, MapPin, ShoppingBag, Heart, Star, Activity } from 'lucide-react';
 
 const AdminUserDetail = () => {
   const { userId } = useParams<{ userId: string }>();
