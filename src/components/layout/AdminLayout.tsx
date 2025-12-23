@@ -27,6 +27,8 @@ const navItems = [
   { label: 'Đơn hàng', path: '/admin/orders' },
   { label: 'Đổi trả', path: '/admin/returns' },
   { label: 'Đánh giá', path: '/admin/reviews' },
+  { label: 'Điểm thân thiết', path: '/admin/loyalty-points' },
+  { label: 'Hoạt động đăng nhập', path: '/admin/login-activities' },
   { label: 'Thanh toán', path: '/admin/payments' },
   { label: 'Người dùng', path: '/admin/users' },
   { label: 'Voucher', path: '/admin/vouchers' },
@@ -191,7 +193,7 @@ const AdminLayout = () => {
         </div>
 
         {/* Navigation - có thể scroll nếu quá dài */}
-        <nav
+        <nav 
           className={`admin-menu-scroll flex-1 overflow-y-auto space-y-2`}
         >
           {navItems.map((item) =>
