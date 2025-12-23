@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Star, MessageSquare, Calendar } from 'lucide-react';
 import { reviewService } from '../../services/reviewService';
 import type { ReviewSummary } from '../../types/review';
@@ -8,7 +8,6 @@ import { ToastContainer } from '../../components/common/Toast';
 import { LoginModal } from '../../components/common/LoginModal';
 
 const MyReviewsPage = () => {
-  const navigate = useNavigate();
   const { toasts, showToast, removeToast } = useToast();
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
   const [loading, setLoading] = useState(true);

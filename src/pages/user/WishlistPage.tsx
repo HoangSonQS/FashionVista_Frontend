@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { wishlistService } from '../../services/wishlistService';
 import type { WishlistItem } from '../../types/wishlist';
@@ -10,7 +10,6 @@ import { LoginModal } from '../../components/common/LoginModal';
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
 
 const WishlistPage = () => {
-  const navigate = useNavigate();
   const { toasts, showToast, removeToast } = useToast();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);

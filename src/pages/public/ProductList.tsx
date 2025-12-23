@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import type {
   CategorySummary,
@@ -28,7 +28,6 @@ interface FilterState {
 }
 
 const ProductList = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const initialSearch = searchParams.get('search') ?? undefined;

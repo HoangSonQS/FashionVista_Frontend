@@ -3,6 +3,7 @@ import type {
   CategorySummary,
   ProductCreateRequest,
   ProductDetail,
+  ProductListItem,
   ProductListResponse,
   SearchSuggestion,
 } from '../types/product';
@@ -15,12 +16,18 @@ export interface ProductQueryParams {
   minPrice?: number;
   maxPrice?: number;
   page?: number;
-  size?: number;
+  pageSize?: number;
 }
 
 export const productService = {
   async getProducts(params: ProductQueryParams): Promise<ProductListResponse> {
-    const response = await axiosClient.get<ProductListResponse>('/products', { params });
+    const { pageSize, ...rest } = params;
+    const response = await axiosClient.get<ProductListResponse>('/products', {
+      params: {
+        ...rest,
+        size: pageSize, // backend expects `size` for page size
+      },
+    });
     return response.data;
   },
 

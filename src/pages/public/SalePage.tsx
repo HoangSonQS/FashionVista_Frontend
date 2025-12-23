@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { productService } from '../../services/productService';
-import type { ProductListItem, ProductListResponse } from '../../types/product';
+import type { ProductListItem } from '../../types/product';
 import { ProductCard } from '../../components/common/ProductCard';
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
