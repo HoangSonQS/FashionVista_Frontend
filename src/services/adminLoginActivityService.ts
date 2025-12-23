@@ -24,6 +24,10 @@ export interface AdminLoginActivityStatsResponse {
   uniqueIPs: number;
 }
 
+export interface LoginActivityLoggingConfig {
+  enabled: boolean;
+}
+
 interface PageResponse<T> {
   content: T[];
   totalPages: number;
@@ -55,6 +59,20 @@ export const adminLoginActivityService = {
     const response = await axiosClient.get<AdminLoginActivityStatsResponse>('/admin/login-activities/stats', {
       params,
     });
+    return response.data;
+  },
+
+  async getLoggingConfig(): Promise<LoginActivityLoggingConfig> {
+    const response = await axiosClient.get<LoginActivityLoggingConfig>('/admin/login-activities/logging-enabled');
+    return response.data;
+  },
+
+  async updateLoggingConfig(enabled: boolean): Promise<LoginActivityLoggingConfig> {
+    const response = await axiosClient.put<LoginActivityLoggingConfig>(
+      '/admin/login-activities/logging-enabled',
+      null,
+      { params: { enabled } }
+    );
     return response.data;
   },
 };

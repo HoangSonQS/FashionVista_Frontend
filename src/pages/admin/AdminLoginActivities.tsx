@@ -6,6 +6,7 @@ import type {
 } from '../../services/adminLoginActivityService';
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { X, AlertTriangle, Shield, ShieldCheck } from 'lucide-react';
 
 const AdminLoginActivities = () => {
@@ -19,7 +20,7 @@ const AdminLoginActivities = () => {
     number: 0,
   });
   const [stats, setStats] = useState<AdminLoginActivityStatsResponse | null>(null);
-  const [userId, setUserId] = useState<number | undefined>(undefined);
+  const [userId, setUserId] = useState<string>('');
   const [loginSuccess, setLoginSuccess] = useState<boolean | undefined>(undefined);
   const [ipAddress, setIpAddress] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
@@ -27,20 +28,68 @@ const AdminLoginActivities = () => {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [loggingEnabled, setLoggingEnabled] = useState<boolean | null>(null);
+  const [loggingToggleLoading, setLoggingToggleLoading] = useState(false);
+  const debouncedUserId = useDebouncedValue(userId, 400);
+  const debouncedIpAddress = useDebouncedValue(ipAddress, 400);
   const { toasts, showToast, removeToast } = useToast();
+
+  const statTooltips: Record<string, string> = {
+    totalLogins: 'Tổng số lượt đăng nhập (thành công + thất bại) theo bộ lọc hiện tại.',
+    successfulLogins: 'Số lượt đăng nhập thành công.',
+    failedLogins: 'Số lượt đăng nhập thất bại (mật khẩu sai hoặc không đủ quyền).',
+    suspiciousActivities:
+      'Hoạt động bị đánh dấu đáng ngờ: IP lạ hoặc nhiều lần đăng nhập thất bại trong thời gian ngắn.',
+    uniqueUsers: 'Số người dùng khác nhau có hoạt động đăng nhập trong bộ lọc.',
+    uniqueIPs: 'Số địa chỉ IP khác nhau được ghi nhận trong bộ lọc.',
+  };
 
   const filters = useMemo(
     () => ({
-      userId: userId,
+      userId: debouncedUserId ? Number(debouncedUserId) : undefined,
       loginSuccess: loginSuccess,
-      ipAddress: ipAddress || undefined,
+      ipAddress: debouncedIpAddress || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       page,
       size: 20,
     }),
-    [userId, loginSuccess, ipAddress, startDate, endDate, page]
+    [debouncedUserId, loginSuccess, debouncedIpAddress, startDate, endDate, page]
   );
+
+  useEffect(() => {
+    const fetchLoggingConfig = async () => {
+      try {
+        const res = await adminLoginActivityService.getLoggingConfig();
+        setLoggingEnabled(res.enabled);
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message || err?.message || 'Không thể tải cấu hình ghi log đăng nhập.';
+        showToast(message, 'error');
+      }
+    };
+    fetchLoggingConfig();
+  }, [showToast]);
+
+  const handleToggleLogging = async () => {
+    if (loggingEnabled === null || loggingToggleLoading) return;
+    try {
+      setLoggingToggleLoading(true);
+      const next = !loggingEnabled;
+      const res = await adminLoginActivityService.updateLoggingConfig(next);
+      setLoggingEnabled(res.enabled);
+      showToast(
+        res.enabled ? 'Đã bật ghi log hoạt động đăng nhập.' : 'Đã tắt ghi log hoạt động đăng nhập.',
+        'success'
+      );
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || 'Không thể cập nhật cấu hình ghi log đăng nhập.';
+      showToast(message, 'error');
+    } finally {
+      setLoggingToggleLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,7 +126,7 @@ const AdminLoginActivities = () => {
   }, [startDate, endDate]);
 
   const handleClearFilters = () => {
-    setUserId(undefined);
+    setUserId('');
     setLoginSuccess(undefined);
     setIpAddress('');
     setStartDate('');
@@ -88,8 +137,27 @@ const AdminLoginActivities = () => {
   return (
     <div className="min-h-screen bg-[var(--background)] p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Quản lý Hoạt động Đăng nhập</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[var(--muted-foreground)]">Ghi log đăng nhập</span>
+            <button
+              type="button"
+              onClick={handleToggleLogging}
+              disabled={loggingEnabled === null || loggingToggleLoading}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full border px-0.5 transition-colors ${
+                loggingEnabled
+                  ? 'border-emerald-500 bg-emerald-500/90'
+                  : 'border-[var(--border)] bg-[var(--muted)]'
+              } disabled:opacity-60 disabled:cursor-not-allowed`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  loggingEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Stats Section */}
@@ -97,25 +165,37 @@ const AdminLoginActivities = () => {
           <div className="mb-6 text-center text-sm text-[var(--muted-foreground)]">Đang tải thống kê...</div>
         ) : stats ? (
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.totalLogins}
+            >
               <div className="text-sm text-[var(--muted-foreground)]">Tổng số lần đăng nhập</div>
               <div className="mt-1 text-2xl font-bold text-[var(--foreground)]">
                 {stats.totalLogins.toLocaleString('vi-VN')}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.successfulLogins}
+            >
               <div className="text-sm text-[var(--muted-foreground)]">Đăng nhập thành công</div>
               <div className="mt-1 text-2xl font-bold text-emerald-600">
                 {stats.successfulLogins.toLocaleString('vi-VN')}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.failedLogins}
+            >
               <div className="text-sm text-[var(--muted-foreground)]">Đăng nhập thất bại</div>
               <div className="mt-1 text-2xl font-bold text-rose-600">
                 {stats.failedLogins.toLocaleString('vi-VN')}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.suspiciousActivities}
+            >
               <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 Hoạt động đáng ngờ
@@ -124,13 +204,19 @@ const AdminLoginActivities = () => {
                 {stats.suspiciousActivities.toLocaleString('vi-VN')}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.uniqueUsers}
+            >
               <div className="text-sm text-[var(--muted-foreground)]">Số user đã đăng nhập</div>
               <div className="mt-1 text-2xl font-bold text-[var(--foreground)]">
                 {stats.uniqueUsers.toLocaleString('vi-VN')}
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <div
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              title={statTooltips.uniqueIPs}
+            >
               <div className="text-sm text-[var(--muted-foreground)]">Số IP khác nhau</div>
               <div className="mt-1 text-2xl font-bold text-[var(--foreground)]">
                 {stats.uniqueIPs.toLocaleString('vi-VN')}
@@ -156,9 +242,9 @@ const AdminLoginActivities = () => {
             <div>
               <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">User ID</label>
               <input
-                type="number"
-                value={userId || ''}
-                onChange={(e) => setUserId(e.target.value ? Number(e.target.value) : undefined)}
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
                 placeholder="Lọc theo User ID"
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
               />

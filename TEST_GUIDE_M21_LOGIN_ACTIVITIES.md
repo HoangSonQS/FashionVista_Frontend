@@ -25,7 +25,7 @@ Trang `/admin/login-activities` cho phép admin xem lịch sử đăng nhập, p
   - Số IP khác nhau
 - Số liệu chính xác và được format với dấu phẩy
 
----
+DONE
 
 ### TC-M21-02: Xem danh sách lịch sử đăng nhập (không filter)
 **Mục đích:** Kiểm tra hiển thị danh sách lịch sử đăng nhập mặc định.
@@ -41,7 +41,7 @@ Trang `/admin/login-activities` cho phép admin xem lịch sử đăng nhập, p
 - Trạng thái thất bại hiển thị badge đỏ với icon Shield
 - Hoạt động đáng ngờ có background màu vàng nhạt và hiển thị "Đáng ngờ" với icon AlertTriangle
 
----
+DONE
 
 ### TC-M21-03: Filter theo User ID
 **Mục đích:** Kiểm tra filter lịch sử theo User ID.
