@@ -147,6 +147,7 @@ const AdminProductImages = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<AdminProductImageResponse | PendingImage | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const { toasts, showToast, removeToast } = useToast();
@@ -274,34 +275,51 @@ const AdminProductImages = () => {
 
     if (actualIndex < 0 || actualDraggedIndex < 0) return;
 
-    // Only update state during drag (visual feedback)
-    // Actual reorder happens on dragEnd
-    setDraggedIndex(index);
+    // Lưu vị trí drop để sử dụng trong handleDragEnd
+    setDropIndex(index);
   }, [draggedIndex, pendingImages.length]);
 
   const handleDragEnd = useCallback(async () => {
-    if (draggedIndex === null) return;
-
-    const actualDraggedIndex = draggedIndex - pendingImages.length;
-    if (actualDraggedIndex < 0) {
+    if (draggedIndex === null || dropIndex === null) {
       setDraggedIndex(null);
+      setDropIndex(null);
       return;
     }
 
-    // Calculate new order from current images state
-    const newOrder = images.map((img) => img.id);
+    const actualDraggedIndex = draggedIndex - pendingImages.length;
+    const actualDropIndex = dropIndex - pendingImages.length;
+
+    // Chỉ xử lý nếu cả 2 index đều hợp lệ và khác nhau
+    if (actualDraggedIndex < 0 || actualDropIndex < 0 || actualDraggedIndex === actualDropIndex) {
+      setDraggedIndex(null);
+      setDropIndex(null);
+      return;
+    }
+
+    // Tính toán lại thứ tự mảng images
+    const newImages = [...images];
+    const [draggedImage] = newImages.splice(actualDraggedIndex, 1);
+    newImages.splice(actualDropIndex, 0, draggedImage);
+
+    // Lấy danh sách imageIds theo thứ tự mới
+    const newOrder = newImages.map((img) => img.id);
+
+    // Cập nhật UI ngay lập tức (optimistic update)
+    setImages(newImages);
     setDraggedIndex(null);
+    setDropIndex(null);
 
     try {
       const reordered = await adminProductImageService.reorderImages(Number(productId), newOrder);
       setImages(reordered);
       showToast('Đã sắp xếp lại thứ tự ảnh.', 'success');
     } catch (err: any) {
+      // Rollback on error
       const revert = await adminProductImageService.getProductImages(Number(productId));
       setImages(revert);
       showToast('Không thể sắp xếp lại thứ tự. Đã khôi phục.', 'error');
     }
-  }, [draggedIndex, images, pendingImages.length, productId, showToast]);
+  }, [draggedIndex, dropIndex, images, pendingImages.length, productId, showToast]);
 
   const handleSetPrimary = useCallback(async (imageId: number) => {
     if (!productId) return;
