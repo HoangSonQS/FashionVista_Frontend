@@ -47,11 +47,29 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor để suppress 404 errors cho return request endpoint
+// Flag & Queue to handle multiple concurrent 401s
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Suppress console error cho 404 khi không tìm thấy return request (trạng thái bình thường)
+  async (error) => {
+    // Suppress console error cho 404
     if (
       error.response?.status === 404 &&
       error.config?.url?.includes('/admin/returns/by-order/')
@@ -60,21 +78,74 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401 Unauthorized (Token expired or invalid)
-    if (error.response?.status === 401) {
-      // Prevent infinite loop if login endpoint fails
-      if (!error.config?.url?.includes('/auth/login')) {
-        console.warn('Session expired or invalid token. Clearing storage...');
-        localStorage.removeItem('auth');
-        localStorage.removeItem('adminAuth');
-        // reload to reset state
+    const originalRequest = error.config;
+
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Prevent infinite loop if auth endpoints themselves fail
+      if (
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/refresh-token')
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return axiosClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const isAdminEndpoint = originalRequest.url?.includes('/admin/');
+      const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
+
+      try {
+        const raw = localStorage.getItem(storageKey);
+        const authData = raw ? JSON.parse(raw) : null;
+        const refreshToken = authData?.refreshToken;
+
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await axios.post(`${baseURL}/auth/refresh-token`, {
+          refreshToken,
+        });
+
+        const { token, refreshToken: newRefreshToken } = response.data;
+
+        // Update Token & Rotation
+        const updatedAuth = { ...authData, token, refreshToken: newRefreshToken };
+        localStorage.setItem(storageKey, JSON.stringify(updatedAuth));
+
+        axiosClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+
+        processQueue(null, token);
+        return axiosClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        console.warn('Session expired. Logging out...');
+        localStorage.removeItem(storageKey);
         if (typeof window !== 'undefined') {
+          // Chỉ reload nếu đang ở trang cần auth, nếu public thì thôi?
+          // Public API lỗi -> clear token -> thành guest. Reload để reset trạng thái UI.
           window.location.reload();
         }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    // Các lỗi khác vẫn log bình thường
     return Promise.reject(error);
   }
 );
