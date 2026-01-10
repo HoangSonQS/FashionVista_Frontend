@@ -3,7 +3,7 @@ import { adminReturnService } from '../../services/adminReturnService';
 import type { ReturnRequestResponse, ReturnStatus, ReturnItemUpdate } from '../../types/return';
 import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
-import { CheckCircle, XCircle, Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw } from 'lucide-react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const STATUS_OPTIONS: { label: string; value: ReturnStatus | '' }[] = [
