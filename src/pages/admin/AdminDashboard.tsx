@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DollarSign, ShoppingBag, Package, Users } from 'lucide-react';
 import KPICard from './components/dashboard/KPICard';
 import RevenueChart from './components/dashboard/RevenueChart';
