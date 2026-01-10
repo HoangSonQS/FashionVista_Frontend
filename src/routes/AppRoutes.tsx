@@ -29,6 +29,8 @@ import AdminCollectionCreate from '../pages/admin/AdminCollectionCreate';
 import AdminCollections from '../pages/admin/AdminCollections';
 import AdminCollectionProducts from '../pages/admin/AdminCollectionProducts';
 import AdminOrders from '../pages/admin/AdminOrders';
+import AdminCarts from '../pages/admin/AdminCarts';
+
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminUserDetail from '../pages/admin/AdminUserDetail';
 import AdminProductVisibility from '../pages/admin/AdminProductVisibility';
@@ -88,11 +90,11 @@ export const AppRoutes = () => {
             <Route path="products/new" element={<ProductCreatePage />} />
             <Route path="products/:id/edit" element={<ProductCreatePage />} />
             <Route path="product-visibility" element={<AdminProductVisibility />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="vouchers" element={<AdminVouchers />} />
-                <Route path="payments" element={<AdminPayments />} />
-                <Route path="product-variants" element={<AdminProductVariants />} />
-                <Route path="products/:productId/images" element={<AdminProductImages />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="vouchers" element={<AdminVouchers />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="product-variants" element={<AdminProductVariants />} />
+            <Route path="products/:productId/images" element={<AdminProductImages />} />
             <Route path="collections" element={<AdminCollections />} />
             <Route path="collections/new" element={<AdminCollectionCreate />} />
             <Route path="collections/:id/edit" element={<AdminCollectionCreate />} />
@@ -102,6 +104,8 @@ export const AppRoutes = () => {
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="loyalty-points" element={<AdminLoyaltyPoints />} />
             <Route path="login-activities" element={<AdminLoginActivities />} />
+            <Route path="login-activities" element={<AdminLoginActivities />} />
+            <Route path="carts" element={<AdminCarts />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/:userId/detail" element={<AdminUserDetail />} />
             <Route path="shipping-fee-configs" element={<AdminShippingFeeConfig />} />

@@ -25,6 +25,7 @@ const navItems = [
     ],
   },
   { label: 'Đơn hàng', path: '/admin/orders' },
+  { label: 'Giỏ hàng', path: '/admin/carts' },
   { label: 'Đổi trả', path: '/admin/returns' },
   { label: 'Đánh giá', path: '/admin/reviews' },
   { label: 'Điểm thân thiết', path: '/admin/loyalty-points' },
@@ -43,7 +44,7 @@ const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  
+
   const adminInfo = useMemo(() => {
     if (typeof window === 'undefined') {
       return null;
@@ -193,7 +194,7 @@ const AdminLayout = () => {
         </div>
 
         {/* Navigation - có thể scroll nếu quá dài */}
-        <nav 
+        <nav
           className={`admin-menu-scroll flex-1 overflow-y-auto space-y-2`}
         >
           {navItems.map((item) =>
@@ -235,14 +236,14 @@ const AdminLayout = () => {
                 >
                   <div className="ml-4 space-y-1 border-l border-[var(--border)] pl-4 pt-1">
                     {item.children.map((child) => (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          onClick={handleMenuClick}
-                          className="block rounded-lg px-3 py-1 text-xs text-[var(--primary)] transition-colors"
-                        >
-                          {child.label}
-                        </Link>
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        onClick={handleMenuClick}
+                        className="block rounded-lg px-3 py-1 text-xs text-[var(--primary)] transition-colors"
+                      >
+                        {child.label}
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -279,7 +280,7 @@ const AdminLayout = () => {
   );
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-[var(--background)] text-[var(--foreground)] relative"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -305,19 +306,17 @@ const AdminLayout = () => {
       )}
 
       {/* Mobile Sidebar */}
-      <aside 
-        className={`md:hidden fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-40 shadow-lg transition-transform duration-300 ease-in-out w-64 ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+      <aside
+        className={`md:hidden fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-40 shadow-lg transition-transform duration-300 ease-in-out w-64 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {renderMenuContent(true)}
       </aside>
 
       {/* Desktop Sidebar với absolute positioning */}
-      <aside 
-        className={`hidden md:block fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-10 shadow-lg transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'w-64' : 'w-12'
-        }`}
+      <aside
+        className={`hidden md:block fixed inset-y-0 left-0 bg-[var(--card)] border-r border-[var(--border)] z-10 shadow-lg transition-all duration-300 ease-in-out ${isMenuOpen ? 'w-64' : 'w-12'
+          }`}
       >
         {/* Toggle button - luôn hiển thị, dính với menu */}
         <button
