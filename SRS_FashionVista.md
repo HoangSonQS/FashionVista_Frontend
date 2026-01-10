@@ -1,4 +1,4 @@
-# SRS - Software Requirements Specification
+ # SRS - Software Requirements Specification
 
 ## SIXTHSOUL - Fashion E-commerce Platform
 

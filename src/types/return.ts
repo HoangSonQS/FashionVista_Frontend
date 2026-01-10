@@ -9,6 +9,8 @@ export interface ReturnItemResponse {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  status: ReturnStatus;
+  acceptedQuantity?: number | null;
 }
 
 export interface ReturnRequestResponse {
@@ -38,11 +40,19 @@ export interface CreateReturnRequestPayload {
   evidenceUrls?: string[];
 }
 
+export interface ReturnItemUpdate {
+  orderItemId: number;
+  status: ReturnStatus;
+  acceptedQuantity: number;
+}
+
 export interface UpdateReturnStatusPayload {
   status: ReturnStatus;
   adminNote?: string;
   refundMethod?: RefundMethod;
   refundAmount?: number;
+  items?: ReturnItemUpdate[];
+  restockItems?: boolean;
 }
 
 export interface PageResponse<T> {

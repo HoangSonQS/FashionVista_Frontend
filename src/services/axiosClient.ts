@@ -56,11 +56,24 @@ axiosClient.interceptors.response.use(
       error.response?.status === 404 &&
       error.config?.url?.includes('/admin/returns/by-order/')
     ) {
-      // Đánh dấu để component biết đây là 404 hợp lệ (không có return request)
-      // Component sẽ handle và return null, không cần log vào console
       error.isExpected404 = true;
       return Promise.reject(error);
     }
+
+    // Handle 401 Unauthorized (Token expired or invalid)
+    if (error.response?.status === 401) {
+      // Prevent infinite loop if login endpoint fails
+      if (!error.config?.url?.includes('/auth/login')) {
+        console.warn('Session expired or invalid token. Clearing storage...');
+        localStorage.removeItem('auth');
+        localStorage.removeItem('adminAuth');
+        // reload to reset state
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      }
+    }
+
     // Các lỗi khác vẫn log bình thường
     return Promise.reject(error);
   }
