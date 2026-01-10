@@ -3,7 +3,8 @@ import { adminCartService } from '../../services/adminCartService';
 import type { AdminCartListResponse } from '../../types/adminCart';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useToast } from '../../hooks/useToast';
-import { Mail, ShoppingCart, User as UserIcon } from 'lucide-react';
+import { Mail, ShoppingCart, User as UserIcon, Eye } from 'lucide-react';
+import AdminCartDetailModal from './components/AdminCartDetailModal';
 
 const AdminCarts = () => {
     const { showToast } = useToast();
@@ -13,6 +14,7 @@ const AdminCarts = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState<'ALL' | 'ACTIVE' | 'ABANDONED'>('ALL');
+    const [selectedCart, setSelectedCart] = useState<AdminCartListResponse | null>(null);
 
     const debouncedSearch = useDebouncedValue(search, 500);
 
@@ -69,8 +71,8 @@ const AdminCarts = () => {
                         <button
                             onClick={() => { setFilterType('ALL'); setPage(0); }}
                             className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${filterType === 'ALL'
-                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
                             Tất cả
@@ -78,8 +80,8 @@ const AdminCarts = () => {
                         <button
                             onClick={() => { setFilterType('ACTIVE'); setPage(0); }}
                             className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${filterType === 'ACTIVE'
-                                    ? 'bg-green-600 text-white shadow-md shadow-green-200'
-                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                ? 'bg-green-600 text-white shadow-md shadow-green-200'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
                             Đang hoạt động
@@ -88,8 +90,8 @@ const AdminCarts = () => {
                             <button
                                 onClick={() => { setFilterType('ABANDONED'); setPage(0); }}
                                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${filterType === 'ABANDONED'
-                                        ? 'bg-red-600 text-white shadow-md shadow-red-200'
-                                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                     }`}
                             >
                                 Bỏ quên
@@ -164,15 +166,24 @@ const AdminCarts = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {cart.isAbandoned && cart.userEmail && (
+                                            <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => handleRemind(cart.id)}
+                                                    onClick={() => setSelectedCart(cart)}
                                                     className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                                                 >
-                                                    <Mail size={14} />
-                                                    Nhắc nhở
+                                                    <Eye size={14} />
+                                                    Xem
                                                 </button>
-                                            )}
+                                                {cart.isAbandoned && cart.userEmail && (
+                                                    <button
+                                                        onClick={() => handleRemind(cart.id)}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                                                    >
+                                                        <Mail size={14} />
+                                                        Nhắc nhở
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -204,6 +215,13 @@ const AdminCarts = () => {
                     </div>
                 )}
             </div>
+
+            {selectedCart && (
+                <AdminCartDetailModal
+                    cart={selectedCart}
+                    onClose={() => setSelectedCart(null)}
+                />
+            )}
         </div>
     );
 };
