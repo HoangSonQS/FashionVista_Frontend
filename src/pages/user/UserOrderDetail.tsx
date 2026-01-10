@@ -3,6 +3,17 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { orderService } from '../../services/orderService';
 import { returnService } from '../../services/returnService';
 import type { OrderResponse } from '../../types/order';
+import {
+  FileText,
+  CheckCircle,
+  Package,
+  Truck,
+  Home,
+  XCircle,
+  AlertCircle,
+  Check,
+  RotateCcw
+} from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Chờ duyệt',
@@ -207,15 +218,15 @@ const UserOrderDetailPage = () => {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {canCancel && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    disabled={cancelling}
-                    className="inline-flex items-center justify-center rounded-full border border-[var(--error)] px-4 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--error)] px-4 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
+                    </button>
                   </div>
                 )}
                 {canRequestReturn && (
@@ -239,69 +250,96 @@ const UserOrderDetailPage = () => {
             </header>
 
             {/* Status Timeline */}
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-4">
+            <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm overflow-hidden">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-6">
                 Trạng thái đơn hàng
               </h2>
-              {(order.status === 'CANCELLED' || order.status === 'REFUNDED') ? (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="h-3 w-3 rounded-full border-2 bg-[var(--error)] border-[var(--error)]" />
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <p className="text-sm font-medium text-[var(--error)]">
-                        {order.status === 'CANCELLED' ? 'Đã hủy' : 'Đã hoàn tiền'}
-                      </p>
-                      <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-                        {order.status === 'CANCELLED'
-                          ? 'Đơn hàng đã bị hủy'
-                          : 'Đơn hàng đã được hoàn tiền'}
-                      </p>
-                    </div>
+
+              {/* CANCELLED / REFUNDED / RETURN State */}
+              {(order.status === 'CANCELLED' || order.status === 'REFUNDED' || order.status.startsWith('RETURN')) ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 bg-[var(--muted)]/20 rounded-xl border border-[var(--border)] border-dashed">
+                  {order.status === 'CANCELLED' ? (
+                    <XCircle className="w-12 h-12 text-[var(--error)]" />
+                  ) : order.status === 'REFUNDED' ? (
+                    <RotateCcw className="w-12 h-12 text-[var(--success)]" />
+                  ) : (
+                    <AlertCircle className="w-12 h-12 text-[var(--warning)]" />
+                  )}
+                  <div>
+                    <h3 className={`text-lg font-bold ${order.status === 'CANCELLED' ? 'text-[var(--error)]' :
+                      order.status === 'REFUNDED' ? 'text-[var(--primary)]' : 'text-[var(--warning)]'
+                      }`}>
+                      {STATUS_LABEL[order.status]}
+                    </h3>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {order.status === 'CANCELLED' ? 'Đơn hàng này đã bị hủy.' :
+                        order.status === 'REFUNDED' ? 'Đơn hàng đã được hoàn tiền.' :
+                          'Đơn hàng đang trong quy trình đổi trả.'}
+                    </p>
                   </div>
                 </div>
               ) : (
-              <div className="space-y-3">
-                {[
-                  { key: 'PENDING', label: 'Chờ duyệt', desc: 'Đơn hàng đã được đặt, đang chờ xác nhận' },
-                  { key: 'CONFIRMED', label: 'Đã xác nhận', desc: 'Đơn hàng đã được xác nhận' },
-                  { key: 'PROCESSING', label: 'Đang xử lý', desc: 'Đơn hàng đang được chuẩn bị' },
-                  { key: 'SHIPPING', label: 'Đang giao', desc: 'Đơn hàng đang trên đường vận chuyển' },
-                  { key: 'DELIVERED', label: 'Đã giao', desc: 'Đơn hàng đã được giao thành công' },
-                ].map((step, index, arr) => {
-                  const isActive = step.key === order.status;
-                    const currentIndex = arr.findIndex((s) => s.key === order.status);
-                    const isCompleted = currentIndex > index;
-                  return (
-                    <div key={step.key} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <div
-                          className={`h-3 w-3 rounded-full border-2 ${
-                            isCompleted
-                              ? 'bg-[var(--success)] border-[var(--success)]'
-                              : isActive
-                              ? 'bg-[var(--primary)] border-[var(--primary)]'
-                              : 'bg-transparent border-[var(--muted-foreground)]'
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1 pb-4 border-l border-[var(--border)] pl-3 -ml-[6px]">
-                        <p
-                          className={`text-sm font-medium ${
-                            isActive || isCompleted
-                              ? 'text-[var(--foreground)]'
-                              : 'text-[var(--muted-foreground)]'
-                          }`}
-                        >
-                          {step.label}
-                        </p>
-                        {isActive && <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{step.desc}</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                /* Stepper for Standard Flow */
+                <div className="relative">
+                  {/* Desktop Connecting Line (Absolute) */}
+                  <div className="hidden md:block absolute top-[22px] left-0 right-0 h-[2px] bg-[var(--border)] z-0" />
+
+                  {/* Steps */}
+                  <div className="flex flex-col md:flex-row justify-between relative z-10 gap-6 md:gap-0">
+                    {[
+                      { key: 'PENDING', label: 'Đặt hàng', icon: FileText },
+                      { key: 'CONFIRMED', label: 'Đã xác nhận', icon: CheckCircle },
+                      { key: 'PROCESSING', label: 'Đang xử lý', icon: Package },
+                      { key: 'SHIPPING', label: 'Đang giao', icon: Truck },
+                      { key: 'DELIVERED', label: 'Đã giao', icon: Home },
+                    ].map((step, index, arr) => {
+                      // Determine state
+                      const statusOrder = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPING', 'DELIVERED'];
+                      const currentStatusIdx = statusOrder.indexOf(order.status);
+                      const stepIdx = statusOrder.indexOf(step.key);
+
+                      const isCompleted = currentStatusIdx > stepIdx;
+                      const isActive = currentStatusIdx === stepIdx;
+                      const isUpcoming = currentStatusIdx < stepIdx;
+
+                      // Line Color Logic (for visual progress bar effect, requires complex css or just static line behind)
+                      // Simply using the static line background above for now.
+
+                      return (
+                        <div key={step.key} className="flex flex-row md:flex-col items-center gap-4 md:gap-2 flex-1 relative group">
+
+                          {/* Vertical Connector for Mobile */}
+                          {index !== arr.length - 1 && (
+                            <div className={`md:hidden absolute left-[22px] top-[44px] bottom-[-24px] w-[2px] ${isCompleted ? 'bg-[var(--success)]' : 'bg-[var(--border)]'
+                              }`} />
+                          )}
+
+                          {/* Icon Circle */}
+                          <div
+                            className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all duration-300 ${isCompleted || isActive
+                              ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/20'
+                              : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)]'
+                              }`}
+                          >
+                            {isCompleted ? <Check className="w-6 h-6" /> : <step.icon className="w-5 h-5" />}
+                          </div>
+
+                          {/* Text Info */}
+                          <div className={`text-left md:text-center transition-colors duration-300 ${isActive ? 'scale-105 origin-left md:origin-center' : ''}`}>
+                            <p className={`text-sm font-bold ${isActive ? 'text-[var(--primary)]' :
+                              isCompleted ? 'text-[var(--foreground)]' : 'text-[var(--muted-foreground)]'
+                              }`}>
+                              {step.label}
+                            </p>
+                            <p className="text-[10px] md:text-xs text-[var(--muted-foreground)] hidden sm:block">
+                              {isActive ? 'Đang thực hiện' : isCompleted ? 'Hoàn tất' : 'Chờ xử lý'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -347,30 +385,29 @@ const UserOrderDetailPage = () => {
                       {order.paymentMethod === 'COD'
                         ? 'Thanh toán khi nhận hàng (COD)'
                         : order.paymentMethod === 'VNPAY'
-                        ? 'VNPay'
-                        : order.paymentMethod === 'MOMO'
-                        ? 'MoMo'
-                        : order.paymentMethod}
+                          ? 'VNPay'
+                          : order.paymentMethod === 'MOMO'
+                            ? 'MoMo'
+                            : order.paymentMethod}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[var(--muted-foreground)]">Trạng thái</span>
                     <span
-                      className={`font-medium ${
-                        order.paymentStatus === 'PAID'
-                          ? 'text-[var(--success)]'
-                          : order.paymentStatus === 'FAILED'
+                      className={`font-medium ${order.paymentStatus === 'PAID'
+                        ? 'text-[var(--success)]'
+                        : order.paymentStatus === 'FAILED'
                           ? 'text-[var(--error)]'
                           : 'text-[var(--warning)]'
-                      }`}
+                        }`}
                     >
                       {order.paymentStatus === 'PAID'
                         ? 'Đã thanh toán'
                         : order.paymentStatus === 'FAILED'
-                        ? 'Thanh toán thất bại'
-                        : order.paymentStatus === 'PENDING'
-                        ? 'Chờ thanh toán'
-                        : order.paymentStatus}
+                          ? 'Thanh toán thất bại'
+                          : order.paymentStatus === 'PENDING'
+                            ? 'Chờ thanh toán'
+                            : order.paymentStatus}
                     </span>
                   </div>
                 </div>
