@@ -1,5 +1,5 @@
 import { axiosClient } from './axiosClient';
-import type { AdminCartListResponse, AdminCartListPage } from '../types/adminCart';
+import type { AdminCartListPage } from '../types/adminCart';
 import type { CartResponse } from '../types/cart';
 
 export interface AdminCartParams {

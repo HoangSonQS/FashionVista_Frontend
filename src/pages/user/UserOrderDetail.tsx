@@ -300,7 +300,6 @@ const UserOrderDetailPage = () => {
 
                       const isCompleted = currentStatusIdx > stepIdx;
                       const isActive = currentStatusIdx === stepIdx;
-                      const isUpcoming = currentStatusIdx < stepIdx;
 
                       // Line Color Logic (for visual progress bar effect, requires complex css or just static line behind)
                       // Simply using the static line background above for now.

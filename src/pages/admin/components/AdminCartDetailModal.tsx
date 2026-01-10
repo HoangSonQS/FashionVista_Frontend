@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Package, CreditCard, User } from 'lucide-react';
+import { X, User, Phone, MapPin, Mail, Package, FileText, Calendar, Clock, DollarSign, AlertCircle } from 'lucide-react';
 import { adminCartService } from './../../../services/adminCartService';
 import type { CartResponse } from './../../../types/cart';
 import type { AdminCartListResponse } from './../../../types/adminCart';

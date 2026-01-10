@@ -34,7 +34,7 @@ const AdminReturns = () => {
   const [adminNote, setAdminNote] = useState('');
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [bulkUpdating, setBulkUpdating] = useState(false);
+
   const [detailUpdating, setDetailUpdating] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
@@ -99,23 +99,7 @@ const AdminReturns = () => {
     setSelectedIds(allSelected ? [] : allIds);
   };
 
-  const handleBulkUpdate = async (status: ReturnStatus) => {
-    if (selectedIds.length === 0) return;
-    if (!confirm(`Xác nhận cập nhật ${selectedIds.length} yêu cầu về trạng thái ${status}?`)) return;
 
-    try {
-      setBulkUpdating(true);
-      await Promise.all(
-        selectedIds.map((id) => adminReturnService.updateStatus(id, { status }))
-      );
-      showToast('Đã cập nhật trạng thái.', 'success');
-      fetchList();
-    } catch (err: any) {
-      showToast(err.message || 'Lỗi cập nhật', 'error');
-    } finally {
-      setBulkUpdating(false);
-    }
-  };
 
   const handleSaveDetail = async () => {
     if (!selected) return;
