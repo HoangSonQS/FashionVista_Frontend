@@ -5,6 +5,7 @@ import { ChevronDown, Menu, X } from 'lucide-react';
 
 const navItems = [
   { label: 'Tổng quan', path: '/admin' },
+  { label: 'Báo cáo', path: '/admin/reports' },
   {
     label: 'Sản phẩm',
     path: '/admin/products',

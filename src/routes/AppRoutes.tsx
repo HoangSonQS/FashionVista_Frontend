@@ -24,6 +24,7 @@ import MyReviewsPage from '../pages/user/MyReviewsPage';
 import ProductCreatePage from '../pages/admin/ProductCreate';
 import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminReports from '../pages/admin/AdminReports';
 import AdminProductList from '../pages/admin/AdminProductList';
 import AdminCollectionCreate from '../pages/admin/AdminCollectionCreate';
 import AdminCollections from '../pages/admin/AdminCollections';
@@ -89,6 +90,7 @@ export const AppRoutes = () => {
             <Route path="products" element={<AdminProductList />} />
             <Route path="products/new" element={<ProductCreatePage />} />
             <Route path="products/:id/edit" element={<ProductCreatePage />} />
+            <Route path="reports" element={<AdminReports />} />
             <Route path="product-visibility" element={<AdminProductVisibility />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="vouchers" element={<AdminVouchers />} />
