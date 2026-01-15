@@ -9,7 +9,6 @@ import {
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductListItem } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 // Helper function to convert Vietnamese text to slug format
@@ -64,7 +63,7 @@ const AdminProductVariants = () => {
   const [quickEditValue, setQuickEditValue] = useState<string>('');
   const [autoGenerateSku, setAutoGenerateSku] = useState(true); // Track if SKU should be auto-generated
   const [priceInput, setPriceInput] = useState<string>(''); // String state for price input
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -405,7 +404,6 @@ const AdminProductVariants = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminUserService, type AdminUserListResponse, type UpdateUserStatusRequest, type UpdateUserRoleRequest } from '../../services/adminUserService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { Download, Plus, KeyRound } from 'lucide-react';
 import AdminCreateUserModal from './components/AdminCreateUserModal';
 import AdminResetPasswordModal from './components/AdminResetPasswordModal';
@@ -34,7 +33,7 @@ const AdminUsers = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resettingUser, setResettingUser] = useState<AdminUserListResponse | null>(null);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   // Lấy current admin ID từ localStorage
   const currentAdminId = useMemo(() => {
@@ -313,7 +312,7 @@ const AdminUsers = () => {
                               onClick={() => handleToggleStatus(user)}
                               disabled={updatingId === user.id}
                               className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${user.active
-                                ? 'border-[var(--error)] bg-[var(--error-bg)] text-[var(--error-foreground)] hover:bg-[var(--error-bg)]/80'
+                                ? 'border-[var(--error)] bg-[var(--error-bg)] text-[var(--foreground)] hover:bg-[var(--error-bg)]/80'
                                 : 'border-[var(--success)] bg-[var(--success-bg)] text-[var(--success-foreground)] hover:bg-[var(--success-bg)]/80'
                                 }`}
                             >
@@ -367,8 +366,6 @@ const AdminUsers = () => {
           </>
         )
       }
-
-      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       {
         showCreateModal && (

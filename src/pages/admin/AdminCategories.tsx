@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminCategoryService, type AdminCategoryResponse, type CategoryCreateRequest, type CategoryUpdateRequest } from '../../services/adminCategoryService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const AdminCategories = () => {
@@ -28,7 +27,7 @@ const AdminCategories = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -64,7 +63,7 @@ const AdminCategories = () => {
       try {
         const response = await adminCategoryService.getAllCategories({ size: 1000 });
         setCategories(response.content);
-      } catch (err) {
+      } catch {
         // Ignore error
       }
     };
@@ -195,7 +194,7 @@ const AdminCategories = () => {
           try {
             const allResponse = await adminCategoryService.getAllCategories({ size: 1000 });
             setCategories(allResponse.content);
-          } catch (err) {
+          } catch {
             // Ignore error
           }
         } else {
@@ -238,7 +237,7 @@ const AdminCategories = () => {
           // Reload all categories for parent selection
           const allResponse = await adminCategoryService.getAllCategories({ size: 1000 });
           setCategories(allResponse.content);
-        } catch (err) {
+        } catch {
           // Ignore error, sẽ được fetch lại bởi useEffect
         }
         return; // Return sớm để không chạy code bên dưới
@@ -323,7 +322,6 @@ const AdminCategories = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>

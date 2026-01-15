@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductListItem, ProductListResponse } from '../../types/product';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 
 const statusOptions = [
@@ -21,7 +20,7 @@ const visibleOptions = [
 const PAGE_SIZE = 15;
 
 const AdminProductVisibility = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -366,7 +365,6 @@ const AdminProductVisibility = () => {
         </div>
       )}
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

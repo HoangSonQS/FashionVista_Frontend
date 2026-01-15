@@ -5,7 +5,6 @@ import { adminCollectionService, type AdminPagedProductResponse } from '../../se
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductListItem } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface CollectionInfo {
@@ -17,7 +16,7 @@ interface CollectionInfo {
 const AdminCollectionProducts = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const collectionId = id ? Number(id) : null;
 
   const [collectionInfo, setCollectionInfo] = useState<CollectionInfo | null>(null);
@@ -312,7 +311,6 @@ const AdminCollectionProducts = () => {
 
   return (
     <div className="p-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
       
       {/* Header */}
       <div className="mb-6">

@@ -4,11 +4,10 @@ import { productService } from '../../services/productService';
 import type { CategorySummary, ProductListItem, ProductListResponse } from '../../types/product';
 import { ProductCard } from '../../components/common/ProductCard';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,7 +185,6 @@ const CategoryPage = () => {
         </div>
       </section>
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

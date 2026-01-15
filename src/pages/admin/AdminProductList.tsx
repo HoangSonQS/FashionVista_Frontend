@@ -4,7 +4,6 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductListItem, ProductListResponse, ProductImportResult, ProductVariant } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 
 const statusOptions = [
   { label: 'Tất cả', value: '' },
@@ -14,7 +13,7 @@ const statusOptions = [
 ];
 
 const AdminProductList = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(0);
@@ -474,7 +473,6 @@ const AdminProductList = () => {
           </div>
         </div>
       )}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

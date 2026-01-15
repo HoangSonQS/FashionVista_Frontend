@@ -35,7 +35,7 @@ export const LoginModal = ({ isOpen, onClose, message = 'Bạn cần đăng nh�
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-[var(--card)] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-[var(--radius)] bg-[var(--card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-2">Đăng nhập yêu cầu</h3>

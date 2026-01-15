@@ -6,7 +6,6 @@ import {
   type PaymentStatus,
 } from '../../services/adminPaymentService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const AdminPayments = () => {
@@ -28,7 +27,7 @@ const AdminPayments = () => {
   const [selectedPayment, setSelectedPayment] = useState<AdminPaymentResponse | null>(null);
   const [paymentStatusForm, setPaymentStatusForm] = useState<PaymentStatus>('PENDING');
   const [updating, setUpdating] = useState(false);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -121,7 +120,6 @@ const AdminPayments = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>

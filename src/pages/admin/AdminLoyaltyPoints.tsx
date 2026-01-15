@@ -6,7 +6,6 @@ import type {
   AdjustLoyaltyPointsRequest,
 } from '../../services/adminLoyaltyPointService';
 import { adminUserService, type AdminUserListResponse } from '../../services/adminUserService';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { Plus, Minus, X, Search } from 'lucide-react';
@@ -58,7 +57,7 @@ const AdminLoyaltyPoints = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUserListResponse | null>(null);
   const userSearchDebounced = useDebouncedValue(userSearch, 300);
   const userSearchRef = useRef<HTMLDivElement>(null);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -603,7 +602,6 @@ const AdminLoyaltyPoints = () => {
           </div>
         )}
       </div>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

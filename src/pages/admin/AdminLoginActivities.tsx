@@ -4,7 +4,6 @@ import type {
   AdminLoginActivityResponse,
   AdminLoginActivityStatsResponse,
 } from '../../services/adminLoginActivityService';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { X, AlertTriangle, Shield, ShieldCheck } from 'lucide-react';
@@ -32,7 +31,7 @@ const AdminLoginActivities = () => {
   const [loggingToggleLoading, setLoggingToggleLoading] = useState(false);
   const debouncedUserId = useDebouncedValue(userId, 400);
   const debouncedIpAddress = useDebouncedValue(ipAddress, 400);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const statTooltips: Record<string, string> = {
     totalLogins: 'Tổng số lượt đăng nhập (thành công + thất bại) theo bộ lọc hiện tại.',
@@ -412,7 +411,6 @@ const AdminLoginActivities = () => {
           )}
         </div>
       </div>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

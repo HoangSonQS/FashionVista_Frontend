@@ -6,7 +6,6 @@ import {
   type VoucherType,
 } from '../../services/adminVoucherService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 // Helper function to convert ISO string (from backend) to local datetime-local format
@@ -61,7 +60,7 @@ const AdminVouchers = () => {
     expiresAt: undefined,
   });
   const [submitting, setSubmitting] = useState(false);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -267,7 +266,6 @@ const AdminVouchers = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>

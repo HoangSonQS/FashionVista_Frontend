@@ -4,11 +4,10 @@ import { Star, MessageSquare, Calendar } from 'lucide-react';
 import { reviewService } from '../../services/reviewService';
 import type { ReviewSummary } from '../../types/review';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { LoginModal } from '../../components/common/LoginModal';
 
 const MyReviewsPage = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -144,7 +143,6 @@ const MyReviewsPage = () => {
         )}
       </div>
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

@@ -13,7 +13,6 @@ import { cartService } from '../../services/cartService';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 
@@ -40,7 +39,7 @@ const ProductList = () => {
   const [quickBuyLoading, setQuickBuyLoading] = useState<Record<number, boolean>>({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { openDrawer } = useCartDrawer();
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [variantModal, setVariantModal] = useState<{
     product: ProductListItem;
     variants: ProductVariant[];
@@ -493,7 +492,6 @@ const ProductList = () => {
         onClose={() => setShowLoginModal(false)}
         message="Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng hoặc mua ngay."
       />
-      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       {variantModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4">

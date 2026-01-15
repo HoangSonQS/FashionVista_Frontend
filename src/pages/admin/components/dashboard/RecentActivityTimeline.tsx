@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Activity as ActivityIcon, Clock, CheckCircle, Truck, User } from 'lucide-react';
 
 interface Activity {
@@ -74,4 +74,4 @@ const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({ activit
     );
 };
 
-export default RecentActivityTimeline;
+export default memo(RecentActivityTimeline);

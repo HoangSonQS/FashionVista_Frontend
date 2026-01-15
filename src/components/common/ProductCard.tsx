@@ -45,7 +45,7 @@ export const ProductCard = ({
             </div>
           )}
           {hasDiscount && (
-            <div className="absolute top-4 left-4 bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide">
+            <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 text-xs font-medium tracking-wide">
               -{discountPercent}%
             </div>
           )}
@@ -53,12 +53,12 @@ export const ProductCard = ({
       </Link>
       <div className="mt-4 space-y-1">
         <Link to={`/products/${slug}`}>
-          <h3 className="font-light text-sm text-[#4DA3E8] hover:underline transition-all line-clamp-2 tracking-wide">
+          <h3 className="font-light text-sm text-[var(--foreground)] hover:underline transition-all line-clamp-2 tracking-wide">
             {name}
           </h3>
         </Link>
         <div className="flex items-baseline gap-2">
-          <span className="font-normal text-sm text-[#4DA3E8]">
+          <span className="font-normal text-sm text-[var(--foreground)]">
             {formatCurrency(price)}
           </span>
           {hasDiscount && typeof compareAtPrice === 'number' && (

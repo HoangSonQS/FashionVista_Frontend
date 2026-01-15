@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState, useEffect } from 'react';
 import { ADMIN_AUTH_CHANGE_EVENT } from '../../constants/events';
 import { ChevronDown, Menu, X } from 'lucide-react';
+import { ToastContainer } from '../common/Toast';
 
 const navItems = [
   { label: 'Tổng quan', path: '/admin' },
@@ -364,6 +365,7 @@ const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 };

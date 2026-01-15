@@ -9,7 +9,6 @@ import {
 import { adminReturnService } from '../../services/adminReturnService';
 import { adminProductService } from '../../services/adminProductService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import type { OrderResponse, OrderItem } from '../../types/order';
 import type { ProductListItem, ProductDetail } from '../../types/product';
@@ -174,7 +173,7 @@ const AdminOrders = () => {
   const [returnAdminNote, setReturnAdminNote] = useState('');
   const [returnRefundAmount, setReturnRefundAmount] = useState<string>('');
   const [returnRefundMethod, setReturnRefundMethod] = useState<RefundMethod>('ORIGINAL');
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [exporting, setExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [bulkUpdating, setBulkUpdating] = useState(false);
@@ -2182,7 +2181,6 @@ const AdminOrders = () => {
         </div>
       )}
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

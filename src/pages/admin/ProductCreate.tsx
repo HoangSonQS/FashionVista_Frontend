@@ -5,7 +5,6 @@ import { productService } from '../../services/productService';
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductCreateRequest, ProductDetail, ProductVariantRequest, ProductImage } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 
 const initialForm: ProductCreateRequest = {
   name: '',
@@ -81,7 +80,7 @@ const ProductCreatePage = () => {
   const cloneId = searchParams.get('clone');
   const editingId = id ? Number(id) : null;
   const isEditing = Boolean(editingId);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const headerTitle = isEditing ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới';
@@ -722,7 +721,6 @@ const ProductCreatePage = () => {
           </div>
         </form>
       </div>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

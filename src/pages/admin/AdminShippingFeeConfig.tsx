@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { shippingFeeConfigService } from '../../services/shippingFeeConfigService';
 import type { ShippingFeeConfig, ShippingFeeConfigUpdateRequest } from '../../types/shipping';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 
 const METHOD_LABELS: Record<string, string> = {
   STANDARD: 'Tiêu chuẩn (GHN / GHTK)',
@@ -21,7 +20,7 @@ export default function AdminShippingFeeConfig() {
     freeShippingThreshold: 0,
   });
   const [saving, setSaving] = useState(false);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   useEffect(() => {
     void loadConfigs();
@@ -174,7 +173,6 @@ export default function AdminShippingFeeConfig() {
         </div>
       </div>
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

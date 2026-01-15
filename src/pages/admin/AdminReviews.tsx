@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { axiosClient } from '../../services/axiosClient';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
@@ -71,7 +70,7 @@ const AdminReviews = () => {
   const [topLoading, setTopLoading] = useState(false);
   const [selectedReview, setSelectedReview] = useState<AdminReview | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({
@@ -488,7 +487,6 @@ const AdminReviews = () => {
         </div>
       )}
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

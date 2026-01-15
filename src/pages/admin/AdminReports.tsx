@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Calendar, DollarSign, ShoppingBag, Users } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import adminReportService, { type AdminReportResponse, type ReportParams } from '../../services/adminReportService';
+
+const LazyRevenueChart = React.lazy(() => import('./components/reports/RevenueChartComponent'));
+const LazyOrderCharts = React.lazy(() => import('./components/reports/OrderChartsComponent'));
 
 const AdminReports = () => {
     const [loading, setLoading] = useState(true);
@@ -21,8 +23,7 @@ const AdminReports = () => {
         try {
             const params: ReportParams = { startDate, endDate };
             const response = await adminReportService.getReports(params);
-            // @ts-ignore
-            setData(response.data ? response.data : response);
+            setData(response.data || response); // Adjusted for potentially nested data
         } catch (error) {
             console.error("Failed to fetch reports:", error);
         } finally {
@@ -129,28 +130,9 @@ const AdminReports = () => {
                             </div>
                         </div>
 
-                        <div className="mt-6">
-                            <h4 className="text-lg font-bold text-gray-800 mb-4">Biểu đồ doanh thu theo thời gian</h4>
-                            <div className="h-[400px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={data.revenueReport.dataPoints} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-                                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis dataKey="label" />
-                                        <YAxis tickFormatter={(val) => `${val / 1000000}M`} />
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <RechartsTooltip
-                                            formatter={(value: any) => [`${parseInt(value).toLocaleString()} ₫`, 'Doanh thu']}
-                                        />
-                                        <Area type="monotone" dataKey="value" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRev)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
+                        <Suspense fallback={<div>Loading Revenue Chart...</div>}>
+                          <LazyRevenueChart dataPoints={data.revenueReport.dataPoints} />
+                        </Suspense>
                     </div>
                 )}
 
@@ -171,47 +153,9 @@ const AdminReports = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-                            <div>
-                                <h4 className="text-lg font-bold text-gray-800 mb-4">Phân bố trạng thái đơn hàng</h4>
-                                <div className="h-[600px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={data.orderReport.statusDistribution}
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={120}
-                                                fill="#8884d8"
-                                                dataKey="count"
-                                                nameKey="status"
-                                                label
-                                            >
-                                                {data.orderReport.statusDistribution.map((_, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="text-lg font-bold text-gray-800 mb-4">Số lượng đơn theo trạng thái (Bar Chart)</h4>
-                                <div className="h-[600px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={data.orderReport.statusDistribution}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="status" />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        </div>
+                        <Suspense fallback={<div>Loading Order Charts...</div>}>
+                          <LazyOrderCharts statusDistribution={data.orderReport.statusDistribution} COLORS={COLORS} />
+                        </Suspense>
                     </div>
                 )}
 

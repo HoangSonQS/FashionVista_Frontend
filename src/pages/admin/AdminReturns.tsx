@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminReturnService } from '../../services/adminReturnService';
 import type { ReturnRequestResponse, ReturnStatus, ReturnItemUpdate } from '../../types/return';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { Save, RotateCcw } from 'lucide-react';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -36,7 +35,7 @@ const AdminReturns = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const [detailUpdating, setDetailUpdating] = useState(false);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const filters = useMemo(
     () => ({ status: statusFilter || undefined, search: debouncedSearch || undefined, page, size: 20 }),
@@ -423,7 +422,6 @@ const AdminReturns = () => {
         </div>
       )}
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

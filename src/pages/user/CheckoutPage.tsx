@@ -15,7 +15,6 @@ import type { Address } from '../../types/user';
 import type { CheckoutRequest, PaymentMethod, ShippingMethod } from '../../types/checkout';
 import type { ShippingFeeConfig } from '../../types/shipping';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(1, 'Vui lòng nhập họ tên'),
@@ -53,7 +52,7 @@ const CheckoutPage = () => {
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
   const [shippingFeeConfigs, setShippingFeeConfigs] = useState<ShippingFeeConfig[]>([]);
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const {
     register,
@@ -862,7 +861,6 @@ const CheckoutPage = () => {
           </aside>
         </form>
 
-        <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
     </div>
   );

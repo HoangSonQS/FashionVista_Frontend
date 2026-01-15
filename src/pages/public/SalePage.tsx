@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { productService } from '../../services/productService';
 import type { ProductListItem } from '../../types/product';
 import { ProductCard } from '../../components/common/ProductCard';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 
 const SalePage = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [data, setData] = useState<ProductListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<'latest' | 'price-asc' | 'price-desc'>('latest');
@@ -130,7 +129,6 @@ const SalePage = () => {
         </div>
       </section>
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

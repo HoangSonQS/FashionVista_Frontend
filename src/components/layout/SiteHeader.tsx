@@ -47,11 +47,11 @@ const IconButton = ({ icon: Icon, label, onClick, className = '', badge }: IconB
     <button
       type="button"
       onClick={onClick}
-      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-[#4DA3E8] text-white transition-colors hover:bg-[#3A8BC7] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3E8] ${className}`}
+      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-[var(--primary)] text-white transition-colors hover:bg-[var(--primary-hover)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--primary)] ${className}`}
     >
       <Icon className="h-5 w-5 shrink-0" />
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -right-1 -top-1 rounded-full bg-white px-1 text-[10px] font-semibold text-[#4DA3E8]">
+        <span className="absolute -right-1 -top-1 rounded-full bg-white px-1 text-[10px] font-semibold text-[var(--primary)]">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -321,20 +321,10 @@ const SiteHeader = () => {
       
       {/* Main header with background đổi màu khi đè lên hero banner */}
       <div
-        className={`relative border-b-2 border-[#4DA3E8] ${
-          isOverHero ? 'bg-[#4DA3E8]' : 'bg-[#E5F1FB]'
+        className={`relative border-b-2 border-[var(--primary)] ${
+          isOverHero ? 'bg-[var(--primary)]' : 'bg-white'
         }`}
       >
-        {/* Vertical light streaks effect */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-          <div className="absolute left-[20%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-          <div className="absolute left-[40%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-          <div className="absolute left-[60%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-          <div className="absolute left-[80%] top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-          <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
-        </div>
-        
         <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Brand name - left side */}
@@ -342,7 +332,7 @@ const SiteHeader = () => {
               <Link
                 to="/"
                 className={`font-serif text-xl md:text-2xl font-bold uppercase tracking-wide transition-colors ${
-                  isOverHero ? 'text-[var(--primary-foreground)]' : 'text-[#4DA3E8]'
+                  isOverHero ? 'text-[var(--primary-foreground)]' : 'text-[var(--primary)]'
                 }`}
               >
                 SIXTHSOUL
@@ -432,7 +422,7 @@ const SiteHeader = () => {
                       }, 200);
                     }}
                     className={`uppercase text-sm md:text-base font-medium tracking-wider transition-colors ${
-                      isOverHero ? 'text-[var(--primary-foreground)] hover:text-white/80' : 'text-[#4DA3E8] hover:text-[#3A8BC7]'
+                      isOverHero ? 'text-[var(--primary-foreground)] hover:text-white/80' : 'text-[var(--primary)] hover:text-[var(--primary-hover)]'
                     }`}
                   >
                     {item.label}

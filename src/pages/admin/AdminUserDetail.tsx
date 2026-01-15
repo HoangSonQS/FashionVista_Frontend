@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { adminUserService } from '../../services/adminUserService';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { ArrowLeft, Mail, Phone, Calendar, User, Gift, MapPin, ShoppingBag, Heart, Star, Activity } from 'lucide-react';
 
 const AdminUserDetail = () => {
@@ -12,7 +11,7 @@ const AdminUserDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'stats' | 'orders' | 'wishlist' | 'reviews' | 'loyalty' | 'activity'>('info');
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!userId) return;
@@ -439,7 +438,6 @@ const AdminUserDetail = () => {
         )}
       </div>
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

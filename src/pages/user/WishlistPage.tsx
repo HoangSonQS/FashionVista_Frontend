@@ -4,13 +4,12 @@ import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { wishlistService } from '../../services/wishlistService';
 import type { WishlistItem } from '../../types/wishlist';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { LoginModal } from '../../components/common/LoginModal';
 
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
 
 const WishlistPage = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
@@ -169,7 +168,6 @@ const WishlistPage = () => {
         )}
       </div>
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

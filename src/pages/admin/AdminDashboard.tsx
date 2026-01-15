@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DollarSign, ShoppingBag, Package, Users } from 'lucide-react';
 import KPICard from './components/dashboard/KPICard';
 import RevenueChart from './components/dashboard/RevenueChart';
@@ -27,6 +27,75 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
+  const kpiItems = useMemo(() => {
+    if (!data) return [];
+    return [
+      {
+        key: 'revenue',
+        label: 'Doanh thu tháng này',
+        value: (data.monthlyRevenue || 0).toLocaleString('vi-VN') + ' ₫',
+        trend: 0,
+        trendType: 'up' as const,
+        icon: DollarSign,
+      },
+      {
+        key: 'newOrders',
+        label: 'Đơn hàng mới',
+        value: data.pendingOrders,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: ShoppingBag,
+      },
+      {
+        key: 'productsSold',
+        label: 'Đơn hoàn thành',
+        value: data.completedOrders,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: Package,
+      },
+      {
+        key: 'newCustomers',
+        label: 'Khách hàng mới',
+        value: data.newCustomers,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: Users,
+      },
+    ];
+  }, [data]);
+
+  const revenueChartData = useMemo(() => {
+    if (!data?.revenueChartData) return [];
+    return data.revenueChartData.map(d => ({
+      name: d.date,
+      value: d.value
+    }));
+  }, [data?.revenueChartData]);
+
+  const orderStatusChartData = useMemo(() => {
+    if (!data) return [];
+    return [
+      { name: 'Pending', value: data.pendingOrders },
+      { name: 'Confirmed', value: 0 },
+      { name: 'Shipping', value: data.shippingOrders },
+      { name: 'Completed', value: data.completedOrders },
+      { name: 'Cancelled', value: data.cancelledOrders },
+    ].filter(d => d.value > 0);
+  }, [data?.pendingOrders, data?.shippingOrders, data?.completedOrders, data?.cancelledOrders]);
+
+  const topProducts = useMemo(() => {
+    if (!data?.topProducts) return [];
+    return data.topProducts.map(p => ({
+      id: p.productId.toString(),
+      name: p.productName,
+      price: p.price || 0,
+      sold: p.quantity,
+      stock: p.stock || 0,
+      image: p.image || 'https://via.placeholder.com/150'
+    }));
+  }, [data?.topProducts]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -38,67 +107,6 @@ const AdminDashboard = () => {
   if (!data) {
     return <div className="p-6 text-center text-red-500">Không thể tải dữ liệu dashboard.</div>;
   }
-
-  const kpiItems = [
-    {
-      key: 'revenue',
-      label: 'Doanh thu tháng này',
-      value: (data.monthlyRevenue || 0).toLocaleString('vi-VN') + ' ₫',
-      trend: 0,
-      trendType: 'up' as const,
-      icon: DollarSign,
-    },
-    {
-      key: 'newOrders',
-      label: 'Đơn hàng mới',
-      value: data.pendingOrders,
-      trend: 0,
-      trendType: 'up' as const,
-      icon: ShoppingBag,
-    },
-    {
-      key: 'productsSold',
-      label: 'Đơn hoàn thành',
-      value: data.completedOrders,
-      trend: 0,
-      trendType: 'up' as const,
-      icon: Package,
-    },
-    {
-      key: 'newCustomers',
-      label: 'Khách hàng mới',
-      value: data.newCustomers,
-      trend: 0,
-      trendType: 'up' as const,
-      icon: Users,
-    },
-  ];
-
-  const revenueChartData = data.revenueChartData ? data.revenueChartData.map(d => ({
-    name: d.date,
-    value: d.value
-  })) : [];
-
-  const orderStatusChartData = [
-    { name: 'Pending', value: data.pendingOrders },
-    { name: 'Confirmed', value: 0 }, // Backend doesn't split confirmed/pending in summary? It has pendingOrders.
-    { name: 'Shipping', value: data.shippingOrders },
-    { name: 'Completed', value: data.completedOrders },
-    { name: 'Cancelled', value: data.cancelledOrders },
-  ].filter(d => d.value > 0);
-
-  // Note: Backend response doesn't strictly have "Confirmed" count exposed in DTO yet, 
-  // it had pending, shipping, completed, cancelled. 
-  // I will stick to what's available.
-
-  const topProducts = data.topProducts.map(p => ({
-    id: p.productId.toString(),
-    name: p.productName,
-    price: p.price || 0,
-    sold: p.quantity,
-    stock: p.stock || 0,
-    image: p.image || 'https://via.placeholder.com/150'
-  }));
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">

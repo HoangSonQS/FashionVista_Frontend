@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useToastStore } from '../../stores/toastStore';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -76,7 +77,7 @@ const Toast = ({ id, message, type = 'info', duration = 4000, onClose, action }:
           <button
             type="button"
             onClick={handleActionClick}
-            className="mt-2 text-xs font-semibold underline hover:no-underline transition-all"
+            className="mt-2 text-xs font-semibold text-[var(--primary)] underline hover:no-underline hover:text-[var(--primary-hover)] transition-all"
           >
             {action.label}
           </button>
@@ -85,7 +86,7 @@ const Toast = ({ id, message, type = 'info', duration = 4000, onClose, action }:
       <button
         type="button"
         onClick={() => onClose(id)}
-        className="flex-shrink-0 rounded p-1 hover:opacity-70 transition-opacity"
+        className="flex-shrink-0 rounded p-1 text-[var(--muted-foreground)] hover:opacity-70 transition-opacity"
         aria-label="Đóng"
       >
         <X className="h-4 w-4" />
@@ -102,12 +103,9 @@ export interface ToastData {
   action?: ToastAction;
 }
 
-interface ToastContainerProps {
-  toasts: ToastData[];
-  onClose: (id: string) => void;
-}
+export const ToastContainer = () => {
+  const { toasts, removeToast } = useToastStore();
 
-export const ToastContainer = ({ toasts, onClose }: ToastContainerProps) => {
   if (toasts.length === 0) return null;
 
   const containerContent = (
@@ -120,7 +118,7 @@ export const ToastContainer = ({ toasts, onClose }: ToastContainerProps) => {
             type={toast.type}
             duration={toast.duration}
             action={toast.action}
-            onClose={onClose}
+            onClose={removeToast}
           />
         </div>
       ))}

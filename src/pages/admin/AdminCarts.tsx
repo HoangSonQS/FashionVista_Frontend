@@ -32,8 +32,7 @@ const AdminCarts = () => {
 
             setCarts(res.content);
             setTotalPages(res.totalPages);
-        } catch (error) {
-            console.error(error);
+        } catch {
             showToast('Không thể tải danh sách giỏ hàng', 'error');
         } finally {
             setLoading(false);

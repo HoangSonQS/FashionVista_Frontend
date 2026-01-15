@@ -1,31 +1,100 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { CategorySummary, ProductListItem } from '../../types/product';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
+import { Carousel } from '../../components/common/Carousel';
+import type { EmblaOptionsType } from 'embla-carousel';
 
 type TabType = 'new' | 'collection' | 'sale';
 
+const CAROUSEL_OPTIONS: EmblaOptionsType = { loop: true };
+
 const HomePage = () => {
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<ProductListItem[]>([]);
   const [newArrivals, setNewArrivals] = useState<ProductListItem[]>([]);
-  const [saleProducts, setSaleProducts] = useState<ProductListItem[]>([]);
+  const [saleProducts, setLoadingSaleProducts] = useState<ProductListItem[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [loadingNewArrivals, setLoadingNewArrivals] = useState(true);
   const [loadingSale, setLoadingSale] = useState(false);
 
+  const carouselSlides = useMemo(() => [
+    <div
+      key={1}
+      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('httpsum.photos/seed/fashion1/1920/1080')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white px-4 max-w-4xl">
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Winter Collection 2026</h1>
+          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+            Stay warm and stylish with our new winter arrivals.
+          </p>
+          <Link
+            to="/collections/winter-2024"
+            className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
+          >
+            Shop Now
+          </Link>
+        </div>
+      </div>
+    </div>,
+    <div
+      key={2}
+      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('httpsum.photos/seed/fashion2/1920/1080')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white px-4 max-w-4xl">
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Up to 50% Off</h1>
+          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+            Don't miss our seasonal sale on selected items.
+          </p>
+          <Link
+            to="/sale"
+            className="inline-block border border-white bg-[var(--accent)] text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-opacity-80 transition-all duration-300"
+          >
+            Explore Sale
+          </Link>
+        </div>
+      </div>
+    </div>,
+    <div
+      key={3}
+      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('httpsum.photos/seed/fashion3/1920/1080')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white px-4 max-w-4xl">
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">New Arrivals</h1>
+          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+            Check out the latest trends and styles.
+          </p>
+          <Link
+            to="/products"
+            className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
+          >
+            View Collection
+          </Link>
+        </div>
+      </div>
+    </div>,
+  ], []);
+
   // Get active tab from URL params
   const section = searchParams.get('section');
-  const activeTab: TabType = 
+  const activeTab: TabType =
     section === 'collections' ? 'collection' :
-    section === 'sale' ? 'sale' :
-    'new';
+      section === 'sale' ? 'sale' :
+        'new';
 
   useEffect(() => {
     const loadData = async () => {
@@ -54,7 +123,7 @@ const HomePage = () => {
       setLoadingSale(true);
       try {
         const sale = await productService.getSaleProducts(8);
-        setSaleProducts(sale);
+        setLoadingSaleProducts(sale);
       } catch (error) {
         showToast('Không thể tải sản phẩm sale.', 'error');
       } finally {
@@ -76,29 +145,8 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-white text-black">
-      {/* Hero Banner - ZARA Style */}
       <section id="home-hero" className="relative w-full">
-        <div className="relative h-[85vh] min-h-[600px] bg-[#4DA3E8] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#4DA3E8]/40 via-[#4DA3E8]/20 to-transparent z-10" />
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <div className="text-center px-4 max-w-4xl">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-light text-white mb-6 tracking-tight">
-                SIXTHSOUL
-              </h1>
-              <p className="text-lg md:text-xl text-white/90 font-light mb-8 tracking-wide">
-                Khám phá bộ sưu tập mới nhất
-              </p>
-              <Link
-                to="/products"
-                className="inline-block border border-white text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-[#4DA3E8] transition-all duration-300"
-              >
-                Xem bộ sưu tập
-              </Link>
-            </div>
-          </div>
-          {/* Placeholder for hero image - can be replaced with actual image */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3E8] via-[#3A8BC7] to-[#2D6FA0]" />
-        </div>
+        <Carousel slides={carouselSlides} options={CAROUSEL_OPTIONS} />
       </section>
 
       {/* Dynamic Products Section based on active tab */}
@@ -205,17 +253,17 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Categories Showcase - ZARA Style */}
+      {/* Categories Showcase - Modern E-commerce Style */}
       {categories.length > 0 && (
         <section className="bg-white py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-8">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-2xl md:text-3xl font-light text-[#4DA3E8] tracking-wide uppercase">
+              <h2 className="text-2xl md:text-3xl font-light text-[var(--primary)] tracking-wide uppercase">
                 Danh mục
               </h2>
               <Link
                 to="/products"
-                className="flex items-center gap-1 text-xs font-light text-[#4DA3E8] hover:underline tracking-wider uppercase"
+                className="flex items-center gap-1 text-xs font-light text-[var(--primary)] hover:underline tracking-wider uppercase"
               >
                 Xem tất cả <ChevronRight className="h-3 w-3" />
               </Link>
@@ -227,7 +275,7 @@ const HomePage = () => {
                   to={`/categories/${category.slug}`}
                   className="group text-center transition-opacity hover:opacity-70"
                 >
-                  <div className="mb-3 aspect-square bg-[#4DA3E8]/10 overflow-hidden rounded-sm">
+                  <div className="mb-3 aspect-square bg-[var(--primary)]/10 overflow-hidden rounded-sm">
                     {category.image ? (
                       <img
                         src={category.image}
@@ -235,14 +283,14 @@ const HomePage = () => {
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-[#4DA3E8]/5 group-hover:bg-[#4DA3E8]/15 transition-colors">
-                        <span className="text-xs text-[#4DA3E8] uppercase tracking-wider">
+                      <div className="h-full w-full flex items-center justify-center bg-[var(--primary)]/5 group-hover:bg-[var(--primary)]/15 transition-colors">
+                        <span className="text-xs text-[var(--primary)] uppercase tracking-wider">
                           {category.name.charAt(0)}
                         </span>
                       </div>
                     )}
                   </div>
-                  <h3 className="text-xs font-light text-[#4DA3E8] tracking-wide uppercase">
+                  <h3 className="text-xs font-light text-[var(--primary)] tracking-wide uppercase">
                     {category.name}
                   </h3>
                 </Link>
@@ -252,8 +300,8 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Promotional Banner - ZARA Style */}
-      <section className="bg-[#4DA3E8] py-20 md:py-24">
+      {/* Promotional Banner - Modern E-commerce Style */}
+      <section className="bg-[var(--primary)] py-20 md:py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-8 text-center">
           <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-wide uppercase">
             Giảm giá lên đến 50%
@@ -263,17 +311,17 @@ const HomePage = () => {
           </p>
           <Link
             to="/products"
-            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[#4DA3E8] transition-all duration-300"
+            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[var(--primary)] transition-all duration-300"
           >
             Mua ngay
           </Link>
         </div>
       </section>
 
-      {/* Newsletter Signup - ZARA Style */}
-      <section className="bg-white border-t border-[#4DA3E8]/20 py-16 md:py-20">
+      {/* Newsletter Signup - Modern E-commerce Style */}
+      <section className="bg-white border-t border-[var(--primary)]/20 py-16 md:py-20">
         <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-3 text-xl md:text-2xl font-light text-[#4DA3E8] tracking-wide uppercase">
+          <h2 className="mb-3 text-xl md:text-2xl font-light text-[var(--primary)] tracking-wide uppercase">
             Đăng ký nhận tin
           </h2>
           <p className="mb-8 text-sm text-gray-600 font-light tracking-wide">
@@ -283,19 +331,19 @@ const HomePage = () => {
             <input
               type="email"
               placeholder="Nhập email của bạn"
-              className="flex-1 border-b border-[#4DA3E8] bg-transparent px-0 py-2 text-sm font-light text-[#4DA3E8] placeholder:text-gray-400 focus:outline-none focus:border-[#4DA3E8]/70 transition-colors"
+              className="flex-1 border-b border-[var(--primary)] bg-transparent px-0 py-2 text-sm font-light text-[var(--primary)] placeholder:text-gray-400 focus:outline-none focus:border-[var(--primary)]/70 transition-colors"
             />
-            <button className="border border-[#4DA3E8] text-[#4DA3E8] px-8 py-2 text-xs font-light tracking-widest uppercase hover:bg-[#4DA3E8] hover:text-white transition-all duration-300">
+            <button className="border border-[var(--primary)] text-[var(--primary)] px-8 py-2 text-xs font-light tracking-widest uppercase hover:bg-[var(--primary)] hover:text-white transition-all duration-300">
               Đăng ký
             </button>
           </div>
         </div>
       </section>
 
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
 
 export default HomePage;
+
 

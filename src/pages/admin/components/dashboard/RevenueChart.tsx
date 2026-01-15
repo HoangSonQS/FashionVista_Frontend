@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AreaChartData {
@@ -51,4 +51,4 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
     );
 };
 
-export default RevenueChart;
+export default memo(RevenueChart);

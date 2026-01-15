@@ -4,7 +4,6 @@ import { adminProductImageService, type AdminProductImageResponse } from '../../
 import { adminProductService } from '../../services/adminProductService';
 import type { ProductDetail } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
-import { ToastContainer } from '../../components/common/Toast';
 import { X, Upload, GripVertical, Star, Trash2 } from 'lucide-react';
 import { optimizeImages } from '../../utils/imageOptimizer';
 
@@ -150,7 +149,7 @@ const AdminProductImages = () => {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<AdminProductImageResponse | PendingImage | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!productId) {
@@ -440,7 +439,6 @@ const AdminProductImages = () => {
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>

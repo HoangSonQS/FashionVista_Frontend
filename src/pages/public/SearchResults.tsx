@@ -7,7 +7,6 @@ import { cartService } from '../../services/cartService';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 
@@ -39,7 +38,7 @@ const SearchResultsPage = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [variantSubmitting, setVariantSubmitting] = useState(false);
   const { openDrawer } = useCartDrawer();
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const currentQuery = params.get('q') ?? params.get('search') ?? '';
 
@@ -381,7 +380,7 @@ const SearchResultsPage = () => {
           message="Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng hoặc mua ngay."
         />
 
-        <ToastContainer toasts={toasts} onClose={removeToast} />
+
 
         {variantModal && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4">
@@ -433,11 +432,10 @@ const SearchResultsPage = () => {
                               type="button"
                               disabled={disabled}
                               onClick={() => !disabled && setSelectedColor(color)}
-                              className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-xs transition-colors ${
-                                isActive
+                              className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-xs transition-colors ${isActive
                                   ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
                                   : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                               {color}
                               {disabled && <span className="ml-1 text-[10px]"> (Hết hàng)</span>}
@@ -481,11 +479,10 @@ const SearchResultsPage = () => {
                               type="button"
                               disabled={disabled}
                               onClick={() => !disabled && setSelectedSize(size)}
-                              className={`rounded-lg border px-2 py-1.5 text-xs text-center transition-colors ${
-                                isActive
+                              className={`rounded-lg border px-2 py-1.5 text-xs text-center transition-colors ${isActive
                                   ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
                                   : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                               {size}
                               {disabled && (
@@ -561,7 +558,6 @@ const SearchResultsPage = () => {
           </div>
         )}
       </div>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
