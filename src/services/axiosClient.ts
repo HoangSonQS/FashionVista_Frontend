@@ -10,6 +10,26 @@ export const axiosClient = axios.create({
   },
 });
 
+// Helper to check token expiration
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const { exp } = JSON.parse(jsonPayload);
+    if (!exp) return false;
+    return Date.now() >= exp * 1000;
+  } catch {
+    return true;
+  }
+};
+
 axiosClient.interceptors.request.use((config) => {
   if (typeof window === 'undefined') {
     return config;
@@ -35,7 +55,7 @@ axiosClient.interceptors.request.use((config) => {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as { token?: string };
-      if (parsed?.token) {
+      if (parsed?.token && !isTokenExpired(parsed.token)) {
         config.headers = config.headers ?? {};
         config.headers.Authorization = `Bearer ${parsed.token}`;
       }
