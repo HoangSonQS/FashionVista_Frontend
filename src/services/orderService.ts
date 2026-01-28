@@ -21,5 +21,15 @@ export const orderService = {
     const response = await axiosClient.post<OrderResponse>(`/orders/${orderNumber}/cancel`);
     return response.data;
   },
+
+  async repay(orderNumber: string): Promise<OrderResponse> {
+    const response = await axiosClient.post<OrderResponse>(`/orders/${orderNumber}/repay`);
+    return response.data;
+  },
+
+  async changePaymentMethod(orderNumber: string, method: string): Promise<OrderResponse> {
+    const response = await axiosClient.post<OrderResponse>(`/orders/${orderNumber}/change-payment-method?method=${method}`);
+    return response.data;
+  },
 };
 

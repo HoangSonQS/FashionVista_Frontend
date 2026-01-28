@@ -65,6 +65,8 @@ const UserOrderDetailPage = () => {
   const [evidenceInput, setEvidenceInput] = useState('');
   const [returnQuantities, setReturnQuantities] = useState<Record<number, number>>({});
   const [returnRequested, setReturnRequested] = useState(false);
+  const [repaying, setRepaying] = useState(false);
+  const [changingMethod, setChangingMethod] = useState(false);
 
   useEffect(() => {
     if (!orderNumber) return;
@@ -167,6 +169,42 @@ const UserOrderDetailPage = () => {
     }
   };
 
+  const handleRepay = async () => {
+    if (!orderNumber) return;
+    try {
+      setRepaying(true);
+      const updated = await orderService.repay(orderNumber);
+      if (updated.paymentUrl) {
+        window.location.href = updated.paymentUrl;
+      } else {
+        setOrder(updated);
+        setActionMessage('Đã tạo liên kết thanh toán mới.');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể thực hiện thanh toán lại.';
+      setActionMessage(message);
+    } finally {
+      setRepaying(false);
+    }
+  };
+
+  const handleChangeToCOD = async () => {
+    if (!orderNumber) return;
+    const confirmed = window.confirm('Bạn muốn đổi sang thanh toán khi nhận hàng (COD)?');
+    if (!confirmed) return;
+    try {
+      setChangingMethod(true);
+      const updated = await orderService.changePaymentMethod(orderNumber, 'COD');
+      setOrder(updated);
+      setActionMessage('Đã đổi sang phương thức COD.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể đổi phương thức thanh toán.';
+      setActionMessage(message);
+    } finally {
+      setChangingMethod(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -237,6 +275,26 @@ const UserOrderDetailPage = () => {
                   >
                     Yêu cầu đổi trả
                   </button>
+                )}
+                {order.status === 'PENDING' && order.paymentMethod === 'VNPAY' && order.paymentStatus === 'PENDING' && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleRepay}
+                      disabled={repaying || cancelling}
+                      className="inline-flex items-center justify-center rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-60"
+                    >
+                      {repaying ? 'Đang xử lý...' : 'Thanh toán lại'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleChangeToCOD}
+                      disabled={changingMethod || cancelling}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors disabled:opacity-60"
+                    >
+                      {changingMethod ? 'Đang đổi...' : 'Đổi sang COD'}
+                    </button>
+                  </div>
                 )}
                 <button
                   type="button"

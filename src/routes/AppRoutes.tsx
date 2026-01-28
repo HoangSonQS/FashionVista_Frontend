@@ -5,6 +5,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
 import AdminLayout from '../components/layout/AdminLayout';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 // Public Pages
 const App = React.lazy(() => import('../App'));

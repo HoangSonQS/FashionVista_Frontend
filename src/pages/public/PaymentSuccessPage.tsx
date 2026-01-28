@@ -1,24 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { orderService } from '../../services/orderService';
+import type { OrderResponse } from '../../types/order';
 
 const PaymentSuccessPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderNumber = searchParams.get('orderNumber');
+  const [order, setOrder] = useState<OrderResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Scroll to top khi component mount
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-    }
-  }, []);
-
-  useEffect(() => {
-    // Scroll to top khi orderNumber thay đổi (khi navigate từ trang khác)
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    if (orderNumber) {
+      orderService.getOrder(orderNumber)
+        .then(setOrder)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, [orderNumber]);
+
+  const isCOD = order?.paymentMethod === 'COD';
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-12">
@@ -37,10 +40,12 @@ const PaymentSuccessPage = () => {
         </div>
         <div className="space-y-2">
           <h1 className="text-2xl md:text-3xl font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
-            Thanh toán thành công
+            {loading ? 'Đang xử lý...' : isCOD ? 'Đặt hàng thành công' : 'Thanh toán và đặt hàng thành công'}
           </h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Cảm ơn bạn đã thanh toán đơn hàng. Bạn có thể xem chi tiết đơn và theo dõi trạng thái giao hàng.
+            {isCOD
+              ? 'Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đang được xử lý.'
+              : 'Chúc mừng! Đơn hàng của bạn đã được thanh toán và khởi tạo thành công.'}
           </p>
           {orderNumber && (
             <div className="pt-2">
