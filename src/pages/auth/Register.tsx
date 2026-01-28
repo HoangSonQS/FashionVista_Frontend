@@ -7,7 +7,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  CheckCircle2,
   ArrowRight,
   ShieldCheck,
   Zap,
