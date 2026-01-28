@@ -63,6 +63,7 @@ const AdminLoginActivities = React.lazy(() => import('../pages/admin/AdminLoginA
 export const AppRoutes = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Suspense fallback={<div className="flex h-screen items-center justify-center text-xl">Loading...</div>}>
         <Routes>
           <Route element={<MainLayout />}>
