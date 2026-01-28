@@ -49,7 +49,13 @@ axiosClient.interceptors.request.use((config) => {
   }
 
   const isAdminEndpoint = normalized.startsWith('/admin/');
-  const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
+
+  // Temporary workaround: Attach admin token for product creation/management
+  // even if the URL doesn't start with /admin/
+  const isProductAdminAction = normalized === '/products' &&
+    ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
+
+  const storageKey = (isAdminEndpoint || isProductAdminAction) ? 'adminAuth' : 'auth';
   const raw = localStorage.getItem(storageKey);
 
   if (raw) {
