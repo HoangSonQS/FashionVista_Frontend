@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MapPin, Truck, CreditCard, Ticket } from 'lucide-react';
+import { MapPin, Truck, CreditCard, Ticket, Plus, ChevronDown, List } from 'lucide-react';
 import axios from 'axios';
+import { addressService } from '../../services/addressService';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
 import { cartService } from '../../services/cartService';
@@ -15,6 +16,7 @@ import type { Address } from '../../types/user';
 import type { CheckoutRequest, PaymentMethod, ShippingMethod } from '../../types/checkout';
 import type { ShippingFeeConfig } from '../../types/shipping';
 import { useToast } from '../../hooks/useToast';
+import type { AddressOption } from '../../types/address';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(1, 'Vui lòng nhập họ tên'),
@@ -53,6 +55,28 @@ const CheckoutPage = () => {
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
   const [shippingFeeConfigs, setShippingFeeConfigs] = useState<ShippingFeeConfig[]>([]);
   const { showToast } = useToast();
+
+  // MODAL STATE
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showAddressListModal, setShowAddressListModal] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+  // ADDRESS FORM STATE (for modal)
+  const [addressForm, setAddressForm] = useState({
+    fullName: '',
+    phone: '',
+    address: '',
+    ward: '',
+    district: '',
+    city: '',
+    isDefault: false,
+  });
+  const [provinces, setProvinces] = useState<AddressOption[]>([]);
+  const [districts, setDistricts] = useState<AddressOption[]>([]);
+  const [wards, setWards] = useState<AddressOption[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
 
   const {
     register,
@@ -104,12 +128,21 @@ const CheckoutPage = () => {
     };
 
     void loadUser();
+
+    // Load provinces for modal
+    addressService.getProvinces().then(data => {
+      const sticky = data.filter(item => ['01', '79', '31', '48', '92'].includes(item.code));
+      const rest = data.filter(item => !['01', '79', '31', '48', '92'].includes(item.code));
+      sticky.sort((a, b) => ['01', '79', '31', '48', '92'].indexOf(a.code) - ['01', '79', '31', '48', '92'].indexOf(b.code));
+      rest.sort((a, b) => a.fullName.localeCompare(b.fullName, 'vi'));
+      setProvinces([...sticky, ...rest]);
+    }).catch(() => setProvinces([]));
   }, [setValue]);
 
   // Load shipping fee configs - chỉ load một lần khi mount
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadShippingFeeConfigs = async () => {
       try {
         const configs = await shippingFeeConfigService.getAll();
@@ -121,9 +154,9 @@ const CheckoutPage = () => {
         // Ignore error, sẽ dùng giá mặc định
       }
     };
-    
+
     void loadShippingFeeConfigs();
-    
+
     return () => {
       isMounted = false;
     };
@@ -176,10 +209,10 @@ const CheckoutPage = () => {
     if (shippingFeeConfigs.length === 0) {
       return null;
     }
-  
+
     // Trạng thái 3: Đã có đủ dữ liệu → tính từ configs
     const config = shippingFeeConfigs.find((c) => c.method === shippingMethod);
-  
+
     // Nếu không tìm thấy config cho method này → dùng giá mặc định
     if (!config) {
       const defaultFees: Record<ShippingMethod, number> = {
@@ -189,11 +222,11 @@ const CheckoutPage = () => {
       };
       return defaultFees[shippingMethod];
     }
-  
+
     // Chỉ check threshold khi đã có config hợp lệ
     const threshold = config.freeShippingThreshold;
     const fee = config.baseFee;
-  
+
     // Debug log (có thể xóa sau)
     console.log('[computedShippingFee]', {
       method: shippingMethod,
@@ -202,19 +235,19 @@ const CheckoutPage = () => {
       fee,
       willBeFree: threshold > 0 && subtotal >= threshold,
     });
-  
+
     // Chỉ miễn phí khi: có sản phẩm VÀ subtotal >= threshold VÀ threshold > 0
     if (threshold > 0 && subtotal >= threshold) {
       return 0;
     }
-  
+
     return fee;
   }, [loadingCart, items.length, subtotal, shippingMethod, shippingFeeConfigs]);
 
   const total =
-  computedShippingFee === null
-    ? subtotal - discount
-    : Math.max(subtotal + computedShippingFee - discount, 0);
+    computedShippingFee === null
+      ? subtotal - discount
+      : Math.max(subtotal + computedShippingFee - discount, 0);
 
   // Function để hiển thị label phí vận chuyển
   // CHỈ hiển thị giá từ configs, KHÔNG tự check threshold (để tránh bị "Miễn phí" đè lên)
@@ -243,7 +276,7 @@ const CheckoutPage = () => {
 
       // Trạng thái 3: Đã có configs → hiển thị giá từ configs (KHÔNG check threshold)
       const config = shippingFeeConfigs.find((c) => c.method === method);
-      
+
       // Nếu không tìm thấy config cho method này → dùng giá mặc định
       if (!config) {
         const defaultFees: Record<ShippingMethod, number> = {
@@ -271,6 +304,93 @@ const CheckoutPage = () => {
     setValue('district', address.district);
     setValue('city', address.city);
     // Không cần gọi API tính phí động, chỉ dùng giá từ configs
+  };
+
+  const handleProvinceChange = async (code: string) => {
+    setSelectedProvince(code);
+    setSelectedDistrict('');
+    setSelectedWard('');
+    setDistricts([]);
+    setWards([]);
+    if (!code) {
+      setAddressForm(prev => ({ ...prev, city: '', district: '', ward: '' }));
+      return;
+    }
+    const province = provinces.find(item => item.code === code);
+    setAddressForm(prev => ({ ...prev, city: province?.fullName ?? '', district: '', ward: '' }));
+    try {
+      const districtData = await addressService.getDistricts(code);
+      setDistricts([...districtData].sort((a, b) => a.fullName.localeCompare(b.fullName, 'vi')));
+    } catch {
+      setDistricts([]);
+    }
+  };
+
+  const handleDistrictChange = async (code: string) => {
+    setSelectedDistrict(code);
+    setSelectedWard('');
+    setWards([]);
+    if (!code) {
+      setAddressForm(prev => ({ ...prev, district: '', ward: '' }));
+      return;
+    }
+    const district = districts.find(item => item.code === code);
+    setAddressForm(prev => ({ ...prev, district: district?.fullName ?? '', ward: '' }));
+    try {
+      const wardData = await addressService.getWards(code);
+      setWards([...wardData].sort((a, b) => a.fullName.localeCompare(b.fullName, 'vi')));
+    } catch {
+      setWards([]);
+    }
+  };
+
+  const handleWardChange = (code: string) => {
+    setSelectedWard(code);
+    const ward = wards.find(item => item.code === code);
+    setAddressForm(prev => ({ ...prev, ward: ward?.fullName ?? '' }));
+  };
+
+  const openAddAddressModal = () => {
+    setEditingAddress(null);
+    setAddressForm({
+      fullName: '',
+      phone: '',
+      address: '',
+      ward: '',
+      district: '',
+      city: '',
+      isDefault: false,
+    });
+    setSelectedProvince('');
+    setSelectedDistrict('');
+    setSelectedWard('');
+    setDistricts([]);
+    setWards([]);
+    setShowAddressModal(true);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingAddress) {
+        await userService.updateAddress(editingAddress.id, addressForm);
+        showToast('Đã cập nhật địa chỉ.', 'success');
+      } else {
+        const newAddr = await userService.createAddress(addressForm);
+        showToast('Đã thêm địa chỉ mới.', 'success');
+        handleSelectAddress(newAddr);
+      }
+      setShowAddressModal(false);
+      // Refresh address list
+      const userAddresses = await userService.getAddresses();
+      const sorted = [...userAddresses].sort((a, b) => {
+        if (a.isDefault === b.isDefault) return a.id - b.id;
+        return a.isDefault ? -1 : 1;
+      });
+      setAddresses(sorted);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Không thể lưu địa chỉ.', 'error');
+    }
   };
 
   const handleApplyVoucher = async () => {
@@ -363,31 +483,177 @@ const CheckoutPage = () => {
     disabled?: boolean;
     badge?: string;
   }> = [
-    {
-      value: 'COD',
-      label: 'Thanh toán khi nhận hàng (COD)',
-      description: 'Thanh toán tiền mặt cho nhân viên giao hàng.',
-    },
-    {
-      value: 'BANK_TRANSFER',
-      label: 'Chuyển khoản ngân hàng',
-      description: 'Thanh toán qua chuyển khoản ngân hàng.',
-      disabled: true,
-      badge: 'Sắp ra mắt',
-    },
-    {
-      value: 'VNPAY',
-      label: 'VNPay',
-      description: 'Thanh toán online an toàn qua cổng VNPay.',
-    },
-    {
-      value: 'MOMO',
-      label: 'Ví MoMo',
-      description: 'Thanh toán bằng ví MoMo.',
-      disabled: true,
-      badge: 'Sắp ra mắt',
-    },
-  ];
+      {
+        value: 'COD',
+        label: 'Thanh toán khi nhận hàng (COD)',
+        description: 'Thanh toán tiền mặt cho nhân viên giao hàng.',
+      },
+      {
+        value: 'BANK_TRANSFER',
+        label: 'Chuyển khoản ngân hàng',
+        description: 'Thanh toán qua chuyển khoản ngân hàng.',
+        disabled: true,
+        badge: 'Sắp ra mắt',
+      },
+      {
+        value: 'VNPAY',
+        label: 'VNPay',
+        description: 'Thanh toán online an toàn qua cổng VNPay.',
+      },
+      {
+        value: 'MOMO',
+        label: 'Ví MoMo',
+        description: 'Thanh toán bằng ví MoMo.',
+        disabled: true,
+        badge: 'Sắp ra mắt',
+      },
+    ];
+
+  const renderAddressModal = () => {
+    if (!showAddressModal) return null;
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+        <form
+          onSubmit={handleSaveAddress}
+          className="w-full max-w-xl space-y-4 rounded-3xl bg-[var(--card)] p-6 text-[var(--foreground)] shadow-2xl"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold">{editingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới'}</h3>
+            <button type="button" onClick={() => setShowAddressModal(false)} className="text-sm hover:text-[var(--primary)]">✕</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-[var(--muted-foreground)]">Họ và tên</label>
+              <input
+                type="text"
+                value={addressForm.fullName}
+                onChange={(e) => setAddressForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                required
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-[var(--muted-foreground)]">Số điện thoại</label>
+              <input
+                type="tel"
+                value={addressForm.phone}
+                onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
+                required
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-[var(--muted-foreground)]">Tỉnh/Thành phố</label>
+            <select
+              value={selectedProvince}
+              onChange={(e) => handleProvinceChange(e.target.value)}
+              required
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
+            >
+              <option value="">Chọn Tỉnh/Thành phố</option>
+              {provinces.map((p) => (
+                <option key={p.code} value={p.code}>{p.fullName}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-[var(--muted-foreground)]">Quận/Huyện</label>
+              <select
+                value={selectedDistrict}
+                onChange={(e) => handleDistrictChange(e.target.value)}
+                required
+                disabled={!districts.length}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none disabled:opacity-50"
+              >
+                <option value="">Chọn Quận/Huyện</option>
+                {districts.map((d) => (
+                  <option key={d.code} value={d.code}>{d.fullName}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-[var(--muted-foreground)]">Phường/Xã</label>
+              <select
+                value={selectedWard}
+                onChange={(e) => handleWardChange(e.target.value)}
+                required
+                disabled={!wards.length}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none disabled:opacity-50"
+              >
+                <option value="">Chọn Phường/Xã</option>
+                {wards.map((w) => (
+                  <option key={w.code} value={w.code}>{w.fullName}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-[var(--muted-foreground)]">Địa chỉ cụ thể</label>
+            <input
+              type="text"
+              value={addressForm.address}
+              onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))}
+              required
+              placeholder="Số nhà, tên đường..."
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+            <input
+              type="checkbox"
+              checked={addressForm.isDefault}
+              onChange={(e) => setAddressForm((prev) => ({ ...prev, isDefault: e.target.checked }))}
+            />
+            Đặt làm địa chỉ mặc định
+          </label>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setShowAddressModal(false)} className="rounded-full border border-[var(--border)] px-6 py-2 text-sm font-semibold hover:bg-[var(--muted)]">Hủy</button>
+            <button type="submit" className="rounded-full bg-[var(--primary)] px-6 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)]">Lưu địa chỉ</button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  const renderAddressListModal = () => {
+    if (!showAddressListModal) return null;
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+        <div className="w-full max-w-2xl space-y-4 rounded-3xl bg-[var(--card)] p-6 text-[var(--foreground)] shadow-2xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold">Chọn địa chỉ giao hàng</h3>
+            <button type="button" onClick={() => setShowAddressListModal(false)} className="text-sm hover:text-[var(--primary)]">✕</button>
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
+            {addresses.map((addr) => (
+              <div key={addr.id} className={`group relative rounded-2xl border p-4 transition-all hover:shadow-md cursor-pointer ${selectedAddressId === addr.id ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/40' : 'border-[var(--border)]'}`} onClick={() => { handleSelectAddress(addr); setShowAddressListModal(false); }}>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{addr.fullName}</span>
+                      <span className="text-sm text-[var(--muted-foreground)]">| (+84) {addr.phone}</span>
+                      {addr.isDefault && <span className="rounded bg-[var(--primary)]/10 px-2 py-0.5 text-[10px] uppercase font-bold text-[var(--primary)]">Mặc định</span>}
+                    </div>
+                    <p className="text-sm text-[var(--muted-foreground)]">{addr.address}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">{addr.ward}, {addr.district}, {addr.city}</p>
+                  </div>
+                  {selectedAddressId === addr.id && <div className="rounded-full bg-[var(--primary)] p-1 text-[var(--primary-foreground)]"><MapPin className="h-4 w-4" /></div>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-2">
+            <button type="button" onClick={() => { setShowAddressListModal(false); openAddAddressModal(); }} className="flex items-center justify-center gap-2 rounded-full border border-[var(--primary)] px-6 py-2 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/5">
+              <Plus className="h-4 w-4" /> Thêm địa chỉ mới
+            </button>
+            <button type="button" onClick={() => setShowAddressListModal(false)} className="rounded-full border border-[var(--border)] px-6 py-2 text-sm font-semibold hover:bg-[var(--muted)]">Đóng</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="checkout-page min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
@@ -446,56 +712,60 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Address cards */}
+              {/* Address Quick Selection */}
               <div className="space-y-3">
-                <p className="text-xs font-medium text-[var(--muted-foreground)]">
-                  Địa chỉ giao hàng đã lưu
-                </p>
-                {addresses.length === 0 ? (
-                  <p className="text-xs text-[var(--muted-foreground)]">
-                    Bạn chưa có địa chỉ nào. Vui lòng thêm địa chỉ trong trang hồ sơ hoặc nhập trực
-                    tiếp bên dưới.
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
+                    Địa chỉ giao hàng
                   </p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowAddressListModal(true)} className="flex items-center gap-1 text-[11px] font-semibold text-[var(--primary)] hover:underline">
+                      <List className="h-3 w-3" /> Chọn từ danh sách
+                    </button>
+                    <button type="button" onClick={openAddAddressModal} className="flex items-center gap-1 text-[11px] font-semibold text-[var(--primary)] hover:underline">
+                      <Plus className="h-3 w-3" /> Thêm địa chỉ mới
+                    </button>
+                  </div>
+                </div>
+
+                {addresses.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] p-6 gap-3">
+                    <p className="text-xs text-[var(--muted-foreground)] text-center">
+                      Bạn chưa có địa chỉ giao hàng nào.
+                    </p>
+                    <button type="button" onClick={openAddAddressModal} className="flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-all shadow-sm">
+                      <Plus className="h-3.5 w-3.5" /> Thêm địa chỉ mới
+                    </button>
+                  </div>
                 ) : (
-                  <div className="space-y-2">
-                    {addresses.map((addr) => {
-                      const isActive = selectedAddressId === addr.id;
-                      return (
-                        <button
-                          key={addr.id}
-                          type="button"
-                          onClick={() => handleSelectAddress(addr)}
-                          className={`w-full rounded-2xl border px-3 py-3 text-left text-xs sm:text-sm transition-colors ${
-                            isActive
-                              ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80'
-                              : 'border-[var(--border)] hover:border-[var(--primary)]/60'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium">
-                              {addr.fullName} • {addr.phone}
-                            </p>
-                            {addr.isDefault && (
-                              <span className="rounded-full bg-[var(--muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)]">
-                                Mặc định
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-1 text-[11px] sm:text-xs text-[var(--muted-foreground)]">
-                            {addr.address}, {addr.ward}, {addr.district}, {addr.city}
-                          </p>
-                        </button>
-                      );
-                    })}
+                  <div className="relative group">
+                    <select
+                      value={selectedAddressId ?? ''}
+                      onChange={(e) => {
+                        const addr = addresses.find(a => a.id === Number(e.target.value));
+                        if (addr) handleSelectAddress(addr);
+                      }}
+                      className="w-full appearance-none rounded-xl border border-[var(--border)] bg-[var(--input-background)] pl-10 pr-10 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all cursor-pointer"
+                    >
+                      {addresses.map((addr) => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.fullName} • {addr.phone} ({addr.address}, {addr.ward}, {addr.district}, {addr.city}) {addr.isDefault ? '[Mặc định]' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none group-hover:text-[var(--foreground)]" />
                   </div>
                 )}
               </div>
 
-              {/* Manual address override */}
-              <div className="space-y-2 pt-3 border-t border-dashed border-[var(--border)]">
-                <p className="text-xs font-medium text-[var(--muted-foreground)]">
-                  Hoặc chỉnh sửa địa chỉ giao hàng
-                </p>
+              {/* Manual address override - keep for fine tuning */}
+              <div className="space-y-4 pt-4 border-t border-dashed border-[var(--border)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
+                    Chi tiết địa chỉ nhận hàng
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <input
                     type="text"
@@ -574,11 +844,10 @@ const CheckoutPage = () => {
                     setShippingMethod(newMethod);
                     setValue('shippingMethod', newMethod);
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
-                    shippingMethod === 'STANDARD'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${shippingMethod === 'STANDARD'
+                    ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                    : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
+                    }`}
                 >
                   <div>
                     <p className="font-medium">Tiêu chuẩn (GHN / GHTK)</p>
@@ -608,11 +877,10 @@ const CheckoutPage = () => {
                     setShippingMethod(newMethod);
                     setValue('shippingMethod', newMethod);
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
-                    shippingMethod === 'FAST'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${shippingMethod === 'FAST'
+                    ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                    : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
+                    }`}
                 >
                   <div>
                     <p className="font-medium">Nhanh</p>
@@ -642,11 +910,10 @@ const CheckoutPage = () => {
                     setShippingMethod(newMethod);
                     setValue('shippingMethod', newMethod);
                   }}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${
-                    shippingMethod === 'EXPRESS'
-                      ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
-                      : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors cursor-pointer ${shippingMethod === 'EXPRESS'
+                    ? 'border-[var(--primary)] bg-[var(--primary-foreground)]/80 text-[var(--foreground)] hover:bg-[#E6F0FF] hover:border-[var(--primary)]'
+                    : 'border-[var(--border)] hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
+                    }`}
                 >
                   <div>
                     <p className="font-medium">Express</p>
@@ -698,11 +965,10 @@ const CheckoutPage = () => {
                       if (method.disabled) return;
                       setValue('paymentMethod', method.value);
                     }}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${
-                      method.disabled
-                        ? 'border-[var(--border)] bg-[var(--muted)]/40 text-[var(--muted-foreground)] cursor-not-allowed opacity-60'
-                        : 'border-[var(--border)] cursor-pointer hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
-                    }`}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition-colors ${method.disabled
+                      ? 'border-[var(--border)] bg-[var(--muted)]/40 text-[var(--muted-foreground)] cursor-not-allowed opacity-60'
+                      : 'border-[var(--border)] cursor-pointer hover:border-[var(--primary)]/60 hover:bg-[#E6F0FF]'
+                      }`}
                   >
                     <div>
                       <p className="font-medium">{method.label}</p>
@@ -806,11 +1072,10 @@ const CheckoutPage = () => {
                     type="button"
                     onClick={handleApplyVoucher}
                     disabled={voucherApplying}
-                    className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium border transition-colors ${
-                      voucherApplying
-                        ? 'bg-[var(--muted)] cursor-not-allowed opacity-70 border-[var(--border)] text-[var(--muted-foreground)]'
-                        : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
-                    }`}
+                    className={`rounded-full px-4 py-2 text-xs sm:text-sm font-medium border transition-colors ${voucherApplying
+                      ? 'bg-[var(--muted)] cursor-not-allowed opacity-70 border-[var(--border)] text-[var(--muted-foreground)]'
+                      : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
+                      }`}
                   >
                     {voucherApplying ? 'Đang áp dụng...' : 'Áp dụng'}
                   </button>
@@ -862,6 +1127,9 @@ const CheckoutPage = () => {
         </form>
 
       </div>
+      {/* MODALS */}
+      {renderAddressModal()}
+      {renderAddressListModal()}
     </div>
   );
 };

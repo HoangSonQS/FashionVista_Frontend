@@ -38,6 +38,7 @@ export interface ProductDetail {
   id: number;
   name: string;
   slug: string;
+  sku: string;
   description?: string | null;
   shortDescription?: string | null;
   price: number;
@@ -45,6 +46,7 @@ export interface ProductDetail {
   status: string;
   featured: boolean;
   category?: string | null;
+  categorySlug?: string | null;
   tags?: string[];
   sizes?: string[];
   colors?: string[];
@@ -107,4 +109,3 @@ export interface ProductCreateRequest {
   variants?: ProductVariantRequest[];
   removedImageIds?: number[];
 }
-

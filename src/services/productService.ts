@@ -1,7 +1,6 @@
 import { axiosClient } from './axiosClient';
 import type {
   CategorySummary,
-  ProductCreateRequest,
   ProductDetail,
   ProductListItem,
   ProductListResponse,
@@ -49,19 +48,6 @@ export const productService = {
     return response.data;
   },
 
-  async createProduct(payload: ProductCreateRequest, files: File[]): Promise<ProductDetail> {
-    const formData = new FormData();
-    formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    files.forEach((file) => formData.append('images', file));
-
-    const response = await axiosClient.post<ProductDetail>('/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
   async getFeaturedProducts(limit: number = 8): Promise<ProductListItem[]> {
     const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
       params: { limit },
@@ -83,4 +69,3 @@ export const productService = {
     return response.data;
   },
 };
-

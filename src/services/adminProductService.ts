@@ -19,6 +19,19 @@ export const adminProductService = {
     return response.data;
   },
 
+  async createProduct(payload: ProductCreateRequest, files: File[]): Promise<ProductDetail> {
+    const formData = new FormData();
+    formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    files.forEach((file) => formData.append('images', file));
+
+    const response = await axiosClient.post<ProductDetail>('/admin/products', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   async getProduct(id: number): Promise<ProductDetail> {
     const response = await axiosClient.get<ProductDetail>(`/admin/products/${id}`);
     return response.data;

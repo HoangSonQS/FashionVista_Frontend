@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { adminCollectionService } from '../../services/adminCollectionService';
 import { adminProductService } from '../../services/adminProductService';
+import { adminCategoryService } from '../../services/adminCategoryService';
 import type { CollectionPayload } from '../../services/adminCollectionService';
 import type { ProductListItem } from '../../types/product';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -29,6 +30,7 @@ const AdminCollectionCreate = () => {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [productOptions, setProductOptions] = useState<ProductListItem[]>([]);
@@ -82,14 +84,21 @@ const AdminCollectionCreate = () => {
   const clearHeroImage = () => {
     setForm((prev) => ({ ...prev, heroImageUrl: '' }));
     setPreviewUrl('');
+    setSelectedFile(null);
   };
 
   const handleFileSelect = (file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Only for preview, don't set in form yet
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
-      setForm((prev) => ({ ...prev, heroImageUrl: result }));
       setPreviewUrl(result);
     };
     reader.readAsDataURL(file);
@@ -108,13 +117,26 @@ const AdminCollectionCreate = () => {
     }
     setSaving(true);
     try {
+      let finalHeroImageUrl = form.heroImageUrl?.trim() ?? '';
+
+      // If a new file was selected, upload it first
+      if (selectedFile) {
+        try {
+          finalHeroImageUrl = await adminCategoryService.uploadImage(selectedFile);
+        } catch (uploadErr) {
+          setError('Không thể tải ảnh lên server. Vui lòng thử lại.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const payload: CollectionPayload = {
         ...form,
         name: form.name.trim(),
         slug: form.slug.trim(),
         description: form.description?.trim() ?? '',
         longDescriptionHtml: form.longDescriptionHtml ?? '',
-        heroImageUrl: form.heroImageUrl?.trim() ?? '',
+        heroImageUrl: finalHeroImageUrl,
         seoTitle: form.seoTitle?.trim() ?? '',
         seoDescription: form.seoDescription?.trim() ?? '',
         // Gửi đúng chuỗi local datetime (yyyy-MM-ddTHH:mm) cho BE, tránh lệch múi giờ

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import { adminProductService } from '../../services/adminProductService';
-import type { ProductCreateRequest, ProductDetail, ProductVariantRequest, ProductImage } from '../../types/product';
+import type { ProductCreateRequest, ProductDetail, ProductVariantRequest, ProductImage, CategorySummary } from '../../types/product';
 import { useToast } from '../../hooks/useToast';
 
 const initialForm: ProductCreateRequest = {
@@ -41,7 +41,6 @@ const baseFields: Array<{ field: keyof ProductCreateRequest; label: string; plac
   { field: 'name', label: 'Tên sản phẩm', required: true },
   { field: 'slug', label: 'Slug (đường dẫn ngắn)', required: true },
   { field: 'sku', label: 'SKU (mã kho)', required: true },
-  { field: 'categorySlug', label: 'Slug danh mục', placeholder: 'dresses' },
 ];
 
 const chipFields: Array<{ field: keyof ProductCreateRequest; label: string; placeholder?: string }> = [
@@ -75,6 +74,7 @@ const ProductCreatePage = () => {
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [rawSizes, setRawSizes] = useState('');
   const [rawColors, setRawColors] = useState('');
+  const [categories, setCategories] = useState<CategorySummary[]>([]);
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const cloneId = searchParams.get('clone');
@@ -132,17 +132,27 @@ const ProductCreatePage = () => {
       .finally(() => setPrefillLoading(false));
   }, [editingId, cloneId]);
 
+  useEffect(() => {
+    // Fetch categories for dropdown on mount
+    productService.getCategories()
+      .then(setCategories)
+      .catch(err => {
+        console.error('Failed to fetch categories:', err);
+        showToast('Không thể tải danh mục sản phẩm. Vui lòng thử lại.', 'error');
+      });
+  }, []);
+
   const mapDetailToForm = (detail: ProductDetail, isClone: boolean): ProductCreateRequest => ({
     name: detail.name,
-    slug: isClone ? `${detail.slug}-copy` : detail.slug,
-    sku: isClone ? `${detail.slug}-SKU` : detail.slug,
+    slug: isClone ? `${detail.slug} -copy` : detail.slug,
+    sku: isClone ? `${detail.sku} -COPY` : detail.sku,
     description: detail.description ?? '',
     shortDescription: detail.shortDescription ?? '',
     price: detail.price,
     compareAtPrice: detail.compareAtPrice,
     status: detail.status,
     featured: detail.featured,
-    categorySlug: '',
+    categorySlug: detail.categorySlug || '',
     tags: detail.tags ?? [],
     sizes: detail.sizes ?? [],
     colors: detail.colors ?? [],
@@ -151,7 +161,7 @@ const ProductCreatePage = () => {
         id: isClone ? undefined : variant.id,
         size: variant.size ?? '',
         color: variant.color ?? '',
-        sku: isClone ? `${variant.sku}-COPY` : variant.sku,
+        sku: isClone ? `${variant.sku} -COPY` : variant.sku,
         price: variant.price,
         stock: variant.stock,
         active: variant.active,
@@ -197,7 +207,7 @@ const ProductCreatePage = () => {
           navigate('/admin/products');
         }, 2000);
       } else {
-        await productService.createProduct(
+        await adminProductService.createProduct(
           payload,
           uploadFiles.map((item) => item.file),
         );
@@ -215,7 +225,10 @@ const ProductCreatePage = () => {
       cleanupFilePreviews(uploadFiles);
       setUploadFiles([]);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Không thể lưu sản phẩm.';
+      let message = err instanceof Error ? err.message : 'Không thể lưu sản phẩm.';
+      if (message.includes('Không tìm thấy danh mục')) {
+        message = 'Danh mục này chưa tồn tại. Vui lòng tạo danh mục mới hoặc chọn từ danh sách.';
+      }
       setStatusMessage(message);
       showToast(message, 'error');
     } finally {
@@ -382,8 +395,6 @@ const ProductCreatePage = () => {
   };
 
   const handleOptionChange = (field: 'sizes' | 'colors', raw: string) => {
-    // Parse values: cho phép khoảng trắng tự do, chỉ tách theo dấu phẩy
-    // Ví dụ: "S, M, L" hoặc "Black, White, Dark Green"
     const values = raw
       .split(',')
       .map((v) => v.trim())
@@ -400,10 +411,8 @@ const ProductCreatePage = () => {
       const sizes = (field === 'sizes' ? values : next.sizes ?? []) as string[];
       const colors = (field === 'colors' ? values : next.colors ?? []) as string[];
 
-      // Sinh biến thể tự động nếu có size/màu và có SKU mã kho + giá bán
       if ((sizes.length || colors.length) && next.sku && next.price) {
         const autoVariants = generateVariantsFromOptions(sizes, colors, next.sku, Number(next.price));
-        // Reset input states cho variants mới
         const newPriceInputs: Record<number, string> = {};
         const newStockInputs: Record<number, string> = {};
         autoVariants.forEach((variant, idx) => {
@@ -451,12 +460,17 @@ const ProductCreatePage = () => {
             <div className="space-y-2">
               <label className="text-sm text-[var(--foreground)]">Giá bán</label>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
                 value={priceInput}
+                onKeyDown={(e) => {
+                  if (!/[\d]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  if (!/^\d*$/.test(value)) return;
+                  const value = e.target.value.replace(/\D/g, '');
                   setPriceInput(value);
                   setForm((prev) => ({ ...prev, price: value === '' ? 0 : Number(value) }));
                 }}
@@ -466,12 +480,17 @@ const ProductCreatePage = () => {
             <div className="space-y-2">
               <label className="text-sm text-[var(--foreground)]">Giá gốc (nếu có)</label>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
                 value={comparePriceInput}
+                onKeyDown={(e) => {
+                  if (!/[\d]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  if (!/^\d*$/.test(value)) return;
+                  const value = e.target.value.replace(/\D/g, '');
                   setComparePriceInput(value);
                   setForm((prev) => ({
                     ...prev,
@@ -494,6 +513,24 @@ const ProductCreatePage = () => {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-[var(--foreground)]">Danh mục</label>
+              <select
+                value={form.categorySlug || ''}
+                onChange={(e) => setFormField('categorySlug', e.target.value)}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-[var(--muted-foreground)]">
+                Nếu không thấy danh mục, vui lòng <span className="text-[var(--primary)] cursor-pointer underline" onClick={() => navigate('/admin/categories')}>tạo danh mục mới</span> trước.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -591,18 +628,22 @@ const ProductCreatePage = () => {
                     placeholder={input.placeholder}
                     value={String(variant[input.field] ?? '')}
                     onChange={(e) => updateVariant(index, input.field, e.target.value)}
-                    className={`rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${
-                      input.field === 'size' ? 'w-24' : input.field === 'color' ? 'w-32' : 'w-48'
-                    } ${input.className ?? ''}`}
+                    className={`rounded - lg border border - [var(--border)]bg - [var(--input - background)]px - 3 py - 2 text - sm focus: outline - none focus: ring - 2 focus: ring - [var(--primary)] ${input.field === 'size' ? 'w-24' : input.field === 'color' ? 'w-32' : 'w-48'
+                      } ${input.className ?? ''} `}
                   />
                 ))}
                 <input
                   type="text"
+                  inputMode="numeric"
                   placeholder="Giá biến thể"
                   value={variantPriceInputs[index] ?? (variant.price ? String(variant.price) : '')}
+                  onKeyDown={(e) => {
+                    if (!/[\d]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    if (!/^\d*$/.test(value)) return;
+                    const value = e.target.value.replace(/\D/g, '');
                     setVariantPriceInputs((prev) => ({ ...prev, [index]: value }));
                     updateVariant(index, 'price', value === '' ? 0 : Number(value));
                   }}
@@ -611,11 +652,16 @@ const ProductCreatePage = () => {
                 <div className="flex items-center gap-3">
                   <input
                     type="text"
+                    inputMode="numeric"
                     placeholder="Tồn kho"
                     value={variantStockInputs[index] ?? (variant.stock ? String(variant.stock) : '')}
+                    onKeyDown={(e) => {
+                      if (!/[\d]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      if (!/^\d*$/.test(value)) return;
+                      const value = e.target.value.replace(/\D/g, '');
                       setVariantStockInputs((prev) => ({ ...prev, [index]: value }));
                       updateVariant(index, 'stock', value === '' ? 0 : Number(value));
                     }}
@@ -684,7 +730,7 @@ const ProductCreatePage = () => {
                   <p className="text-xs font-medium uppercase tracking-[0.25em] text-slate-500">Ảnh mới (chưa lưu)</p>
                   <div className="flex flex-wrap gap-6">
                     {uploadFiles.map((item, index) => (
-                      <div key={`${item.file.name}-${index}`} className="inline-block relative">
+                      <div key={`${item.file.name} -${index} `} className="inline-block relative">
                         <img
                           src={item.preview}
                           alt={item.file.name}
@@ -726,4 +772,3 @@ const ProductCreatePage = () => {
 };
 
 export default ProductCreatePage;
-

@@ -444,11 +444,10 @@ const ProfilePage = () => {
                   type="button"
                   disabled={address.isDefault}
                   onClick={() => handleSetDefault(address)}
-                  className={`rounded border px-3 py-1 text-xs ${
-                    address.isDefault
-                      ? 'border-[var(--muted-foreground)] text-[var(--muted-foreground)] cursor-not-allowed'
-                      : 'border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--border)]'
-                  }`}
+                  className={`rounded border px-3 py-1 text-xs ${address.isDefault
+                    ? 'border-[var(--muted-foreground)] text-[var(--muted-foreground)] cursor-not-allowed'
+                    : 'border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--border)]'
+                    }`}
                 >
                   Thiết lập mặc định
                 </button>
@@ -647,7 +646,7 @@ const ProfilePage = () => {
             value={selectedProvince}
             onChange={(e) => handleProvinceChange(e.target.value)}
             required
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[var(--background)] focus:border-[#0f1f3c] focus:outline-none"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--input-border-focus)] focus:outline-none"
           >
             <option value="">Tỉnh/Thành phố</option>
             {provinces.map((province) => (
@@ -692,15 +691,14 @@ const ProfilePage = () => {
             value={addressForm.address}
             onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))}
             required
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[var(--background)] focus:border-[#0f1f3c] focus:outline-none"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--input-border-focus)] focus:outline-none"
           />
           <div className="space-y-2">
             <span className="text-sm text-[var(--muted-foreground)]">Loại địa chỉ</span>
             <div className="flex gap-3">
               <label
-                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${
-                  addressType === 'HOME' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
-                }`}
+                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${addressType === 'HOME' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
+                  }`}
               >
                 <input
                   type="radio"
@@ -713,9 +711,8 @@ const ProfilePage = () => {
                 Nhà riêng
               </label>
               <label
-                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${
-                  addressType === 'OFFICE' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
-                }`}
+                className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm ${addressType === 'OFFICE' ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]' : 'border-[var(--border)] text-[var(--muted-foreground)]'
+                  }`}
               >
                 <input
                   type="radio"
@@ -775,42 +772,38 @@ const ProfilePage = () => {
             <button
               type="button"
               onClick={() => setActiveTab('INFO')}
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'INFO' ? 'bg-[var(--muted)] font-semibold' : 'text-[var(--muted-foreground)]'
-              }`}
+              className={`w-full rounded-2xl px-3 py-2 text-left ${activeTab === 'INFO' ? 'bg-[var(--muted)] font-semibold' : 'text-[var(--muted-foreground)]'
+                }`}
             >
               Hồ sơ
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('ADDRESS')}
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'ADDRESS'
-                  ? 'bg-[var(--muted)] font-semibold'
-                  : 'text-[var(--muted-foreground)]'
-              }`}
+              className={`w-full rounded-2xl px-3 py-2 text-left ${activeTab === 'ADDRESS'
+                ? 'bg-[var(--muted)] font-semibold'
+                : 'text-[var(--muted-foreground)]'
+                }`}
             >
               Địa chỉ
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('REVIEWS')}
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'REVIEWS'
-                  ? 'bg-[var(--muted)] font-semibold'
-                  : 'text-[var(--muted-foreground)]'
-              }`}
+              className={`w-full rounded-2xl px-3 py-2 text-left ${activeTab === 'REVIEWS'
+                ? 'bg-[var(--muted)] font-semibold'
+                : 'text-[var(--muted-foreground)]'
+                }`}
             >
               Đánh giá của tôi
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('WISHLIST')}
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeTab === 'WISHLIST'
-                  ? 'bg-[var(--muted)] font-semibold'
-                  : 'text-[var(--muted-foreground)]'
-              }`}
+              className={`w-full rounded-2xl px-3 py-2 text-left ${activeTab === 'WISHLIST'
+                ? 'bg-[var(--muted)] font-semibold'
+                : 'text-[var(--muted-foreground)]'
+                }`}
             >
               Sản phẩm yêu thích
             </button>
@@ -833,10 +826,10 @@ const ProfilePage = () => {
           {activeTab === 'INFO'
             ? renderProfileTab()
             : activeTab === 'ADDRESS'
-            ? renderAddressList()
-            : activeTab === 'REVIEWS'
-            ? renderReviews()
-            : renderWishlist()}
+              ? renderAddressList()
+              : activeTab === 'REVIEWS'
+                ? renderReviews()
+                : renderWishlist()}
         </section>
       </div>
       {renderModal()}
