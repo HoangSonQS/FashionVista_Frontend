@@ -26,12 +26,7 @@ export const adminProductImageService = {
     });
     const response = await axiosClient.post<AdminProductImageResponse[]>(
       `/admin/products/${productId}/images`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     return response.data;
   },

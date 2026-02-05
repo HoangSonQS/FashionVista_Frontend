@@ -24,11 +24,8 @@ export const adminProductService = {
     formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
     files.forEach((file) => formData.append('images', file));
 
-    const response = await axiosClient.post<ProductDetail>('/admin/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Don't set Content-Type manually - axios will auto-set with boundary
+    const response = await axiosClient.post<ProductDetail>('/admin/products', formData);
     return response.data;
   },
 
@@ -42,11 +39,7 @@ export const adminProductService = {
     formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
     files.forEach((file) => formData.append('images', file));
 
-    const response = await axiosClient.put<ProductDetail>(`/admin/products/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axiosClient.put<ProductDetail>(`/admin/products/${id}`, formData);
     return response.data;
   },
 
@@ -80,9 +73,7 @@ export const adminProductService = {
   async importProducts(file: File): Promise<ProductImportResult> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await axiosClient.post<ProductImportResult>('/admin/products/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await axiosClient.post<ProductImportResult>('/admin/products/import', formData);
     return response.data;
   },
 

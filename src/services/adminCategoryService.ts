@@ -62,11 +62,7 @@ export const adminCategoryService = {
   async uploadImage(imageFile: File): Promise<string> {
     const formData = new FormData();
     formData.append('image', imageFile);
-    const response = await axiosClient.post<{ url: string }>('/admin/categories/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axiosClient.post<{ url: string }>('/admin/categories/upload-image', formData);
     return response.data.url;
   },
 
@@ -76,11 +72,7 @@ export const adminCategoryService = {
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    const response = await axiosClient.post<AdminCategoryResponse>('/admin/categories', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }).catch((error) => {
+    const response = await axiosClient.post<AdminCategoryResponse>('/admin/categories', formData).catch((error) => {
       // Re-throw để component có thể handle
       throw error;
     });
@@ -93,11 +85,7 @@ export const adminCategoryService = {
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    const response = await axiosClient.patch<AdminCategoryResponse>(`/admin/categories/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }).catch((error) => {
+    const response = await axiosClient.patch<AdminCategoryResponse>(`/admin/categories/${id}`, formData).catch((error) => {
       // Re-throw để component có thể handle
       throw error;
     });
