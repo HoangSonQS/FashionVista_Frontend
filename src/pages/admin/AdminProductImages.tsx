@@ -55,11 +55,9 @@ const ImageItem = memo(({
       onDragStart={() => onDragStart(actualIndex)}
       onDragOver={(e) => onDragOver(e, actualIndex)}
       onDragEnd={onDragEnd}
-      className={`group relative rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden transition-opacity ${
-        isDragging ? 'opacity-50' : ''
-      } ${isDeleting ? 'opacity-50 pointer-events-none' : ''} ${
-        image.primary ? 'ring-2 ring-[var(--primary)]' : ''
-      }`}
+      className={`group relative rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden transition-opacity ${isDragging ? 'opacity-50' : ''
+        } ${isDeleting ? 'opacity-50 pointer-events-none' : ''} ${image.primary ? 'ring-2 ring-[var(--primary)]' : ''
+        }`}
     >
       <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="bg-black/50 rounded p-1 cursor-move">
@@ -311,7 +309,18 @@ const AdminProductImages = () => {
     try {
       const reordered = await adminProductImageService.reorderImages(Number(productId), newOrder);
       setImages(reordered);
-      showToast('Đã sắp xếp lại thứ tự ảnh.', 'success');
+
+      // Auto-set first image as primary after reorder
+      if (reordered.length > 0 && !reordered[0].primary) {
+        await adminProductImageService.setPrimary(Number(productId), reordered[0].id);
+        setImages(prev => prev.map((img, idx) => ({
+          ...img,
+          primary: idx === 0
+        })));
+        showToast('Đã sắp xếp lại và đặt ảnh đầu làm ảnh chính.', 'success');
+      } else {
+        showToast('Đã sắp xếp lại thứ tự ảnh.', 'success');
+      }
     } catch (err: any) {
       // Rollback on error
       const revert = await adminProductImageService.getProductImages(Number(productId));
@@ -468,11 +477,10 @@ const AdminProductImages = () => {
       <div
         onDrop={handleDropZoneDrop}
         onDragOver={handleDropZoneOver}
-        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-          uploading
+        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${uploading
             ? 'border-[var(--primary)] bg-[var(--primary)]/10'
             : 'border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--muted)]/30'
-        }`}
+          }`}
       >
         <input
           type="file"
@@ -504,9 +512,8 @@ const AdminProductImages = () => {
           {pendingImages.map((image, index) => (
             <div
               key={image.id}
-              className={`group relative rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden ${
-                image.primary ? 'ring-2 ring-[var(--primary)]' : ''
-              } ${image.isUploading ? 'opacity-75' : ''}`}
+              className={`group relative rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden ${image.primary ? 'ring-2 ring-[var(--primary)]' : ''
+                } ${image.isUploading ? 'opacity-75' : ''}`}
             >
               {image.isUploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
