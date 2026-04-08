@@ -64,30 +64,29 @@ const Login = () => {
     >
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block text-[var(--foreground)]">
-          <p className="text-sm tracking-[0.3em] uppercase text-[var(--muted-foreground)] mb-3">
-            SixthSoul Studio
+          <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--muted-foreground)] mb-3">
+            MAISON STUDIO
           </p>
           <h1
-            className="text-4xl md:text-5xl font-semibold mb-4"
+            className="text-4xl md:text-5xl font-light mb-6 leading-tight"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            Thời trang nữ cao cấp
+            Dressed in light,<br />worn with intention.
           </h1>
-          <p className="text-sm md:text-base text-[var(--foreground)] leading-relaxed max-w-md">
-            Đăng nhập để khám phá các bộ sưu tập mới nhất, ưu đãi dành riêng cho bạn và trải nghiệm mua
-            sắm được cá nhân hóa.
+          <p className="text-sm text-[var(--muted-foreground)] leading-relaxed max-w-sm font-light italic">
+            "Timeless pieces for the woman who moves quietly through the world and is never forgotten."
           </p>
         </div>
 
         <div
-          className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-lg p-8 md:p-10"
-          style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
+          className="bg-[var(--card)] border border-[var(--border)] rounded-sm shadow-xl p-8 md:p-12"
+          style={{ boxShadow: '0 20px 50px rgba(61, 32, 21, 0.05)' }}
         >
-          <div className="mb-6 text-center md:text-left">
-            <p className="text-xs tracking-[0.25em] uppercase text-[var(--muted-foreground)] mb-2">
+          <div className="mb-10 text-center md:text-left">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--muted-foreground)] mb-2">
               Welcome back
             </p>
-            <h2 className="text-2xl font-semibold text-[var(--foreground)]">Đăng nhập</h2>
+            <h2 className="text-2xl font-medium text-[var(--foreground)]" style={{ fontFamily: 'var(--font-serif)' }}>IDENTIFY YOURSELF</h2>
           </div>
 
           {error && (
@@ -110,8 +109,8 @@ const Login = () => {
                 type="text"
                 value={form.identifier}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                placeholder="you@example.com hoặc 0901234567"
+                className="w-full rounded-sm border border-[var(--border)] bg-[var(--input-background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                placeholder="EMAIL OR PHONE"
               />
             </div>
 
@@ -128,8 +127,8 @@ const Login = () => {
                 type="password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                placeholder="********"
+                className="w-full rounded-sm border border-[var(--border)] bg-[var(--input-background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                placeholder="••••••••"
               />
             </div>
 
@@ -153,9 +152,9 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 rounded-full text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="w-full mt-4 py-3 rounded-sm text-[11px] uppercase tracking-[0.2em] font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {loading ? 'Processing...' : 'Secure Login'}
             </button>
           </form>
 

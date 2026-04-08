@@ -102,7 +102,7 @@ const Register = () => {
         background: 'var(--auth-background-gradient)',
       }}
     >
-      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--card)] shadow-2xl">
         {/* Left Column - Benefits & Branding */}
         <div className="hidden lg:flex lg:col-span-5 bg-[var(--muted)] p-12 flex-col justify-between relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-[var(--primary)]/5 rounded-full blur-3xl opacity-50"></div>
@@ -110,14 +110,14 @@ const Register = () => {
 
           <div className="relative z-10">
             <Link to="/" className="inline-block mb-12">
-              <span className="text-xl font-bold tracking-[0.2em] uppercase text-[var(--foreground)]">
-                FashionVista
+              <span className="text-xl font-light tracking-[0.25em] uppercase text-[var(--foreground)] font-serif">
+                MAISON
               </span>
             </Link>
 
-            <h1 className="text-4xl font-semibold mb-6 leading-tight text-[var(--foreground)]" style={{ fontFamily: 'var(--font-serif)' }}>
-              Trở thành hội viên <br />
-              <span className="text-[var(--primary)]">FashionVista</span>
+            <h1 className="text-4xl font-light mb-6 leading-tight text-[var(--foreground)]" style={{ fontFamily: 'var(--font-serif)' }}>
+              Join the <br />
+              <span className="text-[var(--primary)] font-medium italic">Maison Society</span>
             </h1>
 
             <p className="text-[var(--muted-foreground)] mb-12 max-w-sm">
@@ -127,7 +127,7 @@ const Register = () => {
             <div className="space-y-8">
               {benefits.map((item, idx) => (
                 <div key={idx} className="flex gap-4 group">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-[var(--card)] flex items-center justify-center shadow-sm border border-[var(--border)] group-hover:border-[var(--primary)] transition-colors">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-sm bg-[var(--card)] flex items-center justify-center shadow-sm border border-[var(--border)] group-hover:border-[var(--primary)] transition-colors">
                     {item.icon}
                   </div>
                   <div>
@@ -153,19 +153,19 @@ const Register = () => {
         <div className="col-span-1 lg:col-span-7 p-8 md:p-12 lg:p-16">
           <div className="max-w-md mx-auto">
             <div className="mb-10 lg:hidden">
-              <span className="text-lg font-bold tracking-[0.2em] uppercase text-[var(--foreground)]">
-                FashionVista
+              <span className="text-lg font-light tracking-[0.2em] uppercase text-[var(--foreground)] font-serif">
+                MAISON
               </span>
             </div>
 
             <div className="mb-8">
-              <h2 className="text-3xl font-semibold text-[var(--foreground)] mb-2">Đăng ký tài khoản</h2>
-              <p className="text-[var(--muted-foreground)]">Vui lòng điền thông tin bên dưới để bắt đầu.</p>
+              <h2 className="text-3xl font-light text-[var(--foreground)] mb-2" style={{ fontFamily: 'var(--font-serif)' }}>CREATE ACCOUNT</h2>
+              <p className="text-[11px] uppercase tracking-widest text-[var(--muted-foreground)]">Identify yourself to join us.</p>
             </div>
 
             {error && (
-              <div className="mb-6 flex items-center gap-3 text-sm text-[var(--error)] bg-[var(--error-bg)] border border-[var(--error)]/20 rounded-2xl px-4 py-3 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[var(--error)]"></div>
+              <div className="mb-6 flex items-center gap-3 text-[11px] uppercase tracking-wider text-[var(--error)] bg-[var(--error-bg)] border border-[var(--error)]/20 rounded-sm px-4 py-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex-shrink-0 w-1 h-1 rounded-full bg-[var(--error)]"></div>
                 {error}
               </div>
             )}
@@ -184,8 +184,8 @@ const Register = () => {
                     required
                     value={form.fullName}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
-                    placeholder="Nguyễn Văn A"
+                    className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                    placeholder="CHÊNE"
                   />
                 </div>
               </div>
@@ -204,8 +204,8 @@ const Register = () => {
                       required
                       value={form.email}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
-                      placeholder="you@email.com"
+                      className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                      placeholder="YOU@MAISON.COM"
                     />
                   </div>
                 </div>
@@ -223,8 +223,8 @@ const Register = () => {
                       required
                       value={form.phoneNumber}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
-                      placeholder="09xx xxx xxx"
+                      className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                      placeholder="+84"
                     />
                   </div>
                 </div>
@@ -289,8 +289,8 @@ const Register = () => {
                     required
                     className="mt-1"
                   />
-                  <span className="text-xs text-[var(--muted-foreground)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
-                    Tôi đồng ý với các <Link to="/terms" className="text-[var(--primary)] hover:underline">Điều khoản dịch vụ</Link> và <Link to="/privacy" className="text-[var(--primary)] hover:underline">Chính sách bảo mật</Link> của FashionVista.
+                  <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
+                    I agree to the <Link to="/terms" className="text-[var(--primary)] hover:underline">Terms</Link> and <Link to="/privacy" className="text-[var(--primary)] hover:underline">Privacy Policy</Link> of MAISON.
                   </span>
                 </label>
               </div>
@@ -298,7 +298,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-4 py-4 rounded-2xl text-sm font-bold uppercase tracking-widest bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] items-center justify-center flex gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-[var(--primary)]/20 active:scale-[0.98]"
+                className="w-full mt-4 py-4 rounded-sm text-[11px] uppercase tracking-[0.2em] font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] items-center justify-center flex gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
               >
                 {loading ? (
                   <>
@@ -317,8 +317,8 @@ const Register = () => {
             <div className="mt-8 lg:hidden text-center">
               <p className="text-sm text-[var(--muted-foreground)]">
                 Đã có tài khoản?{' '}
-                <Link to="/login" className="font-bold text-[var(--primary)] hover:underline">
-                  Đăng nhập
+                <Link to="/login" className="font-medium text-[var(--primary)] hover:underline uppercase tracking-widest">
+                  Login here
                 </Link>
               </p>
             </div>

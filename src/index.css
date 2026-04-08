@@ -3,100 +3,72 @@
 
 :root {
   /* ============================================
-     PALETTE: E-COMMERCE MODERN (BLUE PRIMARY)
+     PALETTE: ROMANTIC FEMININE MINIMALISM
      ============================================
-     A clean, modern e-commerce scheme with a blue primary for trust and clarity.
-     - Background: Off-white for a clean, spacious feel.
-     - Text: Near-black for sharp, readable contrast.
-     - Primary: A vibrant blue for key actions and branding.
-     - Accent: A contrasting orange for calls-to-action and highlights.
+     A warm, parchment-based scheme with espresso text and terracotta accents.
+     Inspired by and high-end editorial layouts.
      ============================================ */
 
   /* === Core Palette === */
-  --background: #FAFAF9;
-  --foreground: #0C0A09;
-  --border: #D6D3D1;
+  --background: #FAF5F2;
+  --foreground: #3D2015;
+  --border: #EDD8CC;
 
   /* === Cards & Containers === */
   --card: #FFFFFF;
-  --card-foreground: #0C0A09;
+  --card-foreground: #3D2015;
 
-  /* === Primary Button (Call to Action) === */
-  --primary: #3B82F6;
+  /* === Primary Button & Actions (Terracotta) === */
+  --primary: #C4714E;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #2563EB;
-  --primary-focus: #1D4ED8;
+  --primary-hover: #A85A38;
+  --primary-focus: #C4714E;
 
-  /* === Accent (Badges, Sales, Highlights) === */
-  --accent: #F97316;
+  /* === Accent (Sage Green) === */
+  --accent: #7A9E7E;
   --accent-foreground: #FFFFFF;
-  --accent-hover: #DC2626;
+  --accent-hover: #678B6A;
 
-  /* === Muted (Secondary Text, subtle backgrounds) === */
-  --muted: #F1F1F1;
-  --muted-foreground: #44403C;
+  /* === Muted (Warm Tones) === */
+  --muted: #F5E4DA;
+  --muted-foreground: #B88A78;
 
   /* === Input Fields === */
   --input-background: #FFFFFF;
-  --input-border: #D6D3D1;
-  --input-border-focus: #3B82F6;
-  --input-placeholder: #999999;
+  --input-border: #EDD8CC;
+  --input-border-focus: #C4714E;
+  --input-placeholder: #B88A78;
 
   /* === Checkbox === */
-  --checkbox-checked: #3B82F6;
+  --checkbox-checked: #C4714E;
   --checkbox-checked-foreground: #FFFFFF;
 
-  /* === System Colors === */
+  /* === System Colors (Adapted) === */
   --error: #B91C1C;
-  --error-foreground: #0C0A09;
+  --error-foreground: #3D2015;
   --error-bg: #FEE2E2;
 
-  --success: #16A34A;
-  --success-foreground: #0C0A09;
+  --success: #7A9E7E;
+  --success-foreground: #3D2015;
   --success-bg: #D1FAE5;
 
-  --warning: #F59E0B;
-  --warning-foreground: #0C0A09;
-  --warning-bg: #FEF3C7;
+  /* === Auth & Admin === */
+  --auth-text-link: #C4714E;
+  --auth-focus-ring: #C4714E;
+  --auth-button-bg: #C4714E;
 
-  /* === Overlay (Modal, Drawer) === */
-  --overlay: rgba(0, 0, 0, 0.5);
-
-  /* === Auth & Admin (Consistent with main theme) === */
-  --auth-background-gradient: linear-gradient(to bottom, #FAFAF9, #FFFFFF);
-  --auth-card-bg: #FFFFFF;
-  --auth-card-border: #D6D3D1;
-  --auth-text-primary: #0C0A09;
-  --auth-text-secondary: #44403C;
-  --auth-text-muted: #44403C;
-  --auth-text-link: #3B82F6;
-  --auth-text-link-hover: #2563EB;
-  --auth-input-bg: #FFFFFF;
-  --auth-input-border: #D6D3D1;
-  --auth-focus-ring: #3B82F6;
-  --auth-button-bg: #3B82F6;
-  --auth-button-hover: #2563EB;
-  --auth-button-text: #FFFFFF;
-
-  --admin-background: #FAFAF9;
-  --admin-foreground: #0C0A09;
-  --admin-card: #FFFFFF;
-  --admin-card-hover: #F1F1F1;
-  --admin-border: #D6D3D1;
-  --admin-muted: #F1F1F1;
-  --admin-muted-foreground: #44403C;
-
-  --scrollbar-thumb: #BFDBFE;
-  --scrollbar-thumb-hover: #60A5FA;
+  --scrollbar-thumb: #EDD8CC;
+  --scrollbar-thumb-hover: #C4714E;
 
   /* === Typography & Radius === */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', 'Times New Roman', serif;
-  --radius: 0.5rem;
+  --radius: 0.125rem;
+  /* 2px as requested */
 
   font-family: var(--font-sans);
-  line-height: 1.5;
-  font-weight: 400;
+  line-height: 1.6;
+  font-weight: 300;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -108,6 +80,41 @@ body {
   min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
+}
+
+/* Typography Overrides */
+h1,
+h2,
+h3,
+h4,
+.font-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  /* Light/Medium weight for editorial feel */
+  letter-spacing: -0.01em;
+}
+
+.nav-link,
+.label-small,
+.uppercase-tracking {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+}
+
+p,
+span,
+div {
+  font-weight: 300;
+  /* Lighter weight as requested */
+}
+
+strong,
+b,
+.font-medium {
+  font-weight: 500;
 }
 
 .number-input {
@@ -152,6 +159,95 @@ a:hover {
   transform: translateY(1px);
 }
 
+/* === Component Base Styles === */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius);
+  border: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--primary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius);
+  border: 0.5px solid var(--primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background-color: var(--muted);
+}
+
+.size-selector {
+  border-radius: var(--radius);
+  border: 0.5px solid var(--border);
+  background-color: transparent;
+  color: var(--foreground);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.size-selector.active {
+  border-color: var(--primary);
+}
+
+/* === Input Styling === */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+select,
+textarea {
+  border-radius: var(--radius);
+  border: 0.5px solid var(--border);
+  background-color: var(--input-background);
+  color: var(--foreground);
+  padding: 0.6rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 300;
+  transition: border-color 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+}
+
+::placeholder {
+  color: var(--input-placeholder);
+  opacity: 0.7;
+}
+
 /* === Checkbox Styling === */
 input[type="checkbox"] {
   -webkit-appearance: none;
@@ -159,8 +255,8 @@ input[type="checkbox"] {
   appearance: none;
   width: 1rem;
   height: 1rem;
-  border: 1.5px solid var(--border);
-  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.125rem;
   background-color: var(--input-background);
   cursor: pointer;
   position: relative;
@@ -182,51 +278,51 @@ input[type="checkbox"]:checked::after {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) rotate(45deg);
-  width: 4px;
-  height: 8px;
-  border: solid var(--checkbox-checked-foreground);
-  border-width: 0 2px 2px 0;
+  width: 3px;
+  height: 6px;
+  border: solid var(--primary-foreground);
+  border-width: 0 1.5px 1.5px 0;
 }
 
-input[type="checkbox"]:focus {
-  outline: 2px solid var(--checkbox-checked);
-  outline-offset: 2px;
+.checkout-page button {
+  border-radius: var(--radius);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-input[type="checkbox"]:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.checkout-page button:hover {
+  background-color: var(--primary-hover);
 }
 
-/* Custom scrollbar cho menu admin (ẩn nhẹ, chỉ rõ khi hover, tone xanh nhạt) */
-nav.admin-menu-scroll {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  /* Firefox */
-  scrollbar-color: transparent transparent;
-  /* ẩn nhẹ mặc định */
-}
-
-nav.admin-menu-scroll::-webkit-scrollbar {
+/* Custom scrollbar */
+::-webkit-scrollbar {
   width: 6px;
 }
 
-nav.admin-menu-scroll::-webkit-scrollbar-track {
-  background: transparent;
+::-webkit-scrollbar-track {
+  background: var(--background);
 }
 
-/* Mặc định gần như ẩn */
-nav.admin-menu-scroll::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 999px;
-  transition: background-color 0.2s ease;
-}
-
-/* Khi hover sidebar: hiện rõ nhưng vẫn nhẹ nhàng, theo palette hệ thống */
-nav.admin-menu-scroll:hover::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
 }
 
-nav.admin-menu-scroll:hover::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Admin menu scroll logic */
+nav.admin-menu-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }

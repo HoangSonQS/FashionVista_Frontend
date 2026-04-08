@@ -36,7 +36,6 @@ const ProductList = () => {
   const [data, setData] = useState<ProductListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [quickAddLoading, setQuickAddLoading] = useState<Record<number, boolean>>({});
-  const [quickBuyLoading, setQuickBuyLoading] = useState<Record<number, boolean>>({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { openDrawer } = useCartDrawer();
   const { showToast } = useToast();
@@ -181,61 +180,6 @@ const ProductList = () => {
       }
     } finally {
       setQuickAddLoading((prev) => {
-        const next = { ...prev };
-        delete next[product.id];
-        return next;
-      });
-    }
-  };
-
-  const handleQuickBuy = async (product: ProductListItem) => {
-    if (!ensureAuthenticated()) {
-      return;
-    }
-    setQuickBuyLoading((prev) => ({ ...prev, [product.id]: true }));
-    try {
-      const detail = await productService.getProduct(product.slug);
-      // Check tất cả biến thể - chỉ lấy biến thể có stock > 0 và active
-      const availableVariants = detail.variants.filter((v) => v.active && v.stock > 0);
-      if (availableVariants.length === 0) {
-        showToast('Sản phẩm đã hết hàng.', 'error');
-        return;
-      }
-
-      const hasSelectableVariant = availableVariants.some(
-        (v) => (v.size && v.size.trim().length > 0) || (v.color && v.color.trim().length > 0),
-      );
-
-      if (!hasSelectableVariant) {
-        const variant = availableVariants[0];
-
-        // Nếu đã có trong giỏ: chỉ mở giỏ (drawer) cho user tự chỉnh số lượng
-        try {
-          const currentCart = await cartService.getCart();
-          const existingItem = currentCart.items.find((i) => i.variantId === variant.id);
-          if (existingItem) {
-            openDrawer({ cart: currentCart });
-            return;
-          }
-        } catch {
-          // ignore, tiếp tục addItem bên dưới
-        }
-
-        // Chưa có trong giỏ: thêm 1 và mở giỏ
-        const cart = await cartService.addItem(variant.sku, 1);
-        emitCartUpdated(cart);
-        openDrawer({ cart });
-      } else {
-        openVariantSelection(product, availableVariants, 'buy');
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Không thể mua ngay sản phẩm.';
-      showToast(message, 'error');
-      if (message.includes('Unauthorized')) {
-        setShowLoginModal(true);
-      }
-    } finally {
-      setQuickBuyLoading((prev) => {
         const next = { ...prev };
         delete next[product.id];
         return next;
@@ -404,54 +348,38 @@ const ProductList = () => {
           </div>
 
           <div className="md:col-span-3 space-y-4">
-            {/* {loading && !error && (
-              <p className="text-sm text-[var(--muted-foreground)]">Đang tải sản phẩm...</p>
-            )} */}
-
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-x-4 gap-y-10 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden shadow-lg hover:-translate-y-1 transition-transform flex flex-col p-3"
+                  className="flex flex-col transition-all duration-300"
                 >
                   <ProductCard
                     slug={product.slug}
                     name={product.name}
                     price={product.price}
                     compareAtPrice={product.compareAtPrice}
-                    thumbnailUrl={product.thumbnailUrl}
+                    thumbnailUrl={product.thumbnailUrl ?? null}
+                    hoverThumbnailUrl={product.hoverThumbnailUrl}
                   />
-                  <div className="mt-4 space-y-2 flex-1 flex flex-col">
+                  <div className="mt-3 flex-1 flex flex-col items-center">
                     {(product.sizes || product.colors) && (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
+                      <div className="mt-1 flex flex-wrap justify-center gap-1">
                         {product.sizes && product.sizes.length > 0 && (
-                          <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-                            Size: {product.sizes.join(', ')}
-                          </span>
-                        )}
-                        {product.colors && product.colors.length > 0 && (
-                          <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
-                            Màu: {product.colors.join(', ')}
+                          <span className="text-[9px] uppercase tracking-wider text-gray-400">
+                            {product.sizes.join(' / ')}
                           </span>
                         )}
                       </div>
                     )}
-                    <div className="mt-auto pt-4 space-y-2">
+                    <div className="mt-3 w-full space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
                         type="button"
                         onClick={() => handleQuickAdd(product)}
                         disabled={Boolean(quickAddLoading[product.id])}
-                        className="w-full rounded-full border border-[var(--border)] py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full border border-black py-1.5 text-[10px] font-medium uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all disabled:opacity-50"
                       >
-                        {quickAddLoading[product.id] ? 'Đang thêm...' : 'Thêm vào giỏ'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleQuickBuy(product)}
-                        disabled={Boolean(quickBuyLoading[product.id])}
-                        className="w-full rounded-full bg-[var(--primary)] py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {quickBuyLoading[product.id] ? 'Đang xử lý...' : 'Mua ngay'}
+                        {quickAddLoading[product.id] ? '...' : 'Add to cart'}
                       </button>
                     </div>
                   </div>

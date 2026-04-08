@@ -144,13 +144,13 @@ const HomePage = () => {
   }, [section]);
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <section id="home-hero" className="relative w-full">
         <Carousel slides={carouselSlides} options={CAROUSEL_OPTIONS} />
       </section>
 
       {/* Dynamic Products Section based on active tab */}
-      <section id="products-section" className="bg-white py-16 md:py-20">
+      <section id="products-section" className="bg-[var(--background)] py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           {activeTab === 'new' && (
             <>
@@ -158,14 +158,14 @@ const HomePage = () => {
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
+                      <div className="aspect-[3/4] bg-gray-100" />
                       <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
                       <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
                     </div>
                   ))}
                 </div>
               ) : newArrivals.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {newArrivals.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -173,7 +173,8 @@ const HomePage = () => {
                       name={product.name}
                       price={product.price}
                       compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl}
+                      thumbnailUrl={product.thumbnailUrl ?? null}
+                      hoverThumbnailUrl={product.hoverThumbnailUrl}
                     />
                   ))}
                 </div>
@@ -191,14 +192,14 @@ const HomePage = () => {
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
+                      <div className="aspect-[3/4] bg-gray-100" />
                       <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
                       <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
                     </div>
                   ))}
                 </div>
               ) : featuredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {featuredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -206,7 +207,8 @@ const HomePage = () => {
                       name={product.name}
                       price={product.price}
                       compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl}
+                      thumbnailUrl={product.thumbnailUrl ?? null}
+                      hoverThumbnailUrl={product.hoverThumbnailUrl}
                     />
                   ))}
                 </div>
@@ -224,14 +226,14 @@ const HomePage = () => {
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
+                      <div className="aspect-[3/4] bg-gray-100" />
                       <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
                       <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
                     </div>
                   ))}
                 </div>
               ) : saleProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {saleProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -239,7 +241,8 @@ const HomePage = () => {
                       name={product.name}
                       price={product.price}
                       compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl}
+                      thumbnailUrl={product.thumbnailUrl ?? null}
+                      hoverThumbnailUrl={product.hoverThumbnailUrl}
                     />
                   ))}
                 </div>
@@ -255,7 +258,7 @@ const HomePage = () => {
 
       {/* Categories Showcase - Modern E-commerce Style */}
       {categories.length > 0 && (
-        <section className="bg-white py-16 md:py-20">
+        <section className="bg-[var(--background)] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-8">
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-2xl md:text-3xl font-light text-[var(--primary)] tracking-wide uppercase">
@@ -273,24 +276,24 @@ const HomePage = () => {
                 <Link
                   key={category.slug}
                   to={`/categories/${category.slug}`}
-                  className="group text-center transition-opacity hover:opacity-70"
+                  className="group text-center transition-all"
                 >
-                  <div className="mb-3 aspect-square bg-[var(--primary)]/10 overflow-hidden rounded-sm">
+                  <div className="mb-4 aspect-square bg-[var(--muted)] overflow-hidden rounded-sm border border-[var(--border)]/30">
                     {category.image ? (
                       <img
                         src={category.image}
                         alt={category.name}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-[var(--primary)]/5 group-hover:bg-[var(--primary)]/15 transition-colors">
-                        <span className="text-xs text-[var(--primary)] uppercase tracking-wider">
-                          {category.name.charAt(0)}
+                      <div className="h-full w-full flex items-center justify-center bg-[var(--muted)] group-hover:bg-[var(--border)] transition-colors">
+                        <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-widest">
+                          {category.name}
                         </span>
                       </div>
                     )}
                   </div>
-                  <h3 className="text-xs font-light text-[var(--primary)] tracking-wide uppercase">
+                  <h3 className="text-[10px] font-medium text-[var(--foreground)] tracking-[0.2em] uppercase">
                     {category.name}
                   </h3>
                 </Link>
@@ -319,22 +322,22 @@ const HomePage = () => {
       </section>
 
       {/* Newsletter Signup - Modern E-commerce Style */}
-      <section className="bg-white border-t border-[var(--primary)]/20 py-16 md:py-20">
+      <section className="bg-[var(--background)] border-t border-[var(--border)] py-16 md:py-24">
         <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-3 text-xl md:text-2xl font-light text-[var(--primary)] tracking-wide uppercase">
-            Đăng ký nhận tin
+          <h2 className="mb-4 text-2xl md:text-3xl font-light text-[#4A3728] tracking-[0.1em] uppercase font-serif">
+            Maison Newsletter
           </h2>
-          <p className="mb-8 text-sm text-gray-600 font-light tracking-wide">
-            Nhận thông tin về sản phẩm mới và khuyến mãi đặc biệt
+          <p className="mb-10 text-[12px] text-[#8B7355] font-light tracking-wide uppercase">
+            Join our society for early access and exclusive collection updates.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="flex flex-col gap-6 sm:flex-row sm:justify-center max-w-lg mx-auto">
             <input
               type="email"
-              placeholder="Nhập email của bạn"
-              className="flex-1 border-b border-[var(--primary)] bg-transparent px-0 py-2 text-sm font-light text-[var(--primary)] placeholder:text-gray-400 focus:outline-none focus:border-[var(--primary)]/70 transition-colors"
+              placeholder="YOUR EMAIL ADDRESS"
+              className="flex-1 border-b border-[var(--border)] bg-transparent px-0 py-3 text-[11px] font-light tracking-widest text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors uppercase"
             />
-            <button className="border border-[var(--primary)] text-[var(--primary)] px-8 py-2 text-xs font-light tracking-widest uppercase hover:bg-[var(--primary)] hover:text-white transition-all duration-300">
-              Đăng ký
+            <button className="text-[10px] font-medium tracking-[0.2em] uppercase text-[var(--foreground)] hover:text-[var(--primary)] transition-all duration-300">
+              SUBSCRIBE
             </button>
           </div>
         </div>

@@ -58,9 +58,9 @@ const CategoryPage = () => {
   const title = activeCategory?.name ?? (slug ? slug.replace(/-/g, ' ').toUpperCase() : 'Danh mục');
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Hero / header section */}
-      <section className={`border-b border-gray-200 ${activeCategory?.image ? 'relative overflow-hidden' : 'bg-[#F5FAFF]'}`}>
+      <section className={`border-b border-[var(--border)]/30 ${activeCategory?.image ? 'relative overflow-hidden' : 'bg-[var(--muted)]'}`}>
         {activeCategory?.image && (
           <>
             <div className="absolute inset-0">
@@ -75,10 +75,10 @@ const CategoryPage = () => {
         )}
         <div className={`relative mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 md:flex-row md:items-end md:justify-between md:py-10 ${activeCategory?.image ? 'text-white' : ''}`}>
           <div>
-            <p className={`text-xs uppercase tracking-[0.3em] mb-2 ${activeCategory?.image ? 'text-white/90' : 'text-[#4DA3E8]'}`}>
-              Danh mục
+            <p className={`text-[10px] uppercase tracking-[0.3em] mb-3 ${activeCategory?.image ? 'text-white/90' : 'text-[var(--primary)]'}`}>
+              COLLECTION
             </p>
-            <h1 className={`text-3xl md:text-4xl font-light tracking-wide ${activeCategory?.image ? 'text-white' : 'text-[#1F3A4D]'}`}>
+            <h1 className={`text-3xl md:text-5xl font-light tracking-wide font-serif ${activeCategory?.image ? 'text-white' : 'text-[var(--foreground)]'}`}>
               {title}
             </h1>
             {activeCategory && (
@@ -104,60 +104,60 @@ const CategoryPage = () => {
         <div className="mx-auto max-w-7xl px-4 md:px-8 space-y-6">
           {/* Sort controls */}
           {products.length > 0 && (
-            <div className="flex items-center justify-end gap-3 text-xs text-gray-600">
-              <span className="uppercase tracking-[0.25em] text-[10px] text-gray-500">
-                Sắp xếp
+            <div className="flex items-center justify-end gap-3 uppercase tracking-[0.1em]">
+              <span className="text-[10px] text-[var(--muted-foreground)] tracking-[0.2em]">
+                SORT BY
               </span>
-              <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+              <div className="inline-flex rounded-sm border border-[var(--border)] bg-[var(--card)] p-0.5">
                 <button
                   type="button"
                   onClick={() => setSort('latest')}
-                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+                  className={`rounded-sm px-4 py-1.5 text-[10px] tracking-[0.15em] transition-colors ${
                     sort === 'latest'
-                      ? 'bg-[#4DA3E8] text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                      : 'text-[var(--foreground)] hover:bg-[var(--muted)]'
                   }`}
                 >
-                  Mới nhất
+                  LATEST
                 </button>
                 <button
                   type="button"
                   onClick={() => setSort('price-asc')}
-                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+                  className={`rounded-sm px-4 py-1.5 text-[10px] tracking-[0.15em] transition-colors ${
                     sort === 'price-asc'
-                      ? 'bg-[#4DA3E8] text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                      : 'text-[var(--foreground)] hover:bg-[var(--muted)]'
                   }`}
                 >
-                  Giá ↑
+                  PRICE ↑
                 </button>
                 <button
                   type="button"
                   onClick={() => setSort('price-desc')}
-                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+                  className={`rounded-sm px-4 py-1.5 text-[10px] tracking-[0.15em] transition-colors ${
                     sort === 'price-desc'
-                      ? 'bg-[#4DA3E8] text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                      : 'text-[var(--foreground)] hover:bg-[var(--muted)]'
                   }`}
                 >
-                  Giá ↓
+                  PRICE ↓
                 </button>
               </div>
             </div>
           )}
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="aspect-square bg-gray-100" />
+                  <div className="aspect-[3/4] bg-gray-100" />
                   <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
                   <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
                 </div>
               ))}
             </div>
           ) : sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -165,7 +165,8 @@ const CategoryPage = () => {
                   name={product.name}
                   price={product.price}
                   compareAtPrice={product.compareAtPrice}
-                  thumbnailUrl={product.thumbnailUrl}
+                  thumbnailUrl={product.thumbnailUrl ?? null}
+                  hoverThumbnailUrl={product.hoverThumbnailUrl}
                 />
               ))}
             </div>
@@ -176,9 +177,9 @@ const CategoryPage = () => {
               </p>
               <Link
                 to="/products"
-                className="mt-6 inline-block border border-[#4DA3E8] px-6 py-2 text-xs font-light uppercase tracking-[0.3em] text-[#4DA3E8] hover:bg-[#4DA3E8] hover:text-white transition-all"
+                className="mt-6 inline-block border border-[var(--primary)] px-8 py-3 text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all rounded-sm"
               >
-                Xem tất cả sản phẩm
+                VIEW ALL ITEMS
               </Link>
             </div>
           )}

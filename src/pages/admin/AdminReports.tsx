@@ -35,12 +35,12 @@ const AdminReports = () => {
         fetchData();
     }, [startDate, endDate]);
 
-    const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
+    const COLORS = ['#C4714E', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
 
     if (loading && !data) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
             </div>
         );
     }
@@ -75,7 +75,7 @@ const AdminReports = () => {
                     />
                     <button
                         onClick={fetchData}
-                        className="ml-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition"
+                        className="ml-2 px-3 py-1.5 bg-[var(--primary)] text-white text-sm font-medium rounded-md hover:bg-[var(--primary-hover)] transition"
                     >
                         Áp dụng
                     </button>
@@ -87,7 +87,7 @@ const AdminReports = () => {
                 <button
                     onClick={() => setActiveTab('revenue')}
                     className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'revenue'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-[var(--primary)] text-[var(--primary)]'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
@@ -97,7 +97,7 @@ const AdminReports = () => {
                 <button
                     onClick={() => setActiveTab('orders')}
                     className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'orders'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-[var(--primary)] text-[var(--primary)]'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
@@ -107,7 +107,7 @@ const AdminReports = () => {
                 <button
                     onClick={() => setActiveTab('customers')}
                     className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'customers'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-[var(--primary)] text-[var(--primary)]'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
@@ -122,9 +122,9 @@ const AdminReports = () => {
                 {activeTab === 'revenue' && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                                <p className="text-sm font-medium text-blue-600 uppercase">Tổng doanh thu (trong kỳ)</p>
-                                <h3 className="text-3xl font-bold text-gray-800 mt-2">
+                            <div className="bg-[var(--muted)] p-6 rounded-xl border border-[var(--border)]">
+                                <p className="text-sm font-medium text-[var(--foreground)] uppercase">Tổng doanh thu (trong kỳ)</p>
+                                <h3 className="text-3xl font-light text-[var(--foreground)] mt-2" style={{ fontFamily: 'var(--font-serif)' }}>
                                     {data.revenueReport.totalRevenue.toLocaleString('vi-VN')} ₫
                                 </h3>
                             </div>
@@ -178,7 +178,7 @@ const AdminReports = () => {
                                             <td className="p-4 font-medium text-gray-800">{customer.fullName}</td>
                                             <td className="p-4 text-gray-600">{customer.email}</td>
                                             <td className="p-4 text-center">
-                                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                                                <span className="inline-block px-3 py-1 bg-[var(--muted)] text-[var(--primary)] rounded-full text-xs font-bold">
                                                     {customer.totalOrders}
                                                 </span>
                                             </td>

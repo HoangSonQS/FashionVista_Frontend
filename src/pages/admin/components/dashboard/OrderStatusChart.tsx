@@ -13,7 +13,7 @@ interface OrderStatusChartProps {
 
 const COLORS = {
     Pending: '#F59E0B',     // Amber-500
-    Confirmed: '#3B82F6',   // Blue-500
+    Confirmed: '#C4714E',   // Terracotta
     Shipping: '#8B5CF6',    // Violet-500
     Completed: '#10B981',   // Emerald-500
     Cancelled: '#EF4444',   // Red-500

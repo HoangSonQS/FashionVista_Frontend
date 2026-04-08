@@ -9,13 +9,14 @@ const formatCurrency = (value?: number | null) => {
   return `${value.toLocaleString('vi-VN')}₫`;
 };
 
-export type BasicProductCardProps = {
+export interface BasicProductCardProps {
   slug: string;
   name: string;
   price: number;
   compareAtPrice?: number | null;
-  thumbnailUrl?: string | null;
-};
+  thumbnailUrl: string | null;
+  hoverThumbnailUrl?: string | null;
+}
 
 export const ProductCard = ({
   slug,
@@ -23,46 +24,55 @@ export const ProductCard = ({
   price,
   compareAtPrice,
   thumbnailUrl,
+  hoverThumbnailUrl,
 }: BasicProductCardProps) => {
   const hasDiscount = typeof compareAtPrice === 'number' && compareAtPrice > price;
-  const discountPercent = hasDiscount
-    ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
-    : 0;
 
   return (
-    <div className="group relative">
+    <div className="group relative bg-[var(--card)]">
       <Link to={`/products/${slug}`} className="block">
-        <div className="relative overflow-hidden bg-white aspect-square flex items-center justify-center">
+        <div className="relative overflow-hidden aspect-[3/4] bg-[var(--background)]">
           {thumbnailUrl ? (
-            <img
-              src={thumbnailUrl}
-              alt={name}
-              className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-            />
+            <>
+              <img
+                src={thumbnailUrl}
+                alt={name}
+                className={`h-full w-full object-cover transition-all duration-700 ${
+                  hoverThumbnailUrl ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'
+                }`}
+              />
+              {hoverThumbnailUrl && (
+                <img
+                  src={hoverThumbnailUrl}
+                  alt={`${name} hover`}
+                  className="absolute inset-0 h-full w-full object-cover opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:scale-105"
+                />
+              )}
+            </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
-              <span className="text-sm">No Image</span>
+            <div className="flex h-full w-full items-center justify-center bg-[var(--muted)] text-[var(--muted-foreground)]">
+              <span className="text-[10px] uppercase tracking-widest">No Image</span>
             </div>
           )}
           {hasDiscount && (
-            <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 text-xs font-medium tracking-wide">
-              -{discountPercent}%
+            <div className="absolute top-3 left-3 bg-[var(--foreground)] text-[var(--background)] px-2 py-0.5 text-[9px] font-medium tracking-widest uppercase">
+              Sale
             </div>
           )}
         </div>
       </Link>
-      <div className="mt-4 space-y-1">
+      <div className="mt-4 text-center px-1">
         <Link to={`/products/${slug}`}>
-          <h3 className="font-light text-sm text-[var(--foreground)] hover:underline transition-all line-clamp-2 tracking-wide">
+          <h3 className="text-[11px] font-medium text-[var(--foreground)] uppercase tracking-[0.15em] line-clamp-1 hover:opacity-60 transition-opacity">
             {name}
           </h3>
         </Link>
-        <div className="flex items-baseline gap-2">
-          <span className="font-normal text-sm text-[var(--foreground)]">
+        <div className="mt-1.5 flex flex-col items-center gap-1">
+          <span className="text-[11px] font-light text-[var(--foreground)] tracking-wider">
             {formatCurrency(price)}
           </span>
           {hasDiscount && typeof compareAtPrice === 'number' && (
-            <span className="text-xs text-gray-500 line-through font-light">
+            <span className="text-[10px] text-[var(--muted-foreground)] line-through font-light tracking-wide">
               {formatCurrency(compareAtPrice)}
             </span>
           )}

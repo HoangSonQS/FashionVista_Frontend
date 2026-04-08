@@ -13,6 +13,7 @@ export interface ProductListItem {
   visibleUpdatedAt?: string;
   category?: string | null;
   thumbnailUrl?: string | null;
+  hoverThumbnailUrl?: string | null;
   sizes?: string[] | null;
   colors?: string[] | null;
 }

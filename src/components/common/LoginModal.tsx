@@ -35,25 +35,25 @@ export const LoginModal = ({ isOpen, onClose, message = 'Bạn cần đăng nh�
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-[var(--radius)] bg-[var(--card)] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-sm bg-[var(--card)] p-8 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-xl font-semibold mb-2">Đăng nhập yêu cầu</h3>
-        <p className="text-sm text-[var(--muted-foreground)] mb-6">{message}</p>
-        <div className="flex gap-3 justify-end">
+        <h3 className="text-sm font-medium uppercase tracking-[0.2em] mb-4" style={{ fontFamily: 'var(--font-serif)' }}>Authentication Required</h3>
+        <p className="text-[11px] uppercase tracking-widest text-[var(--muted-foreground)] mb-8">{message}</p>
+        <div className="flex gap-4 justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+            className="px-6 py-2 rounded-sm border border-[var(--border)] text-[10px] uppercase tracking-[0.2em] font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-all"
           >
-            Hủy
+            Cancel
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors"
+            className="px-6 py-2 rounded-sm bg-[var(--primary)] text-[var(--primary-foreground)] text-[10px] uppercase tracking-[0.2em] font-medium hover:bg-[var(--primary-hover)] transition-all"
           >
-            Đăng nhập
+            Login
           </button>
         </div>
       </div>
