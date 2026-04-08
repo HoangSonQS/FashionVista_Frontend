@@ -67,15 +67,15 @@ const CollectionDetailPage = () => {
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="inline-flex w-fit items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors mb-2"
+            className="inline-flex w-fit items-center justify-center rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-1.5 text-[10px] uppercase tracking-widest font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors mb-2"
           >
             ← Quay lại
           </button>
 
           <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-center">
             <div className="space-y-3">
-              <p className="text-xs tracking-[0.3em] uppercase text-[var(--muted-foreground)]">
-                SixthSoul Collection
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--muted-foreground)]">
+                Maison Collection
               </p>
               <h1
                 className="text-3xl md:text-4xl font-semibold"
@@ -84,12 +84,12 @@ const CollectionDetailPage = () => {
                 {data.name}
               </h1>
               {data.description && (
-                <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+                <p className="text-sm text-[var(--muted-foreground)] leading-relaxed font-light">
                   {data.description}
                 </p>
               )}
             </div>
-            <div className="h-56 md:h-64 rounded-3xl border border-[var(--border)] bg-[var(--card)] overflow-hidden flex items-center justify-center">
+            <div className="h-56 md:h-64 rounded-sm border border-[var(--border)] bg-[var(--card)] overflow-hidden flex items-center justify-center">
               {data.heroImageUrl ? (
                 <img
                   src={data.heroImageUrl}
@@ -97,8 +97,8 @@ const CollectionDetailPage = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-xs text-[var(--muted-foreground)]">
-                  Đang cập nhật hình ảnh
+                <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
+                  Image coming soon
                 </span>
               )}
             </div>
@@ -110,7 +110,7 @@ const CollectionDetailPage = () => {
       {data.longDescriptionHtml && (
         <section className="mx-auto max-w-4xl px-4 pt-8">
           <div
-            className="prose max-w-none prose-p:my-3 prose-strong:font-semibold prose-em:italic text-[var(--foreground)]"
+            className="prose max-w-none prose-p:my-3 prose-strong:font-semibold prose-em:italic text-[var(--foreground)] font-light"
             dangerouslySetInnerHTML={{ __html: data.longDescriptionHtml }}
           />
         </section>
@@ -119,26 +119,26 @@ const CollectionDetailPage = () => {
       {/* Products */}
       <section className="mx-auto max-w-6xl px-4 pt-8 space-y-4">
         {data.products.length === 0 ? (
-          <p className="text-sm text-[var(--muted-foreground)]">
+          <p className="text-sm text-[var(--muted-foreground)] font-light">
             Chưa có sản phẩm nào trong bộ sưu tập này.
           </p>
         ) : (
           <>
-            <h2 className="text-base font-semibold text-[var(--muted-foreground)] uppercase tracking-[0.2em]">
-              Sản phẩm trong bộ sưu tập
+            <h2 className="text-[11px] font-semibold text-[var(--muted-foreground)] uppercase tracking-[0.2em]">
+              Items in this collection
             </h2>
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {data.products.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden hover:-translate-y-1 transition-transform flex flex-col p-3"
+                  className="rounded-sm border border-[var(--border)]/30 bg-[var(--card)] overflow-hidden hover:-translate-y-1 transition-transform flex flex-col p-2"
                 >
                   <ProductCard
                     slug={product.slug}
                     name={product.name}
                     price={product.price}
                     compareAtPrice={product.compareAtPrice}
-                    thumbnailUrl={product.thumbnailUrl}
+                    thumbnailUrl={product.thumbnailUrl ?? null}
                   />
                 </div>
               ))}
