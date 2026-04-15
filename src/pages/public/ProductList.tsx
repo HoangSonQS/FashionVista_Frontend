@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import type {
@@ -28,6 +28,7 @@ interface FilterState {
 
 const ProductList = () => {
   const location = useLocation();
+  const listRef = useRef<HTMLDivElement>(null);
   const searchParams = new URLSearchParams(location.search);
   const initialSearch = searchParams.get('search') ?? undefined;
   const [filters, setFilters] = useStableState<FilterState>(initialSearch ? { search: initialSearch } : {});
@@ -51,6 +52,18 @@ const ProductList = () => {
 
   useEffect(() => {
     productService.getCategories().then(setCategories).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    // Scroll to products section on mount with smooth animation
+    // Adjusted to be 70px higher as requested to show more context
+    const timer = setTimeout(() => {
+      if (listRef.current) {
+        const top = listRef.current.getBoundingClientRect().top + window.pageYOffset - 70;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    }, 600);
+    return () => clearTimeout(timer);
   }, []);
 
   // Hiển thị error toast khi có lỗi
@@ -246,7 +259,7 @@ const ProductList = () => {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto space-y-8 px-4 pt-10">
+      <div ref={listRef} className="max-w-6xl mx-auto space-y-8 px-4 pt-10">
 
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Sidebar filter - sticky on desktop after banner */}
@@ -472,11 +485,10 @@ const ProductList = () => {
                             type="button"
                             disabled={disabled}
                             onClick={() => !disabled && setSelectedColor(color)}
-                             className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-xs transition-colors ${
-                              isActive
+                            className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-xs transition-colors ${isActive
                                 ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
                                 : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                            } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             {color}
                             {disabled && <span className="ml-1 text-[10px]"> (Hết hàng)</span>}
@@ -521,11 +533,10 @@ const ProductList = () => {
                             type="button"
                             disabled={disabled}
                             onClick={() => !disabled && setSelectedSize(size)}
-                            className={`rounded-lg border px-2 py-1.5 text-xs text-center transition-colors ${
-                              isActive
+                            className={`rounded-lg border px-2 py-1.5 text-xs text-center transition-colors ${isActive
                                 ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
                                 : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                            } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                           >
                             {size}
                             {disabled && <span className="block text-[10px] mt-0.5">Hết hàng</span>}

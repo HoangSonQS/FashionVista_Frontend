@@ -19,6 +19,15 @@ const SalePage = React.lazy(() => import('../pages/public/SalePage'));
 const PaymentResultPage = React.lazy(() => import('../pages/public/PaymentResult'));
 const PaymentSuccessPage = React.lazy(() => import('../pages/public/PaymentSuccessPage'));
 const PaymentFailedPage = React.lazy(() => import('../pages/public/PaymentFailedPage'));
+const AboutPage = React.lazy(() => import('../pages/public/About.tsx'));
+const ContactPage = React.lazy(() => import('../pages/public/Contact.tsx'));
+const PaymentMethodsPage = React.lazy(() => import('../pages/public/PaymentMethods.tsx'));
+
+// Policy Pages
+const TermsOfServicePage = React.lazy(() => import('../pages/policy/TermsOfService.tsx'));
+const PrivacyPolicyPage = React.lazy(() => import('../pages/policy/PrivacyPolicy.tsx'));
+const RefundPolicyPage = React.lazy(() => import('../pages/policy/RefundPolicy.tsx'));
+const ShippingPolicyPage = React.lazy(() => import('../pages/policy/ShippingPolicy.tsx'));
 
 // Auth Pages
 const Register = React.lazy(() => import('../pages/auth/Register'));
@@ -79,6 +88,15 @@ export const AppRoutes = () => {
             <Route path="/checkout/success" element={<PaymentSuccessPage />} />
             <Route path="/checkout/failed" element={<PaymentFailedPage />} />
 
+            {/* Support & Legal Routes */}
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/refund-policy" element={<RefundPolicyPage />} />
+            <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+
             <Route element={<ProtectedRoute />}>
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
@@ -89,6 +107,7 @@ export const AppRoutes = () => {
               <Route path="/reviews" element={<MyReviewsPage />} />
             </Route>
           </Route>
+
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

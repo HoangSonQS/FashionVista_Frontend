@@ -4,12 +4,15 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)]">Về MAISON</h3>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Về SIXTHSOUL</h3>
             <ul className="space-y-3">
-              {['Giới thiệu', 'Tuyển dụng', 'Cửa hàng'].map((label) => (
-                <li key={label}>
-                  <a href="#" className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                    {label}
+              {[
+                { label: 'Giới thiệu', path: '/about' },
+                { label: 'Sản phẩm', path: '/products' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a href={item.path} className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -17,12 +20,17 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)]">Dịch vụ khách hàng</h3>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Dịch vụ khách hàng</h3>
             <ul className="space-y-3">
-              {['Liên hệ', 'Vận chuyển', 'Đổi trả', 'FAQ'].map((label) => (
-                <li key={label}>
-                  <a href="#" className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                    {label}
+              {[
+                { label: 'Liên hệ', path: '/contact' },
+                { label: 'Vận chuyển', path: '/shipping-policy' },
+                { label: 'Đổi trả', path: '/refund-policy' },
+                { label: 'Thanh toán', path: '/payment-methods' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a href={item.path} className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -30,12 +38,15 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)]">Pháp lý</h3>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Pháp lý</h3>
             <ul className="space-y-3">
-              {['Bảo mật', 'Điều khoản'].map((label) => (
-                <li key={label}>
-                  <a href="#" className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                    {label}
+              {[
+                { label: 'Bảo mật', path: '/privacy-policy' },
+                { label: 'Điều khoản', path: '/terms-of-service' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a href={item.path} className="text-[11px] uppercase tracking-[0.1em] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -43,9 +54,9 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)]">Bản tin</h3>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Bản tin</h3>
             <p className="text-[12px] text-[var(--muted-foreground)] mb-6 font-light leading-relaxed">
-              Nhận thông tin về bộ sưu tập mới và ưu đãi đặc quyền
+              Nhận thông tin về bộ sưu tập mới và ưu đãi đặc quyền từ SixthSoul.
             </p>
             <form className="flex flex-col gap-3">
               <input
@@ -55,7 +66,7 @@ const Footer = () => {
               />
               <button
                 type="submit"
-                className="self-start text-[10px] uppercase tracking-[0.2em] font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors"
+                className="self-start text-[10px] uppercase tracking-[0.2em] font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors font-sans"
                 aria-label="Gửi email"
               >
                 ĐĂNG KÝ
@@ -76,7 +87,7 @@ const Footer = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
                       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                      <line x1="17.5" y2="17.51" y1="6.5" />
                     </svg>
                   )}
                 </a>
@@ -85,7 +96,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-[var(--border)]/30 mt-16 pt-8">
-          <p className="text-center text-[10px] text-[var(--muted-foreground)] uppercase tracking-[0.2em]">© 2026 MAISON. All rights reserved.</p>
+          <p className="text-center text-[10px] text-[var(--muted-foreground)] uppercase tracking-[0.2em]">© 2026 SIXTHSOUL. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -93,5 +104,6 @@ const Footer = () => {
 };
 
 export default Footer;
+
 
 
