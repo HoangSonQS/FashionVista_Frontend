@@ -2,9 +2,9 @@ import React, { Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ProtectedRoute } from './ProtectedRoute';
-import { AdminProtectedRoute } from './AdminProtectedRoute';
+// import { AdminProtectedRoute } from './AdminProtectedRoute';
 import MainLayout from '../components/layout/MainLayout';
-import AdminLayout from '../components/layout/AdminLayout';
+// import AdminLayout from '../components/layout/AdminLayout';
 import ScrollToTop from '../components/common/ScrollToTop';
 
 // Public Pages
@@ -34,7 +34,7 @@ const Register = React.lazy(() => import('../pages/auth/Register'));
 const Login = React.lazy(() => import('../pages/auth/Login'));
 const ForgotPassword = React.lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('../pages/auth/ResetPassword'));
-const AdminLogin = React.lazy(() => import('../pages/admin/AdminLogin'));
+// const AdminLogin = React.lazy(() => import('../pages/admin/AdminLogin'));
 
 // User Pages
 const CartPage = React.lazy(() => import('../pages/user/CartPage'));
@@ -46,28 +46,28 @@ const WishlistPage = React.lazy(() => import('../pages/user/WishlistPage'));
 const MyReviewsPage = React.lazy(() => import('../pages/user/MyReviewsPage'));
 
 // Admin Pages
-const AdminDashboard = React.lazy(() => import('../pages/admin/AdminDashboard'));
-const ProductCreatePage = React.lazy(() => import('../pages/admin/ProductCreate'));
-const AdminReports = React.lazy(() => import('../pages/admin/AdminReports'));
-const AdminProductList = React.lazy(() => import('../pages/admin/AdminProductList'));
-const AdminCollectionCreate = React.lazy(() => import('../pages/admin/AdminCollectionCreate'));
-const AdminCollections = React.lazy(() => import('../pages/admin/AdminCollections'));
-const AdminCollectionProducts = React.lazy(() => import('../pages/admin/AdminCollectionProducts'));
-const AdminOrders = React.lazy(() => import('../pages/admin/AdminOrders'));
-const AdminCarts = React.lazy(() => import('../pages/admin/AdminCarts'));
-const AdminUsers = React.lazy(() => import('../pages/admin/AdminUsers'));
-const AdminUserDetail = React.lazy(() => import('../pages/admin/AdminUserDetail'));
-const AdminProductVisibility = React.lazy(() => import('../pages/admin/AdminProductVisibility'));
-const AdminShippingFeeConfig = React.lazy(() => import('../pages/admin/AdminShippingFeeConfig'));
-const AdminCategories = React.lazy(() => import('../pages/admin/AdminCategories'));
-const AdminVouchers = React.lazy(() => import('../pages/admin/AdminVouchers'));
-const AdminPayments = React.lazy(() => import('../pages/admin/AdminPayments'));
-const AdminProductVariants = React.lazy(() => import('../pages/admin/AdminProductVariants'));
-const AdminProductImages = React.lazy(() => import('../pages/admin/AdminProductImages'));
-const AdminReturns = React.lazy(() => import('../pages/admin/AdminReturns'));
-const AdminReviews = React.lazy(() => import('../pages/admin/AdminReviews'));
-const AdminLoyaltyPoints = React.lazy(() => import('../pages/admin/AdminLoyaltyPoints'));
-const AdminLoginActivities = React.lazy(() => import('../pages/admin/AdminLoginActivities'));
+// const AdminDashboard = React.lazy(() => import('../pages/admin/AdminDashboard'));
+// const ProductCreatePage = React.lazy(() => import('../pages/admin/ProductCreate'));
+// const AdminReports = React.lazy(() => import('../pages/admin/AdminReports'));
+// const AdminProductList = React.lazy(() => import('../pages/admin/AdminProductList'));
+// const AdminCollectionCreate = React.lazy(() => import('../pages/admin/AdminCollectionCreate'));
+// const AdminCollections = React.lazy(() => import('../pages/admin/AdminCollections'));
+// const AdminCollectionProducts = React.lazy(() => import('../pages/admin/AdminCollectionProducts'));
+// const AdminOrders = React.lazy(() => import('../pages/admin/AdminOrders'));
+// const AdminCarts = React.lazy(() => import('../pages/admin/AdminCarts'));
+// const AdminUsers = React.lazy(() => import('../pages/admin/AdminUsers'));
+// const AdminUserDetail = React.lazy(() => import('../pages/admin/AdminUserDetail'));
+// const AdminProductVisibility = React.lazy(() => import('../pages/admin/AdminProductVisibility'));
+// const AdminShippingFeeConfig = React.lazy(() => import('../pages/admin/AdminShippingFeeConfig'));
+// const AdminCategories = React.lazy(() => import('../pages/admin/AdminCategories'));
+// const AdminVouchers = React.lazy(() => import('../pages/admin/AdminVouchers'));
+// const AdminPayments = React.lazy(() => import('../pages/admin/AdminPayments'));
+// const AdminProductVariants = React.lazy(() => import('../pages/admin/AdminProductVariants'));
+// const AdminProductImages = React.lazy(() => import('../pages/admin/AdminProductImages'));
+// const AdminReturns = React.lazy(() => import('../pages/admin/AdminReturns'));
+// const AdminReviews = React.lazy(() => import('../pages/admin/AdminReviews'));
+// const AdminLoyaltyPoints = React.lazy(() => import('../pages/admin/AdminLoyaltyPoints'));
+// const AdminLoginActivities = React.lazy(() => import('../pages/admin/AdminLoginActivities'));
 
 export const AppRoutes = () => {
   return (
