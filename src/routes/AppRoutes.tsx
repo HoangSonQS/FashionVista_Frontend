@@ -113,8 +113,9 @@ export const AppRoutes = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Admin Routes Temporarily Disabled - Use FashionVista_Admin repo instead */}
+          {/* 
           <Route path="/admin/login" element={<AdminLogin />} />
-
           <Route element={<AdminProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
@@ -143,6 +144,7 @@ export const AppRoutes = () => {
               <Route path="shipping-fee-configs" element={<AdminShippingFeeConfig />} />
             </Route>
           </Route>
+          */}
 
           {/* Catch-all route - redirect về home */}
           <Route path="*" element={<Navigate to="/" replace />} />

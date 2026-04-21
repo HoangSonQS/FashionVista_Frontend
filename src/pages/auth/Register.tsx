@@ -176,7 +176,7 @@ const Register = () => {
                   Họ và tên
                 </label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors z-10" />
                   <input
                     id="fullName"
                     name="fullName"
@@ -184,7 +184,7 @@ const Register = () => {
                     required
                     value={form.fullName}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                    className="w-full !pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
                     placeholder="CHÊNE"
                   />
                 </div>
@@ -196,7 +196,7 @@ const Register = () => {
                     Email
                   </label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors z-10" />
                     <input
                       id="email"
                       name="email"
@@ -204,7 +204,7 @@ const Register = () => {
                       required
                       value={form.email}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                      className="w-full !pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
                       placeholder="YOU@MAISON.COM"
                     />
                   </div>
@@ -215,7 +215,7 @@ const Register = () => {
                     Số điện thoại
                   </label>
                   <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors z-10" />
                     <input
                       id="phoneNumber"
                       name="phoneNumber"
@@ -223,7 +223,7 @@ const Register = () => {
                       required
                       value={form.phoneNumber}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
+                      className="w-full !pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
                       placeholder="+84"
                     />
                   </div>
@@ -235,7 +235,7 @@ const Register = () => {
                   Mật khẩu
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors z-10" />
                   <input
                     id="password"
                     name="password"
@@ -243,13 +243,13 @@ const Register = () => {
                     required
                     value={form.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
+                    className="w-full !pl-12 !pr-12 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors z-10"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -261,7 +261,7 @@ const Register = () => {
                   Xác nhận mật khẩu
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] group-focus-within:text-[var(--primary)] transition-colors z-10" />
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -269,13 +269,13 @@ const Register = () => {
                     required
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
+                    className="w-full !pl-12 !pr-12 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors z-10"
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>

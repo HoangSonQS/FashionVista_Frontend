@@ -56,6 +56,7 @@
   --auth-text-link: #C4714E;
   --auth-focus-ring: #C4714E;
   --auth-button-bg: #C4714E;
+  --primary-focus-ring: rgba(196, 113, 78, 0.2);
 
   --scrollbar-thumb: #EDD8CC;
   --scrollbar-thumb-hover: #C4714E;
@@ -118,7 +119,9 @@ b,
 }
 
 .number-input {
-  -moz-appearance: textfield;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .number-input::-webkit-inner-spin-button,
@@ -218,22 +221,25 @@ a:hover {
 }
 
 /* === Input Styling === */
+/* === Input Styling === */
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="search"],
 input[type="number"],
+input[type="tel"],
 select,
 textarea {
   border-radius: var(--radius);
   border: 0.5px solid var(--border);
   background-color: var(--input-background);
   color: var(--foreground);
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 1rem;
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 300;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  width: 100%;
 }
 
 input:focus,
@@ -241,6 +247,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 2px var(--primary-focus-ring);
 }
 
 ::placeholder {
