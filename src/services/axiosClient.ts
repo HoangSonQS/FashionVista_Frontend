@@ -10,7 +10,6 @@ export const axiosClient = axios.create({
   },
 });
 
-// Helper to check token expiration
 const isTokenExpired = (token: string): boolean => {
   try {
     const base64Url = token.split('.')[1];
@@ -30,19 +29,31 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
-axiosClient.interceptors.request.use((config) => {
-  if (typeof window === 'undefined') {
-    return config;
+const handleLogout = (isAdmin: boolean) => {
+  const storageKey = isAdmin ? 'adminAuth' : 'auth';
+  localStorage.removeItem(storageKey);
+  if (typeof window !== 'undefined') {
+    const loginPath = isAdmin ? '/admin/login' : '/login';
+    // Use window.location.href to force a full redirect and stop any running app logic
+    if (window.location.pathname !== loginPath) {
+      window.location.href = loginPath;
+    }
   }
+};
+
+axiosClient.interceptors.request.use((config) => {
+  if (typeof window === 'undefined') return config;
 
   const url = config.url ?? '';
   const normalized = url.startsWith('/') ? url : `/${url}`;
-  const isAuthEndpoint = normalized.startsWith('/auth/') || normalized.startsWith('/admin/auth/');
-  if (isAuthEndpoint) {
-    return config;
-  }
+  
+  // Skip token attachment for auth endpoints
+  const isAuthEndpoint = normalized.includes('/auth/login') || 
+                        normalized.includes('/auth/register') || 
+                        normalized.includes('/auth/refresh-token');
+                        
+  if (isAuthEndpoint) return config;
 
-  // Don't override Content-Type if it's FormData (axios will set it automatically with boundary)
   const isFormData = config.data instanceof FormData;
   if (isFormData) {
     delete config.headers['Content-Type'];
@@ -55,19 +66,20 @@ axiosClient.interceptors.request.use((config) => {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as { token?: string };
-      if (parsed?.token && !isTokenExpired(parsed.token)) {
-        config.headers = config.headers ?? {};
+      if (parsed?.token) {
+        if (isTokenExpired(parsed.token)) {
+          // Optional: we could trigger refresh here, but intercepting 401 is usually more reliable
+        }
         config.headers.Authorization = `Bearer ${parsed.token}`;
       }
     } catch {
-      // ignore parse error
+      // ignore
     }
   }
 
   return config;
 });
 
-// Flag & Queue to handle multiple concurrent 401s
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -76,40 +88,30 @@ let failedQueue: Array<{
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else if (token) {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else if (token) prom.resolve(token);
   });
-
   failedQueue = [];
 };
 
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Suppress console error cho 404
-    if (
-      error.response?.status === 404 &&
-      error.config?.url?.includes('/admin/returns/by-order/')
-    ) {
-      error.isExpected404 = true;
+    const originalRequest = error.config;
+    if (!originalRequest) return Promise.reject(error);
+
+    const url = originalRequest.url ?? '';
+    const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/refresh-token');
+
+    // If 401 occurs on an auth request, it's either wrong credentials or invalid refresh token
+    if (error.response?.status === 401 && isAuthRequest) {
+      const isAdmin = url.includes('/admin/');
+      handleLogout(isAdmin);
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config;
-
-    // Handle 401 Unauthorized
+    // Handle 401 for normal requests
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Prevent infinite loop if auth endpoints themselves fail
-      if (
-        originalRequest.url?.includes('/auth/login') ||
-        originalRequest.url?.includes('/auth/refresh-token')
-      ) {
-        return Promise.reject(error);
-      }
-
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -124,42 +126,31 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const isAdminEndpoint = originalRequest.url?.includes('/admin/');
-      const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
+      const isAdmin = url.includes('/admin/');
+      const storageKey = isAdmin ? 'adminAuth' : 'auth';
 
       try {
         const raw = localStorage.getItem(storageKey);
         const authData = raw ? JSON.parse(raw) : null;
         const refreshToken = authData?.refreshToken;
 
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
+        if (!refreshToken) throw new Error('No refresh token');
 
-        const response = await axios.post(`${baseURL}/auth/refresh-token`, {
+        // Note: use base axios to avoid client interceptors for refresh call
+        const response = await axios.post(`${baseURL}${isAdmin ? '/admin' : ''}/auth/refresh-token`, {
           refreshToken,
         });
 
         const { token, refreshToken: newRefreshToken } = response.data;
-
-        // Update Token & Rotation
         const updatedAuth = { ...authData, token, refreshToken: newRefreshToken };
         localStorage.setItem(storageKey, JSON.stringify(updatedAuth));
 
         axiosClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        originalRequest.headers['Authorization'] = `Bearer ${token}`;
-
         processQueue(null, token);
         return axiosClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        console.warn('Session expired. Logging out...');
-        localStorage.removeItem(storageKey);
-        if (typeof window !== 'undefined') {
-          // Chỉ reload nếu đang ở trang cần auth, nếu public thì thôi?
-          // Public API lỗi -> clear token -> thành guest. Reload để reset trạng thái UI.
-          window.location.reload();
-        }
+        handleLogout(isAdmin);
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

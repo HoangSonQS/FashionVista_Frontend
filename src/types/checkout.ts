@@ -55,6 +55,7 @@ export interface VoucherValidationResponse {
   discount: number;
   subtotal: number;
   finalTotal: number;
+  freeShipping: boolean;
 }
 
 

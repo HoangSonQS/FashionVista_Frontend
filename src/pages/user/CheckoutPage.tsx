@@ -51,6 +51,7 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [voucherApplying, setVoucherApplying] = useState(false);
   const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
+  const [voucherFreeShipping, setVoucherFreeShipping] = useState(false);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('STANDARD');
   const [shippingFeeConfigs, setShippingFeeConfigs] = useState<ShippingFeeConfig[]>([]);
@@ -236,13 +237,13 @@ const CheckoutPage = () => {
       willBeFree: threshold > 0 && subtotal >= threshold,
     });
 
-    // Chỉ miễn phí khi: có sản phẩm VÀ subtotal >= threshold VÀ threshold > 0
-    if (threshold > 0 && subtotal >= threshold) {
+    // Chỉ miễn phí khi: có sản phẩm VÀ (subtotal >= threshold HOẶC voucher freeship)
+    if ((threshold > 0 && subtotal >= threshold) || voucherFreeShipping) {
       return 0;
     }
 
     return fee;
-  }, [loadingCart, items.length, subtotal, shippingMethod, shippingFeeConfigs]);
+  }, [loadingCart, items.length, subtotal, shippingMethod, shippingFeeConfigs, voucherFreeShipping]);
 
   const total =
     computedShippingFee === null
@@ -250,8 +251,6 @@ const CheckoutPage = () => {
       : Math.max(subtotal + computedShippingFee - discount, 0);
 
   // Function để hiển thị label phí vận chuyển
-  // CHỈ hiển thị giá từ configs, KHÔNG tự check threshold (để tránh bị "Miễn phí" đè lên)
-  // Logic check threshold chỉ ở computedShippingFee để tính tổng
   const getShippingFeeLabel = useMemo(() => {
     return (method: ShippingMethod): string => {
       // Trạng thái 1: Cart chưa load hoặc rỗng → hiển thị giá mặc định
@@ -274,7 +273,7 @@ const CheckoutPage = () => {
         return formatCurrency(defaultFees[method]);
       }
 
-      // Trạng thái 3: Đã có configs → hiển thị giá từ configs (KHÔNG check threshold)
+      // Trạng thái 3: Đã có configs → check threshold và voucher freeship
       const config = shippingFeeConfigs.find((c) => c.method === method);
 
       // Nếu không tìm thấy config cho method này → dùng giá mặc định
@@ -287,11 +286,15 @@ const CheckoutPage = () => {
         return formatCurrency(defaultFees[method]);
       }
 
-      // CHỈ hiển thị giá từ configs, KHÔNG check threshold ở đây
-      // Threshold chỉ được check trong computedShippingFee để tính tổng
+      // Check threshold và voucher freeship
+      const threshold = config.freeShippingThreshold;
+      if ((threshold > 0 && subtotal >= threshold) || voucherFreeShipping) {
+        return 'Miễn phí';
+      }
+
       return formatCurrency(config.baseFee);
     };
-  }, [loadingCart, items.length, subtotal, shippingFeeConfigs]);
+  }, [loadingCart, items.length, subtotal, shippingFeeConfigs, voucherFreeShipping]);
 
   // Xử lý khi user chọn địa chỉ
   const handleSelectAddress = (address: Address) => {
@@ -409,12 +412,14 @@ const CheckoutPage = () => {
       const result = await voucherService.validateVoucher(trimmed, subtotal);
       const discountAmount = Math.min(result.discount ?? 0, subtotal);
       setDiscount(discountAmount);
+      setVoucherFreeShipping(result.freeShipping || false);
       setAppliedVoucherCode(trimmed);
       const message = result.message || 'Áp dụng voucher thành công.';
       setVoucherMessage(message);
       showToast(message, 'success');
     } catch (error) {
       setDiscount(0);
+      setVoucherFreeShipping(false);
       setAppliedVoucherCode(null);
       setVoucherMessage(null);
       let message = 'Không thể áp dụng voucher. Vui lòng thử mã khác.';
