@@ -6,6 +6,9 @@ import type {
   ProductListResponse,
   SearchSuggestion,
 } from '../types/product';
+import { cachedRequest } from './requestCache';
+
+const HOME_DATA_CACHE_TTL_MS = 60_000;
 
 export interface ProductQueryParams {
   category?: string;
@@ -36,8 +39,10 @@ export const productService = {
   },
 
   async getCategories(): Promise<CategorySummary[]> {
-    const response = await axiosClient.get<CategorySummary[]>('/categories');
-    return response.data;
+    return cachedRequest('categories', async () => {
+      const response = await axiosClient.get<CategorySummary[]>('/categories');
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
   },
 
   async getSuggestions(keyword: string): Promise<SearchSuggestion[]> {
@@ -49,17 +54,21 @@ export const productService = {
   },
 
   async getFeaturedProducts(limit: number = 8): Promise<ProductListItem[]> {
-    const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
-      params: { limit },
-    });
-    return response.data;
+    return cachedRequest(`products:featured:${limit}`, async () => {
+      const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
+        params: { limit },
+      });
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
   },
 
   async getNewArrivals(limit: number = 8): Promise<ProductListItem[]> {
-    const response = await axiosClient.get<ProductListItem[]>('/products/new-arrivals', {
-      params: { limit },
-    });
-    return response.data;
+    return cachedRequest(`products:new-arrivals:${limit}`, async () => {
+      const response = await axiosClient.get<ProductListItem[]>('/products/new-arrivals', {
+        params: { limit },
+      });
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
   },
 
   async getSaleProducts(limit: number = 24): Promise<ProductListItem[]> {
