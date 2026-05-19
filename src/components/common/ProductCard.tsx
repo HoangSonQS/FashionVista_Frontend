@@ -24,7 +24,6 @@ export const ProductCard = ({
   price,
   compareAtPrice,
   thumbnailUrl,
-  hoverThumbnailUrl,
 }: BasicProductCardProps) => {
   const hasDiscount = typeof compareAtPrice === 'number' && compareAtPrice > price;
 
@@ -37,17 +36,8 @@ export const ProductCard = ({
               <img
                 src={thumbnailUrl}
                 alt={name}
-                className={`h-full w-full object-cover transition-all duration-700 ${
-                  hoverThumbnailUrl ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'
-                }`}
+                className="h-full w-full object-cover"
               />
-              {hoverThumbnailUrl && (
-                <img
-                  src={hoverThumbnailUrl}
-                  alt={`${name} hover`}
-                  className="absolute inset-0 h-full w-full object-cover opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:scale-105"
-                />
-              )}
             </>
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[var(--muted)] text-[var(--muted-foreground)]">
@@ -81,5 +71,4 @@ export const ProductCard = ({
     </div>
   );
 };
-
 

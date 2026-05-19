@@ -111,13 +111,13 @@ const Register = () => {
           <div className="relative z-10">
             <Link to="/" className="inline-block mb-12">
               <span className="text-xl font-light tracking-[0.25em] uppercase text-[var(--foreground)] font-serif">
-                MAISON
+                SIXTHSOUL
               </span>
             </Link>
 
             <h1 className="text-4xl font-light mb-6 leading-tight text-[var(--foreground)]" style={{ fontFamily: 'var(--font-serif)' }}>
               Join the <br />
-              <span className="text-[var(--primary)] font-medium italic">Maison Society</span>
+              <span className="text-[var(--primary)] font-medium italic">SixthSoul Society</span>
             </h1>
 
             <p className="text-[var(--muted-foreground)] mb-12 max-w-sm">
@@ -154,7 +154,7 @@ const Register = () => {
           <div className="max-w-md mx-auto">
             <div className="mb-10 lg:hidden">
               <span className="text-lg font-light tracking-[0.2em] uppercase text-[var(--foreground)] font-serif">
-                MAISON
+                SIXTHSOUL
               </span>
             </div>
 
@@ -205,7 +205,7 @@ const Register = () => {
                       value={form.email}
                       onChange={handleChange}
                       className="w-full !pl-12 pr-4 py-3.5 rounded-sm border border-[var(--border)] bg-[var(--input-background)] text-[var(--foreground)] placeholder:text-[var(--input-placeholder)] focus:outline-none focus:border-[var(--primary)] transition-all"
-                      placeholder="YOU@MAISON.COM"
+                      placeholder="YOU@SIXTHSOUL.COM"
                     />
                   </div>
                 </div>
@@ -290,7 +290,7 @@ const Register = () => {
                     className="mt-1"
                   />
                   <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
-                    I agree to the <Link to="/terms" className="text-[var(--primary)] hover:underline">Terms</Link> and <Link to="/privacy" className="text-[var(--primary)] hover:underline">Privacy Policy</Link> of MAISON.
+                    I agree to the <Link to="/terms" className="text-[var(--primary)] hover:underline">Terms</Link> and <Link to="/privacy" className="text-[var(--primary)] hover:underline">Privacy Policy</Link> of SIXTHSOUL.
                   </span>
                 </label>
               </div>

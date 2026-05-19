@@ -75,7 +75,7 @@ const CollectionDetailPage = () => {
           <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-center">
             <div className="space-y-3">
               <p className="text-[10px] tracking-[0.3em] uppercase text-[var(--muted-foreground)]">
-                Maison Collection
+                SixthSoul Collection
               </p>
               <h1
                 className="text-3xl md:text-4xl font-semibold"
@@ -151,5 +151,4 @@ const CollectionDetailPage = () => {
 };
 
 export default CollectionDetailPage;
-
 

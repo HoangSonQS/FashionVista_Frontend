@@ -65,7 +65,7 @@ const Login = () => {
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block text-[var(--foreground)]">
           <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--muted-foreground)] mb-3">
-            MAISON STUDIO
+            SIXTHSOUL STUDIO
           </p>
           <h1
             className="text-4xl md:text-5xl font-light mb-6 leading-tight"

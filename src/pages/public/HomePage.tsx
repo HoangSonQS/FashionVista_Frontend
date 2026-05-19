@@ -7,6 +7,9 @@ import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 import { Carousel } from '../../components/common/Carousel';
 import type { EmblaOptionsType } from 'embla-carousel';
+import heroBoutiqueRose from '../../assets/home/hero-boutique-rose.jpg';
+import heroEveningAtelier from '../../assets/home/hero-evening-atelier.jpg';
+import heroStudioCream from '../../assets/home/hero-studio-cream.jpg';
 
 type TabType = 'new' | 'collection' | 'sale';
 
@@ -27,20 +30,20 @@ const HomePage = () => {
     <div
       key={1}
       className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('httpsum.photos/seed/fashion1/1920/1080')" }}
+      style={{ backgroundImage: `url(${heroStudioCream})` }}
     >
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/20 to-black/10" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Winter Collection 2026</h1>
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">New Season Edit</h1>
           <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
-            Stay warm and stylish with our new winter arrivals.
+            Những thiết kế nữ tính, thanh lịch cho nhịp sống hiện đại.
           </p>
           <Link
-            to="/collections/winter-2024"
+            to="/products"
             className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
           >
-            Shop Now
+            Khám phá ngay
           </Link>
         </div>
       </div>
@@ -48,20 +51,20 @@ const HomePage = () => {
     <div
       key={2}
       className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('httpsum.photos/seed/fashion2/1920/1080')" }}
+      style={{ backgroundImage: `url(${heroBoutiqueRose})` }}
     >
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-l from-black/45 via-black/20 to-black/10" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Up to 50% Off</h1>
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Soft Tailoring</h1>
           <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
-            Don't miss our seasonal sale on selected items.
+            Blazer, set đồ và phom dáng tối giản cho vẻ ngoài tự tin.
           </p>
           <Link
-            to="/sale"
+            to="/collections"
             className="inline-block border border-white bg-[var(--accent)] text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-opacity-80 transition-all duration-300"
           >
-            Explore Sale
+            Xem bộ sưu tập
           </Link>
         </div>
       </div>
@@ -69,20 +72,20 @@ const HomePage = () => {
     <div
       key={3}
       className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('httpsum.photos/seed/fashion3/1920/1080')" }}
+      style={{ backgroundImage: `url(${heroEveningAtelier})` }}
     >
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/10" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">New Arrivals</h1>
+          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Evening Atelier</h1>
           <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
-            Check out the latest trends and styles.
+            Chất liệu mềm, đường nét tinh tế cho những buổi tối đặc biệt.
           </p>
           <Link
-            to="/products"
+            to="/sale"
             className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
           >
-            View Collection
+            Xem ưu đãi
           </Link>
         </div>
       </div>
@@ -325,7 +328,7 @@ const HomePage = () => {
       <section className="bg-[var(--background)] border-t border-[var(--border)] py-16 md:py-24">
         <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
           <h2 className="mb-4 text-2xl md:text-3xl font-light text-[#4A3728] tracking-[0.1em] uppercase font-serif">
-            Maison Newsletter
+            SixthSoul Newsletter
           </h2>
           <p className="mb-10 text-[12px] text-[#8B7355] font-light tracking-wide uppercase">
             Join our society for early access and exclusive collection updates.
@@ -348,5 +351,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-
