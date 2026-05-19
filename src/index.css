@@ -3,69 +3,69 @@
 
 :root {
   /* ============================================
-     PALETTE: ROMANTIC FEMININE MINIMALISM
+     PALETTE: POWDER BLUE FEMININE
      ============================================
-     A warm, parchment-based scheme with espresso text and terracotta accents.
-     Inspired by and high-end editorial layouts.
+     Cool-neutral base with powder blue (#B5D4F4) as the
+     primary interactive color. All neutrals shifted to
+     cool-leaning so the blue reads natural, not foreign.
      ============================================ */
 
   /* === Core Palette === */
-  --background: #FAF5F2;
-  --foreground: #3D2015;
-  --border: #EDD8CC;
+  --background: #F7F8FA;        /* cool off-white, replaces warm parchment */
+  --foreground: #1E2535;        /* deep blue-navy, replaces espresso brown */
+  --border: #D6E4F0;            /* blue-tinted border, replaces peach */
 
   /* === Cards & Containers === */
   --card: #FFFFFF;
-  --card-foreground: #3D2015;
+  --card-foreground: #1E2535;
 
-  /* === Primary Button & Actions (Terracotta) === */
-  --primary: #C4714E;
-  --primary-foreground: #FFFFFF;
-  --primary-hover: #A85A38;
-  --primary-focus: #C4714E;
+  /* === Primary Button & Actions (Powder Blue) === */
+  --primary: #B5D4F4;
+  --primary-foreground: #1A3050;
+  --primary-hover: #9FC8EF;
+  --primary-focus: #B5D4F4;
 
-  /* === Accent (Sage Green) === */
-  --accent: #7A9E7E;
+  /* === Accent (Muted Periwinkle — complements blue) === */
+  --accent: #8BA7C7;
   --accent-foreground: #FFFFFF;
-  --accent-hover: #678B6A;
+  --accent-hover: #7596B8;
 
-  /* === Muted (Warm Tones) === */
-  --muted: #F5E4DA;
-  --muted-foreground: #B88A78;
+  /* === Muted (Cool Lavender-Gray) === */
+  --muted: #EBF1F8;             /* blue-tinted muted surface */
+  --muted-foreground: #7A96B2;  /* cool-blue mid tone */
 
   /* === Input Fields === */
   --input-background: #FFFFFF;
-  --input-border: #EDD8CC;
-  --input-border-focus: #C4714E;
-  --input-placeholder: #B88A78;
+  --input-border: #D6E4F0;
+  --input-border-focus: #B5D4F4;
+  --input-placeholder: #9BB4CC;
 
   /* === Checkbox === */
-  --checkbox-checked: #C4714E;
-  --checkbox-checked-foreground: #FFFFFF;
+  --checkbox-checked: #B5D4F4;
+  --checkbox-checked-foreground: #1A3050;
 
-  /* === System Colors (Adapted) === */
-  --error: #B91C1C;
-  --error-foreground: #3D2015;
-  --error-bg: #FEE2E2;
+  /* === System Colors (Adapted to cool palette) === */
+  --error: #C0392B;
+  --error-foreground: #1E2535;
+  --error-bg: #FDE8E8;
 
-  --success: #7A9E7E;
-  --success-foreground: #3D2015;
-  --success-bg: #D1FAE5;
+  --success: #2E7D6B;
+  --success-foreground: #1E2535;
+  --success-bg: #D4EFE9;
 
   /* === Auth & Admin === */
-  --auth-text-link: #C4714E;
-  --auth-focus-ring: #C4714E;
-  --auth-button-bg: #C4714E;
-  --primary-focus-ring: rgba(196, 113, 78, 0.2);
+  --auth-text-link: #7EB3E8;
+  --auth-focus-ring: #B5D4F4;
+  --auth-button-bg: #B5D4F4;
+  --primary-focus-ring: rgba(181, 212, 244, 0.35);
 
-  --scrollbar-thumb: #EDD8CC;
-  --scrollbar-thumb-hover: #C4714E;
+  --scrollbar-thumb: #D6E4F0;
+  --scrollbar-thumb-hover: #B5D4F4;
 
   /* === Typography & Radius === */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', 'Times New Roman', serif;
   --radius: 0.125rem;
-  /* 2px as requested */
 
   font-family: var(--font-sans);
   line-height: 1.6;
@@ -91,7 +91,6 @@ h4,
 .font-serif {
   font-family: var(--font-serif);
   font-weight: 400;
-  /* Light/Medium weight for editorial feel */
   letter-spacing: -0.01em;
 }
 
@@ -109,7 +108,6 @@ p,
 span,
 div {
   font-weight: 300;
-  /* Lighter weight as requested */
 }
 
 strong,
@@ -141,21 +139,20 @@ a:hover {
 
 .checkout-page button {
   border-radius: var(--radius);
-  border: 1px solid var(--border);
-  padding: 0.6em 1.2em;
-  font-size: 1rem;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  font-family: inherit;
   background-color: var(--primary);
   color: var(--primary-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
 }
 
 .checkout-page button:hover {
-  background-color: #E6F0FF;
-  border-color: var(--primary);
-  color: var(--foreground);
+  background-color: var(--primary-hover);
 }
 
 .checkout-page button:active {
@@ -190,7 +187,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   background-color: transparent;
-  color: var(--primary);
+  color: var(--accent);
   font-family: var(--font-sans);
   font-weight: 500;
   text-transform: uppercase;
@@ -198,7 +195,7 @@ a:hover {
   font-size: 0.75rem;
   padding: 0.8rem 1.5rem;
   border-radius: var(--radius);
-  border: 0.5px solid var(--primary);
+  border: 0.5px solid var(--accent);
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -218,9 +215,9 @@ a:hover {
 
 .size-selector.active {
   border-color: var(--primary);
+  background-color: var(--muted);
 }
 
-/* === Input Styling === */
 /* === Input Styling === */
 input[type="text"],
 input[type="email"],
@@ -291,24 +288,6 @@ input[type="checkbox"]:checked::after {
   border-width: 0 1.5px 1.5px 0;
 }
 
-.checkout-page button {
-  border-radius: var(--radius);
-  border: none;
-  padding: 0.8rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.checkout-page button:hover {
-  background-color: var(--primary-hover);
-}
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -332,4 +311,39 @@ nav.admin-menu-scroll {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.product-card-image-frame {
+  perspective: 900px;
+}
+
+.product-card-image {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: opacity 0.45s ease, transform 0.55s ease;
+}
+
+.product-card-image-primary {
+  position: relative;
+}
+
+.product-card-image-secondary {
+  opacity: 0;
+  pointer-events: none;
+  transform: rotateY(8deg);
+}
+
+.product-card-image-frame:hover .product-card-image-primary {
+  opacity: 0;
+  transform: rotateY(-8deg);
+}
+
+.product-card-image-frame:hover .product-card-image-secondary {
+  opacity: 1;
+  transform: rotateY(0deg);
 }

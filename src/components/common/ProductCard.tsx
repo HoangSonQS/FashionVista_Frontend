@@ -24,20 +24,33 @@ export const ProductCard = ({
   price,
   compareAtPrice,
   thumbnailUrl,
+  hoverThumbnailUrl,
 }: BasicProductCardProps) => {
   const hasDiscount = typeof compareAtPrice === 'number' && compareAtPrice > price;
+  const hasHoverImage = Boolean(hoverThumbnailUrl && hoverThumbnailUrl !== thumbnailUrl);
 
   return (
     <div className="group relative bg-[var(--card)]">
       <Link to={`/products/${slug}`} className="block">
-        <div className="relative overflow-hidden aspect-[3/4] bg-[var(--background)]">
+        <div
+          className={`relative overflow-hidden aspect-[3/4] bg-[var(--background)] ${
+            hasHoverImage ? 'product-card-image-frame' : ''
+          }`}
+        >
           {thumbnailUrl ? (
             <>
               <img
                 src={thumbnailUrl}
                 alt={name}
-                className="h-full w-full object-cover"
+                className="product-card-image product-card-image-primary"
               />
+              {hasHoverImage && (
+                <img
+                  src={hoverThumbnailUrl ?? ''}
+                  alt={name}
+                  className="product-card-image product-card-image-secondary"
+                />
+              )}
             </>
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[var(--muted)] text-[var(--muted-foreground)]">
@@ -71,4 +84,3 @@ export const ProductCard = ({
     </div>
   );
 };
-

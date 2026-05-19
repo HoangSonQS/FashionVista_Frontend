@@ -448,12 +448,6 @@ const ProductDetailPage = () => {
               <div className="prose prose-sm text-[var(--muted-foreground)] font-light leading-relaxed max-w-none">
                 {product.shortDescription || product.description}
               </div>
-              
-              {/* Size Chart Image Placeholder/Integration */}
-              <div className="mt-10 bg-[var(--muted)] p-6 flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] mb-4">Size Chart</span>
-                <img src="/size-chart-placeholder.png" alt="Size Chart" className="w-full opacity-50 grayscale hover:opacity-100 transition-opacity" />
-              </div>
             </div>
             
             {status && (
