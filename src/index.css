@@ -1,48 +1,48 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* ============================================
-     PALETTE: POWDER BLUE FEMININE
+     PALETTE: BOUTIQUE BLUE FEMININE
      ============================================
-     Cool-neutral base with powder blue (#B5D4F4) as the
-     primary interactive color. All neutrals shifted to
-     cool-leaning so the blue reads natural, not foreign.
+     A soft atelier base with SixthSoul blue as an
+     intentional accent. This keeps the requested blue
+     identity without making the brand feel too cold.
      ============================================ */
 
   /* === Core Palette === */
-  --background: #F7F8FA;        /* cool off-white, replaces warm parchment */
-  --foreground: #1E2535;        /* deep blue-navy, replaces espresso brown */
-  --border: #D6E4F0;            /* blue-tinted border, replaces peach */
+  --background: #FBF8F6;
+  --foreground: #24324A;
+  --border: #E7DCD8;
 
   /* === Cards & Containers === */
   --card: #FFFFFF;
-  --card-foreground: #1E2535;
+  --card-foreground: #24324A;
 
   /* === Primary Button & Actions (Powder Blue) === */
-  --primary: #B5D4F4;
-  --primary-foreground: #1A3050;
-  --primary-hover: #9FC8EF;
-  --primary-focus: #B5D4F4;
+  --primary: #7FAFD6;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #5E97C6;
+  --primary-focus: #9FC8E8;
 
   /* === Accent (Muted Periwinkle — complements blue) === */
-  --accent: #8BA7C7;
+  --accent: #C89CA7;
   --accent-foreground: #FFFFFF;
-  --accent-hover: #7596B8;
+  --accent-hover: #B77F8D;
 
   /* === Muted (Cool Lavender-Gray) === */
-  --muted: #EBF1F8;             /* blue-tinted muted surface */
-  --muted-foreground: #7A96B2;  /* cool-blue mid tone */
+  --muted: #F3ECE9;
+  --muted-foreground: #8B7A75;
 
   /* === Input Fields === */
   --input-background: #FFFFFF;
-  --input-border: #D6E4F0;
-  --input-border-focus: #B5D4F4;
-  --input-placeholder: #9BB4CC;
+  --input-border: #E7DCD8;
+  --input-border-focus: #7FAFD6;
+  --input-placeholder: #A89791;
 
   /* === Checkbox === */
-  --checkbox-checked: #B5D4F4;
-  --checkbox-checked-foreground: #1A3050;
+  --checkbox-checked: #7FAFD6;
+  --checkbox-checked-foreground: #FFFFFF;
 
   /* === System Colors (Adapted to cool palette) === */
   --error: #C0392B;
@@ -54,18 +54,18 @@
   --success-bg: #D4EFE9;
 
   /* === Auth & Admin === */
-  --auth-text-link: #7EB3E8;
-  --auth-focus-ring: #B5D4F4;
-  --auth-button-bg: #B5D4F4;
-  --primary-focus-ring: rgba(181, 212, 244, 0.35);
+  --auth-text-link: #5E97C6;
+  --auth-focus-ring: #9FC8E8;
+  --auth-button-bg: #7FAFD6;
+  --primary-focus-ring: rgba(127, 175, 214, 0.32);
 
-  --scrollbar-thumb: #D6E4F0;
-  --scrollbar-thumb-hover: #B5D4F4;
+  --scrollbar-thumb: #E7DCD8;
+  --scrollbar-thumb-hover: #7FAFD6;
 
   /* === Typography & Radius === */
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-serif: 'Playfair Display', 'Times New Roman', serif;
-  --radius: 0.125rem;
+  --font-sans: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  --radius: 0.15rem;
 
   font-family: var(--font-sans);
   line-height: 1.6;
@@ -83,6 +83,11 @@ body {
   color: var(--foreground);
 }
 
+::selection {
+  background: rgba(127, 175, 214, 0.28);
+  color: var(--foreground);
+}
+
 /* Typography Overrides */
 h1,
 h2,
@@ -91,7 +96,7 @@ h4,
 .font-serif {
   font-family: var(--font-serif);
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .nav-link,

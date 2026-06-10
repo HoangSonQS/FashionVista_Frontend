@@ -1,10 +1,23 @@
+import sixthSoulLogo from '../../assets/logo/sixthsoul_logo_blue.png';
+
 const Footer = () => {
   return (
-    <footer className="bg-[var(--background)] text-[var(--foreground)] border-t border-[var(--border)]/50 mt-24">
+    <footer className="mt-24 border-t border-[var(--border)]/60 bg-white text-[var(--foreground)]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="mb-14 flex flex-col gap-5 border-b border-[var(--border)] pb-10 md:flex-row md:items-end md:justify-between">
+          <div>
+            <img src={sixthSoulLogo} alt="SixthSoul" className="h-10 w-auto" />
+            <p className="mt-5 max-w-md text-[12px] font-light uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+              Soft wardrobe pieces for women who dress with ease, detail and intention.
+            </p>
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--primary)]">
+            Live your beauty. Live your SixthSoul.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div>
-            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Về SIXTHSOUL</h3>
+            <h3 className="font-serif text-[15px] font-medium uppercase tracking-[0.05em] mb-6 text-[var(--foreground)] font-sans">Về thương hiệu</h3>
             <ul className="space-y-3">
               {[
                 { label: 'Giới thiệu', path: '/about' },
@@ -96,7 +109,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-[var(--border)]/30 mt-16 pt-8">
-          <p className="text-center text-[10px] text-[var(--muted-foreground)] uppercase tracking-[0.2em]">© 2026 SIXTHSOUL. All rights reserved.</p>
+          <p className="text-center text-[10px] text-[var(--muted-foreground)] uppercase tracking-[0.2em]">© 2026. All rights reserved.</p>
         </div>
       </div>
     </footer>

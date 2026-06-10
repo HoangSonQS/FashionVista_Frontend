@@ -5,6 +5,7 @@ import { useToast } from '../../hooks/useToast';
 import { Download, Plus, KeyRound } from 'lucide-react';
 import AdminCreateUserModal from './components/AdminCreateUserModal';
 import AdminResetPasswordModal from './components/AdminResetPasswordModal';
+import { getAuthSession } from '../../services/authSession';
 
 const roleOptions = [
   { label: 'Tất cả', value: '' },
@@ -35,17 +36,9 @@ const AdminUsers = () => {
   const [resettingUser, setResettingUser] = useState<AdminUserListResponse | null>(null);
   const { showToast } = useToast();
 
-  // Lấy current admin ID từ localStorage
   const currentAdminId = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    const raw = localStorage.getItem('adminAuth');
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as { user?: { id?: number | string } };
-      return parsed?.user?.id ? Number(parsed.user.id) : null;
-    } catch {
-      return null;
-    }
+    const id = getAuthSession('admin')?.user?.id;
+    return id ? Number(id) : null;
   }, []);
 
   const filters = useMemo(
@@ -396,4 +389,3 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
-

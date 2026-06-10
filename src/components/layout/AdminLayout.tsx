@@ -1,8 +1,9 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState, useEffect } from 'react';
-import { ADMIN_AUTH_CHANGE_EVENT } from '../../constants/events';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { ToastContainer } from '../common/Toast';
+import { getAuthSession } from '../../services/authSession';
+import { logoutSession } from '../../services/axiosClient';
 
 const navItems = [
   { label: 'Tổng quan', path: '/admin' },
@@ -47,24 +48,10 @@ const AdminLayout = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  const adminInfo = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    const raw = localStorage.getItem('adminAuth');
-    if (!raw) {
-      return null;
-    }
-    try {
-      return JSON.parse(raw) as { user?: { fullName?: string; email?: string } };
-    } catch {
-      return null;
-    }
-  }, []);
+  const adminInfo = useMemo(() => getAuthSession('admin'), []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    window.dispatchEvent(new Event(ADMIN_AUTH_CHANGE_EVENT));
+  const handleLogout = async () => {
+    await logoutSession('admin');
     navigate('/admin/login');
   };
 

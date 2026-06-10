@@ -30,10 +30,10 @@ export const ProductCard = ({
   const hasHoverImage = Boolean(hoverThumbnailUrl && hoverThumbnailUrl !== thumbnailUrl);
 
   return (
-    <div className="group relative bg-[var(--card)]">
+    <div className="group relative bg-transparent">
       <Link to={`/products/${slug}`} className="block">
         <div
-          className={`relative overflow-hidden aspect-[3/4] bg-[var(--background)] ${
+          className={`relative overflow-hidden aspect-[3/4] bg-[var(--muted)] ${
             hasHoverImage ? 'product-card-image-frame' : ''
           }`}
         >
@@ -58,15 +58,15 @@ export const ProductCard = ({
             </div>
           )}
           {hasDiscount && (
-            <div className="absolute top-3 left-3 bg-[var(--foreground)] text-[var(--background)] px-2 py-0.5 text-[9px] font-medium tracking-widest uppercase">
+            <div className="absolute left-3 top-3 bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-widest text-[var(--foreground)] shadow-sm">
               Sale
             </div>
           )}
         </div>
       </Link>
-      <div className="mt-4 text-center px-1">
+      <div className="mt-4 px-1 text-center">
         <Link to={`/products/${slug}`}>
-          <h3 className="text-[11px] font-medium text-[var(--foreground)] uppercase tracking-[0.15em] line-clamp-1 hover:opacity-60 transition-opacity">
+          <h3 className="line-clamp-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)] transition-colors hover:text-[var(--primary)]">
             {name}
           </h3>
         </Link>

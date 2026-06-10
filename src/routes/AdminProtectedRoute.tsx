@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { bootstrapAuthSession } from '../services/axiosClient';
+import { getAuthSession } from '../services/authSession';
 import { adminService } from '../services/adminService';
 
 export const AdminProtectedRoute = () => {
@@ -9,23 +11,16 @@ export const AdminProtectedRoute = () => {
 
   useEffect(() => {
     const validateAdminAuth = async () => {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('adminAuth') : null;
-      
-      if (!raw) {
-        setIsAuthorized(false);
-        setIsValidating(false);
-        return;
-      }
-
       try {
-        // Validate token bằng cách gọi API admin - nếu token không hợp lệ hoặc không phải admin sẽ throw error
+        const hasMemoryAuth = Boolean(getAuthSession('admin'));
+        const refreshed = hasMemoryAuth || await bootstrapAuthSession('admin');
+        if (!refreshed) {
+          setIsAuthorized(false);
+          return;
+        }
         await adminService.getOverview();
         setIsAuthorized(true);
-      } catch (error) {
-        // Token không hợp lệ hoặc không phải admin - xóa và redirect
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('adminAuth');
-        }
+      } catch {
         setIsAuthorized(false);
       } finally {
         setIsValidating(false);
@@ -38,7 +33,7 @@ export const AdminProtectedRoute = () => {
   if (isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-[var(--muted-foreground)]">Đang xác thực...</p>
+        <p className="text-[var(--muted-foreground)]">Dang xac thuc...</p>
       </div>
     );
   }
@@ -49,5 +44,3 @@ export const AdminProtectedRoute = () => {
 
   return <Outlet />;
 };
-
-

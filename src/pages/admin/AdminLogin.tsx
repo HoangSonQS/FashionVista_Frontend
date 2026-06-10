@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { setAuthSession } from '../../services/authSession';
 import { ADMIN_AUTH_CHANGE_EVENT } from '../../constants/events';
 
 interface LoginFormState {
@@ -37,7 +38,7 @@ const AdminLogin = () => {
         identifier: form.identifier,
         password: form.password,
       });
-      localStorage.setItem('adminAuth', JSON.stringify(response));
+      setAuthSession('admin', response);
       window.dispatchEvent(new Event(ADMIN_AUTH_CHANGE_EVENT));
       navigate('/admin');
     } catch (err) {
@@ -48,7 +49,10 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--admin-background)] px-4">
+    <div
+      className="min-h-screen flex items-center justify-center bg-[var(--admin-background)] bg-cover bg-center px-4"
+      style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.88)), url(/sixthsoul-banner.png)' }}
+    >
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-lg">
         <div className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-[var(--muted-foreground)] mb-2">Admin Portal</p>

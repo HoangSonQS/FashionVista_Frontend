@@ -1,98 +1,101 @@
 import axios from 'axios';
+import { clearAuthSession, getAccessToken, setAuthSession } from './authSession';
+import type { AuthResponse, User } from '../types/auth';
 
 const baseURL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || 'http://localhost:8085/api';
 
 export const axiosClient = axios.create({
   baseURL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+type AuthKind = 'user' | 'admin';
+
+let refreshPromise: Promise<string> | null = null;
+
 const isTokenExpired = (token: string): boolean => {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    const { exp } = JSON.parse(jsonPayload);
-    if (!exp) return false;
-    return Date.now() >= exp * 1000;
+    const payload = JSON.parse(window.atob(base64));
+    return payload.exp ? Date.now() >= payload.exp * 1000 : false;
   } catch {
     return true;
   }
 };
 
-const handleLogout = (isAdmin: boolean) => {
-  const storageKey = isAdmin ? 'adminAuth' : 'auth';
-  localStorage.removeItem(storageKey);
-  if (typeof window !== 'undefined') {
-    const loginPath = isAdmin ? '/admin/login' : '/login';
-    // Use window.location.href to force a full redirect and stop any running app logic
-    if (window.location.pathname !== loginPath) {
-      window.location.href = loginPath;
+const inferKind = (url?: string): AuthKind => (url?.includes('/admin/') ? 'admin' : 'user');
+
+const refreshAccessToken = async (kind: AuthKind): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post<AuthResponse>(`${baseURL}/v1/auth/refresh`, {}, { withCredentials: true })
+      .then((response) => {
+        const token = response.data.accessToken || response.data.token;
+        if (!token) throw new Error('Refresh response missing access token.');
+        setAuthSession(kind, { ...response.data, token, accessToken: token });
+        return token;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+};
+
+export const bootstrapAuthSession = async (kind: AuthKind = 'user'): Promise<boolean> => {
+  try {
+    const token = await refreshAccessToken(kind);
+    const me = await axios.get<User>(`${baseURL}/v1/auth/me`, {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const role = String(me.data.role || '');
+    if (kind === 'admin' && role !== 'ADMIN' && role !== 'STAFF') {
+      clearAuthSession(kind);
+      return false;
     }
+    setAuthSession(kind, { token, accessToken: token, user: me.data });
+    return true;
+  } catch {
+    clearAuthSession(kind);
+    return false;
+  }
+};
+
+export const logoutSession = async (kind: AuthKind = 'user') => {
+  try {
+    await axiosClient.post('/v1/auth/logout');
+  } finally {
+    clearAuthSession(kind);
   }
 };
 
 axiosClient.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config;
 
-  const url = config.url ?? '';
-  const normalized = url.startsWith('/') ? url : `/${url}`;
-  
-  // Skip token attachment for auth endpoints
-  const isAuthEndpoint = normalized.includes('/auth/login') || 
-                        normalized.includes('/auth/register') || 
-                        normalized.includes('/auth/refresh-token');
-                        
+  const normalized = (config.url ?? '').startsWith('/') ? config.url ?? '' : `/${config.url ?? ''}`;
+  const isAuthEndpoint = normalized.includes('/auth/login') ||
+    normalized.includes('/auth/register') ||
+    normalized.includes('/auth/refresh') ||
+    normalized.includes('/auth/refresh-token');
   if (isAuthEndpoint) return config;
 
-  const isFormData = config.data instanceof FormData;
-  if (isFormData) {
+  if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
   }
 
-  const isAdminEndpoint = normalized.startsWith('/admin/');
-  const storageKey = isAdminEndpoint ? 'adminAuth' : 'auth';
-  const raw = localStorage.getItem(storageKey);
-
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as { token?: string };
-      if (parsed?.token) {
-        if (isTokenExpired(parsed.token)) {
-          // Optional: we could trigger refresh here, but intercepting 401 is usually more reliable
-        }
-        config.headers.Authorization = `Bearer ${parsed.token}`;
-      }
-    } catch {
-      // ignore
-    }
+  const kind = inferKind(normalized);
+  const token = getAccessToken(kind) || getAccessToken('user');
+  if (token && !isTokenExpired(token)) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 });
-
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: any) => void;
-}> = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else if (token) prom.resolve(token);
-  });
-  failedQueue = [];
-};
 
 axiosClient.interceptors.response.use(
   (response) => response,
@@ -101,64 +104,24 @@ axiosClient.interceptors.response.use(
     if (!originalRequest) return Promise.reject(error);
 
     const url = originalRequest.url ?? '';
-    const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/refresh-token');
-
-    // If 401 occurs on an auth request, it's either wrong credentials or invalid refresh token
+    const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/refresh');
     if (error.response?.status === 401 && isAuthRequest) {
-      const isAdmin = url.includes('/admin/');
-      handleLogout(isAdmin);
       return Promise.reject(error);
     }
 
-    // Handle 401 for normal requests
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
-            return axiosClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      const isAdmin = url.includes('/admin/');
-      const storageKey = isAdmin ? 'adminAuth' : 'auth';
-
+      const kind = inferKind(url);
       try {
-        const raw = localStorage.getItem(storageKey);
-        const authData = raw ? JSON.parse(raw) : null;
-        const refreshToken = authData?.refreshToken;
-
-        if (!refreshToken) throw new Error('No refresh token');
-
-        // Note: use base axios to avoid client interceptors for refresh call
-        const response = await axios.post(`${baseURL}${isAdmin ? '/admin' : ''}/auth/refresh-token`, {
-          refreshToken,
-        });
-
-        const { token, refreshToken: newRefreshToken } = response.data;
-        const updatedAuth = { ...authData, token, refreshToken: newRefreshToken };
-        localStorage.setItem(storageKey, JSON.stringify(updatedAuth));
-
-        axiosClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        processQueue(null, token);
+        const token = await refreshAccessToken(kind);
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        handleLogout(isAdmin);
+        clearAuthSession(kind);
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
   }
 );
-
-

@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { setAuthSession } from '../../services/authSession';
 import { AUTH_CHANGE_EVENT } from '../../constants/events';
+import sixthSoulLogo from '../../assets/logo/sixthsoul_logo_blue.png';
 
 interface LoginFormState {
   identifier: string; // Email hoặc số điện thoại
@@ -39,8 +41,7 @@ const Login = () => {
         identifier: form.identifier,
         password: form.password,
       });
-      // Lưu token + user vào localStorage cho các phần khác dùng sau này
-      localStorage.setItem('auth', JSON.stringify(result));
+      setAuthSession('user', result);
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
       // Chuyển về trang Home sau khi đăng nhập thành công
       navigate('/');
@@ -64,9 +65,9 @@ const Login = () => {
     >
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block text-[var(--foreground)]">
-          <p className="text-[10px] tracking-[0.4em] uppercase text-[var(--muted-foreground)] mb-3">
-            SIXTHSOUL STUDIO
-          </p>
+          <Link to="/" className="mb-8 inline-flex">
+            <img src={sixthSoulLogo} alt="SixthSoul" className="h-10 w-auto" />
+          </Link>
           <h1
             className="text-4xl md:text-5xl font-light mb-6 leading-tight"
             style={{ fontFamily: 'var(--font-serif)' }}

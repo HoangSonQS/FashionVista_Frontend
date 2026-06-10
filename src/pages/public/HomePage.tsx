@@ -7,9 +7,6 @@ import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
 import { Carousel } from '../../components/common/Carousel';
 import type { EmblaOptionsType } from 'embla-carousel';
-import heroBoutiqueRose from '../../assets/home/hero-boutique-rose.jpg';
-import heroEveningAtelier from '../../assets/home/hero-evening-atelier.jpg';
-import heroStudioCream from '../../assets/home/hero-studio-cream.jpg';
 
 type TabType = 'new' | 'collection' | 'sale';
 
@@ -29,19 +26,19 @@ const HomePage = () => {
   const carouselSlides = useMemo(() => [
     <div
       key={1}
-      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${heroStudioCream})` }}
+      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: 'url(/sixthsoul-banner.png)' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/20 to-black/10" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">New Season Edit</h1>
-          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+      <div className="absolute inset-0 bg-gradient-to-r from-black/44 via-black/16 to-transparent" />
+      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
+          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">New Season Edit</h1>
+          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
             Những thiết kế nữ tính, thanh lịch cho nhịp sống hiện đại.
           </p>
           <Link
             to="/products"
-            className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
+            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
           >
             Khám phá ngay
           </Link>
@@ -50,19 +47,36 @@ const HomePage = () => {
     </div>,
     <div
       key={2}
-      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${heroBoutiqueRose})` }}
+      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-[#f7f7f5]"
     >
-      <div className="absolute inset-0 bg-gradient-to-l from-black/45 via-black/20 to-black/10" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Soft Tailoring</h1>
-          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+      <div className="absolute inset-y-0 right-0 hidden w-[70%] md:block">
+        <div className="absolute inset-y-0 left-[18%] w-[24%] bg-[#ecefeb]" />
+        <img
+          src="/sixthsoul-home/8.png"
+          alt="SixthSoul mini dress detail"
+          className="absolute right-[31%] top-[8%] h-[68%] w-[28%] object-cover object-top shadow-[0_24px_60px_rgba(4,19,78,0.12)]"
+        />
+        <img
+          src="/sixthsoul-home/5.png"
+          alt="SixthSoul white mini dress"
+          className="absolute bottom-[-5%] right-[2%] h-[106%] w-[44%] object-contain object-bottom"
+        />
+      </div>
+      <img
+        src="/sixthsoul-home/5.png"
+        alt="SixthSoul white mini dress"
+        className="absolute inset-y-0 right-[-10%] h-full w-[78%] object-contain object-bottom opacity-95 md:hidden"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/52 via-black/18 to-transparent" />
+      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
+          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">Soft Tailoring</h1>
+          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
             Blazer, set đồ và phom dáng tối giản cho vẻ ngoài tự tin.
           </p>
           <Link
             to="/collections"
-            className="inline-block border border-white bg-[var(--accent)] text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-opacity-80 transition-all duration-300"
+            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
           >
             Xem bộ sưu tập
           </Link>
@@ -71,19 +85,36 @@ const HomePage = () => {
     </div>,
     <div
       key={3}
-      className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${heroEveningAtelier})` }}
+      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-[#f5f4f0]"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/10" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center text-white px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Evening Atelier</h1>
-          <p className="text-lg md:text-xl font-light mb-8 tracking-wide">
+      <div className="absolute inset-y-0 right-0 hidden w-[72%] md:block">
+        <div className="absolute inset-y-0 left-[24%] w-[22%] bg-[#e8e8e4]" />
+        <img
+          src="/sixthsoul-home/20.png"
+          alt="SixthSoul lace mini dress"
+          className="absolute right-[34%] top-[11%] h-[66%] w-[25%] object-cover object-top shadow-[0_24px_60px_rgba(4,19,78,0.12)]"
+        />
+        <img
+          src="/sixthsoul-home/14.png"
+          alt="SixthSoul long lace dress"
+          className="absolute bottom-[-4%] right-[0%] h-[108%] w-[48%] object-contain object-bottom"
+        />
+      </div>
+      <img
+        src="/sixthsoul-home/14.png"
+        alt="SixthSoul long lace dress"
+        className="absolute inset-y-0 right-[-16%] h-full w-[86%] object-contain object-bottom opacity-95 md:hidden"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/54 via-black/18 to-transparent" />
+      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
+          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">Evening Atelier</h1>
+          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
             Chất liệu mềm, đường nét tinh tế cho những buổi tối đặc biệt.
           </p>
           <Link
             to="/sale"
-            className="inline-block border border-white bg-white/10 backdrop-blur-md text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-300"
+            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
           >
             Xem ưu đãi
           </Link>
@@ -153,8 +184,22 @@ const HomePage = () => {
       </section>
 
       {/* Dynamic Products Section based on active tab */}
-      <section id="products-section" className="bg-[var(--background)] py-16 md:py-20">
+      <section id="products-section" className="bg-[var(--background)] py-14 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="mb-10 flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--primary)]">Online Shop</p>
+              <h2 className="mt-2 text-2xl font-light uppercase tracking-[0.12em] md:text-3xl">
+                {activeTab === 'sale' ? 'Sale Edit' : activeTab === 'collection' ? 'Collection Picks' : 'The New'}
+              </h2>
+            </div>
+            <Link
+              to="/products"
+              className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--foreground)] hover:text-[var(--primary)]"
+            >
+              Xem tat ca
+            </Link>
+          </div>
           {activeTab === 'new' && (
             <>
               {loadingNewArrivals ? (
@@ -168,7 +213,7 @@ const HomePage = () => {
                   ))}
                 </div>
               ) : newArrivals.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {newArrivals.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -202,7 +247,7 @@ const HomePage = () => {
                   ))}
                 </div>
               ) : featuredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {featuredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -236,7 +281,7 @@ const HomePage = () => {
                   ))}
                 </div>
               ) : saleProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {saleProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -264,7 +309,7 @@ const HomePage = () => {
         <section className="bg-[var(--background)] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-8">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-2xl md:text-3xl font-light text-[var(--primary)] tracking-wide uppercase">
+              <h2 className="text-2xl md:text-3xl font-light text-[var(--foreground)] tracking-[0.12em] uppercase">
                 Danh mục
               </h2>
               <Link
@@ -307,9 +352,9 @@ const HomePage = () => {
       )}
 
       {/* Promotional Banner - Modern E-commerce Style */}
-      <section className="bg-[var(--primary)] py-20 md:py-24">
+      <section className="bg-[var(--foreground)] py-20 md:py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-wide uppercase">
+          <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-[0.12em] uppercase">
             Giảm giá lên đến 50%
           </h2>
           <p className="mb-8 text-sm md:text-base text-white/90 font-light tracking-wide">
@@ -317,7 +362,7 @@ const HomePage = () => {
           </p>
           <Link
             to="/products"
-            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[var(--primary)] transition-all duration-300"
+            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[var(--foreground)] transition-all duration-300"
           >
             Mua ngay
           </Link>
@@ -327,10 +372,10 @@ const HomePage = () => {
       {/* Newsletter Signup - Modern E-commerce Style */}
       <section className="bg-[var(--background)] border-t border-[var(--border)] py-16 md:py-24">
         <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-2xl md:text-3xl font-light text-[#4A3728] tracking-[0.1em] uppercase font-serif">
+          <h2 className="mb-4 text-2xl md:text-3xl font-light text-[var(--foreground)] tracking-[0.1em] uppercase font-serif">
             SixthSoul Newsletter
           </h2>
-          <p className="mb-10 text-[12px] text-[#8B7355] font-light tracking-wide uppercase">
+          <p className="mb-10 text-[12px] text-[var(--muted-foreground)] font-light tracking-wide uppercase">
             Join our society for early access and exclusive collection updates.
           </p>
           <div className="flex flex-col gap-6 sm:flex-row sm:justify-center max-w-lg mx-auto">

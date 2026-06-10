@@ -1,23 +1,13 @@
 import { axiosClient } from './axiosClient';
 import type { WishlistItem } from '../types/wishlist';
 import { cachedRequest, clearCachedRequest } from './requestCache';
+import { getAccessToken } from './authSession';
 
 const WISHLIST_CACHE_TTL_MS = 2_000;
 
 const getWishlistCacheKey = () => {
-  if (typeof window === 'undefined') {
-    return 'wishlist:anonymous';
-  }
-  const raw = window.localStorage.getItem('auth');
-  if (!raw) {
-    return 'wishlist:anonymous';
-  }
-  try {
-    const token = (JSON.parse(raw) as { token?: string }).token;
-    return `wishlist:${token?.slice(-16) ?? 'anonymous'}`;
-  } catch {
-    return 'wishlist:anonymous';
-  }
+  const token = getAccessToken('user');
+  return `wishlist:${token?.slice(-16) ?? 'anonymous'}`;
 };
 
 export const wishlistService = {

@@ -10,6 +10,7 @@ import { LoginModal } from '../../components/common/LoginModal';
 import { reviewService } from '../../services/reviewService';
 import type { ReviewSummary } from '../../types/review';
 import { wishlistService } from '../../services/wishlistService';
+import { getAuthSession } from '../../services/authSession';
 import { ChevronLeft, ChevronRight, X, Maximize2, Minus, Plus, Heart } from 'lucide-react';
 
 const ProductDetailPage = () => {
@@ -80,8 +81,7 @@ const ProductDetailPage = () => {
   // Kiểm tra trạng thái wishlist để hiển thị đúng nhãn (nếu đã đăng nhập)
   useEffect(() => {
     if (!product) return;
-    const rawAuth = typeof window !== 'undefined' ? window.localStorage.getItem('auth') : null;
-    if (!rawAuth) {
+    if (!getAuthSession('user')) {
       setInWishlist(false);
       return;
     }
@@ -105,11 +105,7 @@ const ProductDetailPage = () => {
   }, [product]);
 
   const ensureAuthenticated = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    const raw = window.localStorage.getItem('auth');
-    if (!raw) {
+    if (!getAuthSession('user')) {
       setShowLoginModal(true);
       return false;
     }

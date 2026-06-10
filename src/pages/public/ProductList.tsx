@@ -15,6 +15,7 @@ import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
+import { getAuthSession } from '../../services/authSession';
 
 interface FilterState {
   category?: string;
@@ -134,11 +135,7 @@ const ProductList = () => {
   const products: ProductListItem[] = useMemo(() => data?.items ?? [], [data]);
 
   const ensureAuthenticated = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    const raw = window.localStorage.getItem('auth');
-    if (!raw) {
+    if (!getAuthSession('user')) {
       setShowLoginModal(true);
       return false;
     }
@@ -241,29 +238,20 @@ const ProductList = () => {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-0 pb-16">
-      <section className="relative overflow-hidden bg-gradient-to-b from-[var(--primary)] to-[var(--background)]">
-        <div className="absolute inset-0 opacity-5">
-          {/* <div className="absolute top-20 left-20 w-72 h-72 bg-[var(--primary)] rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-[var(--primary)] rounded-full blur-3xl" /> */}
-        </div>
-        <div className="relative mx-auto flex max-w-6xl h-168 flex-col items-center justify-center gap-6 px-4 py-24 text-center">
-          <h1
-            className="font-serif text-7xl md:text-8xl lg:text-9xl font-bold mb-8 text-primary tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
-          >
-            sixthsoul
-          </h1>
-          <p className="text-base md:text-lg lg:text-xl uppercase tracking-[0.3em] text-foreground/90 font-sans font-light">
+      {/* <section className="relative overflow-hidden border-b border-[var(--border)] bg-white">
+        <div className="relative mx-auto flex min-h-[360px] max-w-6xl flex-col items-center justify-center gap-6 px-4 py-20 text-center">
+          <img src={sixthSoulLogo} alt="SixthSoul" className="h-16 w-auto md:h-20" />
+          <p className="text-xs md:text-sm uppercase tracking-[0.28em] text-[var(--muted-foreground)] font-sans font-light">
             "LIVE YOUR BEAUTY. LIVE YOUR SIXTHSOUL."
           </p>
         </div>
-      </section>
+      </section> */}
 
       <div ref={listRef} className="max-w-6xl mx-auto space-y-8 px-4 pt-10">
 
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Sidebar filter - sticky on desktop after banner */}
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 space-y-4 md:sticky md:top-24">
+          <div className="bg-white border border-[var(--border)] rounded-sm p-4 space-y-4 md:sticky md:top-24">
             <h2 className="text-lg font-semibold">Bộ lọc</h2>
 
             <div className="space-y-2 text-sm relative">
@@ -280,7 +268,7 @@ const ProductList = () => {
                   setSearchInput(value);
                   handleInputChange('search', value);
                 }}
-                className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               />
             </div>
 
@@ -292,7 +280,7 @@ const ProductList = () => {
                 id="category"
                 value={filters.category ?? ''}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               >
                 <option value="">Tất cả</option>
                 {categories.map((category) => (
@@ -312,7 +300,7 @@ const ProductList = () => {
                   placeholder="0"
                   value={filters.minPrice ?? ''}
                   onChange={(e) => handleNumberChange('minPrice', e.target.value)}
-                  className="number-input w-full rounded-lg border border-[hsl(211,35%,55%)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="number-input w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
               </div>
               <div className="space-y-2">
@@ -323,7 +311,7 @@ const ProductList = () => {
                   placeholder="5.000.000"
                   value={filters.maxPrice ?? ''}
                   onChange={(e) => handleNumberChange('maxPrice', e.target.value)}
-                  className="number-input w-full rounded-lg border border-[hsl(211,35%,55%)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="number-input w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
               </div>
             </div>
@@ -336,7 +324,7 @@ const ProductList = () => {
                   placeholder="S, M..."
                   value={filters.size ?? ''}
                   onChange={(e) => handleInputChange('size', e.target.value)}
-                  className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
               </div>
               <div className="space-y-2">
@@ -346,7 +334,7 @@ const ProductList = () => {
                   placeholder="Black..."
                   value={filters.color ?? ''}
                   onChange={(e) => handleInputChange('color', e.target.value)}
-                  className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full rounded-sm border border-[var(--input-border)] bg-[var(--input-background)] px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                 />
               </div>
             </div>
@@ -354,7 +342,7 @@ const ProductList = () => {
             <button
               type="button"
               onClick={() => setFilters({})}
-              className="w-full rounded-full border border-[var(--border)] py-2 text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--border)] transition-colors"
+              className="w-full rounded-sm border border-[var(--border)] py-2 text-xs font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
             >
               Xóa bộ lọc
             </button>
@@ -365,7 +353,7 @@ const ProductList = () => {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="flex flex-col transition-all duration-300"
+                  className="group flex flex-col transition-all duration-300"
                 >
                   <ProductCard
                     slug={product.slug}
@@ -614,4 +602,3 @@ const ProductList = () => {
 };
 
 export default ProductList;
-

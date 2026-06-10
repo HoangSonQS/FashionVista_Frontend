@@ -13,6 +13,7 @@ import {
   Gift
 } from 'lucide-react';
 import { authService } from '../../services/authService';
+import sixthSoulLogo from '../../assets/logo/sixthsoul_logo_blue.png';
 
 interface FormState {
   fullName: string;
@@ -110,9 +111,7 @@ const Register = () => {
 
           <div className="relative z-10">
             <Link to="/" className="inline-block mb-12">
-              <span className="text-xl font-light tracking-[0.25em] uppercase text-[var(--foreground)] font-serif">
-                SIXTHSOUL
-              </span>
+              <img src={sixthSoulLogo} alt="SixthSoul" className="h-10 w-auto" />
             </Link>
 
             <h1 className="text-4xl font-light mb-6 leading-tight text-[var(--foreground)]" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -153,9 +152,9 @@ const Register = () => {
         <div className="col-span-1 lg:col-span-7 p-8 md:p-12 lg:p-16">
           <div className="max-w-md mx-auto">
             <div className="mb-10 lg:hidden">
-              <span className="text-lg font-light tracking-[0.2em] uppercase text-[var(--foreground)] font-serif">
-                SIXTHSOUL
-              </span>
+              <Link to="/" className="inline-flex">
+                <img src={sixthSoulLogo} alt="SixthSoul" className="h-9 w-auto" />
+              </Link>
             </div>
 
             <div className="mb-8">

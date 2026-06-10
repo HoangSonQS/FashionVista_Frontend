@@ -9,8 +9,11 @@ import { AUTH_CHANGE_EVENT, CART_UPDATED_EVENT } from '../../constants/events';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../common/LoginModal';
 import { productService } from '../../services/productService';
+import { getAuthSession } from '../../services/authSession';
+import { logoutSession } from '../../services/axiosClient';
 import type { SearchSuggestion } from '../../types/product';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import sixthSoulLogo from '../../assets/logo/sixthsoul_logo_blue.png';
 
 const NAV_ITEMS = [
   { label: 'THE NEW', href: '/?section=new' },
@@ -20,18 +23,7 @@ const NAV_ITEMS = [
 ];
 
 const readAuthState = (): AuthResponse | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const raw = window.localStorage.getItem('auth');
-  if (!raw) {
-    return null;
-  }
-  try {
-    return JSON.parse(raw) as AuthResponse;
-  } catch {
-    return null;
-  }
+  return getAuthSession('user');
 };
 
 type IconButtonProps = {
@@ -47,11 +39,11 @@ const IconButton = ({ icon: Icon, label, onClick, className = '', badge }: IconB
     <button
       type="button"
       onClick={onClick}
-      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-[var(--primary)] text-white transition-colors hover:bg-[var(--primary-hover)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--primary)] ${className}`}
+      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-[var(--border)] bg-white/85 text-[var(--foreground)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--primary)] ${className}`}
     >
       <Icon className="h-5 w-5 shrink-0" />
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -right-1 -top-1 rounded-full bg-white px-1 text-[10px] font-semibold text-[var(--primary)]">
+        <span className="absolute -right-1 -top-1 rounded-full bg-[var(--primary)] px-1 text-[10px] font-semibold text-white">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -91,11 +83,9 @@ const SiteHeader = () => {
       setAuth(readAuthState());
     };
 
-    window.addEventListener('storage', handleAuthChange);
     window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange as EventListener);
 
     return () => {
-      window.removeEventListener('storage', handleAuthChange);
       window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange as EventListener);
     };
   }, []);
@@ -268,11 +258,8 @@ const SiteHeader = () => {
     };
   }, [debouncedSearch, searchOpen]);
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('auth');
-      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
-    }
+  const handleLogout = async () => {
+    await logoutSession('user');
     setAuth(null);
     setCartCount(0);
     setAccountMenuOpen(false);
@@ -318,19 +305,22 @@ const SiteHeader = () => {
     <header ref={headerRef} className="sticky top-0 z-50 w-full">
       {/* Main header with background đổi màu khi đè lên hero banner */}
       <div
-        className={`relative border-b-[0.5px] border-[var(--border)] ${isOverHero ? 'bg-[var(--primary)]' : 'bg-[var(--background)]'
+        className={`relative border-b-[0.5px] border-[var(--border)] shadow-[0_1px_0_rgba(36,50,74,0.03)] ${isOverHero ? 'bg-white/88 backdrop-blur-xl' : 'bg-[var(--background)]/96 backdrop-blur-xl'
           }`}
       >
         <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
-            {/* Brand name - left side */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <Link
                 to="/"
-                className={`font-serif text-xl md:text-2xl font-light uppercase tracking-[0.2em] transition-colors ${isOverHero ? 'text-[var(--primary-foreground)]' : 'text-[var(--foreground)]'
-                  }`}
+                className="inline-flex items-center transition-opacity hover:opacity-80"
+                aria-label="SixthSoul"
               >
-                SIXTHSOUL
+                <img
+                  src={sixthSoulLogo}
+                  alt="SixthSoul"
+                  className="h-8 w-auto md:h-9"
+                />
               </Link>
             </div>
 
@@ -407,8 +397,7 @@ const SiteHeader = () => {
                     <Link
                       key={item.label}
                       to={item.href}
-                      className={`uppercase text-[11px] font-medium tracking-[0.15em] transition-colors ${isOverHero ? 'text-[var(--primary-foreground)] hover:text-white/80' : 'text-[var(--foreground)] hover:text-[var(--primary)]'
-                        }`}
+                      className="uppercase text-[11px] font-medium tracking-[0.18em] text-[var(--foreground)] transition-colors hover:text-[var(--primary)]"
                     >
                       {item.label}
                     </Link>
@@ -439,7 +428,7 @@ const SiteHeader = () => {
                       <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl">
                         <div className="mb-3">
                           <p className="text-sm font-semibold">{customerName}</p>
-                          <p className="text-xs text-[var(--muted-foreground)]">{auth.user.email}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">{auth.user?.email}</p>
                         </div>
                         <div className="flex flex-col gap-1.5 text-sm">
                           <button
@@ -510,7 +499,7 @@ const SiteHeader = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="inline-flex items-center justify-center gap-2 rounded-sm bg-[var(--primary)] px-5 py-2 text-[10px] uppercase tracking-[0.12em] font-medium text-[var(--primary-foreground)] shadow-sm transition-all hover:bg-[var(--primary-hover)] focus-visible:outline-none"
+                  className="inline-flex items-center justify-center gap-2 rounded-sm border border-[var(--primary)] bg-white/80 px-5 py-2 text-[10px] uppercase tracking-[0.12em] font-medium text-[var(--foreground)] shadow-sm transition-all hover:bg-[var(--primary)] hover:text-white focus-visible:outline-none"
                 >
                   <User className="h-3.5 w-3.5" />
                   Đăng nhập

@@ -1,23 +1,13 @@
 import { axiosClient } from './axiosClient';
 import type { CartResponse } from '../types/cart';
 import { cachedRequest, setCachedRequestValue } from './requestCache';
+import { getAccessToken } from './authSession';
 
 const CART_CACHE_TTL_MS = 2_000;
 
 const getCartCacheKey = () => {
-  if (typeof window === 'undefined') {
-    return 'cart:anonymous';
-  }
-  const raw = window.localStorage.getItem('auth');
-  if (!raw) {
-    return 'cart:anonymous';
-  }
-  try {
-    const token = (JSON.parse(raw) as { token?: string }).token;
-    return `cart:${token?.slice(-16) ?? 'anonymous'}`;
-  } catch {
-    return 'cart:anonymous';
-  }
+  const token = getAccessToken('user');
+  return `cart:${token?.slice(-16) ?? 'anonymous'}`;
 };
 
 export const cartService = {

@@ -9,6 +9,7 @@ import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
 import { useToast } from '../../hooks/useToast';
 import { ProductCard } from '../../components/common/ProductCard';
+import { getAuthSession } from '../../services/authSession';
 
 // Kết quả dùng ở trang search: gồm thông tin suggestion + giá để hiển thị card giống trang home
 type SearchResultItem = SearchSuggestion & {
@@ -111,11 +112,7 @@ const SearchResultsPage = () => {
   }, [currentQuery]);
 
   const ensureAuthenticated = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    const raw = window.localStorage.getItem('auth');
-    if (!raw) {
+    if (!getAuthSession('user')) {
       setShowLoginModal(true);
       return false;
     }
@@ -506,5 +503,4 @@ const SearchResultsPage = () => {
 };
 
 export default SearchResultsPage;
-
 
