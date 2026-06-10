@@ -47,26 +47,9 @@ const HomePage = () => {
     </div>,
     <div
       key={2}
-      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-[#f7f7f5]"
+      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
     >
-      <div className="absolute inset-y-0 right-0 hidden w-[70%] md:block">
-        <div className="absolute inset-y-0 left-[18%] w-[24%] bg-[#ecefeb]" />
-        <img
-          src="/sixthsoul-home/8.png"
-          alt="SixthSoul mini dress detail"
-          className="absolute right-[31%] top-[8%] h-[68%] w-[28%] object-cover object-top shadow-[0_24px_60px_rgba(4,19,78,0.12)]"
-        />
-        <img
-          src="/sixthsoul-home/5.png"
-          alt="SixthSoul white mini dress"
-          className="absolute bottom-[-5%] right-[2%] h-[106%] w-[44%] object-contain object-bottom"
-        />
-      </div>
-      <img
-        src="/sixthsoul-home/5.png"
-        alt="SixthSoul white mini dress"
-        className="absolute inset-y-0 right-[-10%] h-full w-[78%] object-contain object-bottom opacity-95 md:hidden"
-      />
       <div className="absolute inset-0 bg-gradient-to-r from-black/52 via-black/18 to-transparent" />
       <div className="absolute inset-x-0 bottom-12 md:bottom-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
@@ -85,26 +68,9 @@ const HomePage = () => {
     </div>,
     <div
       key={3}
-      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-[#f5f4f0]"
+      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
     >
-      <div className="absolute inset-y-0 right-0 hidden w-[72%] md:block">
-        <div className="absolute inset-y-0 left-[24%] w-[22%] bg-[#e8e8e4]" />
-        <img
-          src="/sixthsoul-home/20.png"
-          alt="SixthSoul lace mini dress"
-          className="absolute right-[34%] top-[11%] h-[66%] w-[25%] object-cover object-top shadow-[0_24px_60px_rgba(4,19,78,0.12)]"
-        />
-        <img
-          src="/sixthsoul-home/14.png"
-          alt="SixthSoul long lace dress"
-          className="absolute bottom-[-4%] right-[0%] h-[108%] w-[48%] object-contain object-bottom"
-        />
-      </div>
-      <img
-        src="/sixthsoul-home/14.png"
-        alt="SixthSoul long lace dress"
-        className="absolute inset-y-0 right-[-16%] h-full w-[86%] object-contain object-bottom opacity-95 md:hidden"
-      />
       <div className="absolute inset-0 bg-gradient-to-r from-black/54 via-black/18 to-transparent" />
       <div className="absolute inset-x-0 bottom-12 md:bottom-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
