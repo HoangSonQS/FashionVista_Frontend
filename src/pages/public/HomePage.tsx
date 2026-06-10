@@ -50,42 +50,14 @@ const HomePage = () => {
       className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
       style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-black/52 via-black/18 to-transparent" />
-      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
-          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">Soft Tailoring</h1>
-          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
-            Blazer, set đồ và phom dáng tối giản cho vẻ ngoài tự tin.
-          </p>
-          <Link
-            to="/collections"
-            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
-          >
-            Xem bộ sưu tập
-          </Link>
-        </div>
-      </div>
+      <Link to="/collections" className="absolute inset-0" aria-label="Xem bộ sưu tập White Romance" />
     </div>,
     <div
       key={3}
       className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
       style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-black/54 via-black/18 to-transparent" />
-      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
-          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">Evening Atelier</h1>
-          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
-            Chất liệu mềm, đường nét tinh tế cho những buổi tối đặc biệt.
-          </p>
-          <Link
-            to="/sale"
-            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
-          >
-            Xem ưu đãi
-          </Link>
-        </div>
-      </div>
+      <Link to="/sale" className="absolute inset-0" aria-label="Xem ưu đãi Puffy Dress" />
     </div>,
   ], []);
 
