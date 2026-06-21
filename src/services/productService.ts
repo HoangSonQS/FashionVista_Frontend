@@ -79,4 +79,11 @@ export const productService = {
     });
     return response.data;
   },
+
+  async getRelatedProducts(slug: string, limit: number = 20): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>(`/products/${slug}/related`, {
+      params: { limit },
+    });
+    return response.data;
+  },
 };

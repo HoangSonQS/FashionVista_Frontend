@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Heart, LogOut, Menu, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
+import { Heart, LogOut, Menu, Search, ShoppingBag, User, X, type LucideIcon } from 'lucide-react';
 
 import type { AuthResponse } from '../../types/auth';
 import { cartService } from '../../services/cartService';
@@ -213,14 +214,28 @@ const SiteHeader = () => {
     };
   }, [accountMenuOpen]);
 
-  // Tự động focus input khi mở search
+  // Tự động focus input khi mở search + đóng khi Esc
   useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-    if (!searchOpen) {
+    if (searchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+      document.body.style.overflow = 'hidden';
+    } else {
       setSearchSuggestions([]);
+      setSearchTerm('');
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSearchOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [searchOpen]);
 
   // Gợi ý search từ header
@@ -324,86 +339,19 @@ const SiteHeader = () => {
               </Link>
             </div>
 
-            {/* Navigation links - center */}
+            {/* Navigation links - center, luôn hiện */}
             <div className="flex-1 flex items-center justify-center">
-              {searchOpen ? (
-                <div className="relative w-full max-w-md origin-right transition-all duration-1000 scale-100 opacity-100">
-                  <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--input-background)] px-3 py-1.5 shadow-sm">
-                    <Search className="h-4 w-4 text-[var(--muted-foreground)]" />
-                    <input
-                      ref={searchInputRef}
-                      type="search"
-                      placeholder="Tìm váy, áo, màu sắc, bộ sưu tập..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="flex-1 bg-transparent text-sm text-[var(--foreground)] focus:outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-sm bg-[var(--primary)] px-3 py-1 text-[10px] uppercase tracking-widest font-medium text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors"
-                    >
-                      TÌM KIẾM
-                    </button>
-                  </form>
-                  <div className="absolute left-0 right-0 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-xl">
-                    {!searchLoading && searchTerm.trim().length >= 2 && searchSuggestions.length === 0 && (
-                      <div className="px-4 py-2 text-xs text-[var(--muted-foreground)]">
-                        Không tìm thấy sản phẩm phù hợp.
-                      </div>
-                    )}
-                    {!searchLoading &&
-                      searchSuggestions.map((item) => (
-                        <div
-                          key={item.slug}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => {
-                            setSearchOpen(false);
-                            navigate(`/products/${item.slug}`);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setSearchOpen(false);
-                              navigate(`/products/${item.slug}`);
-                            }
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors cursor-pointer bg-[var(--card)] hover:bg-[var(--background)]"
-                        >
-                          <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)]">
-                            {item.thumbnailUrl ? (
-                              <img src={item.thumbnailUrl} alt={item.name} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--muted-foreground)]">
-                                No image
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium line-clamp-1 text-[var(--foreground)]">
-                              {item.name}
-                            </p>
-                            <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                              Xem chi tiết sản phẩm
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              ) : (
-                <nav className="hidden items-center gap-8 md:gap-12 lg:flex">
-                  {NAV_ITEMS.map((item) => (
-                    <Link
-                      key={item.label}
-                      to={item.href}
-                      className="uppercase text-[11px] font-medium tracking-[0.18em] text-[var(--foreground)] transition-colors hover:text-[var(--primary)]"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              )}
+              <nav className="hidden items-center gap-8 md:gap-12 lg:flex">
+                {NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="uppercase text-[11px] font-medium tracking-[0.18em] text-[var(--foreground)] transition-colors hover:text-[var(--primary)]"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
             </div>
 
             {/* Icon buttons - right side */}
@@ -596,6 +544,105 @@ const SiteHeader = () => {
         onClose={() => setShowLoginModal(false)}
         message="Bạn cần đăng nhập để sử dụng tính năng này."
       />
+
+      {/* Full-screen search overlay */}
+      {searchOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex flex-col"
+          style={{ animation: 'fadeInOverlay 0.22s ease' }}
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSearchOpen(false)}
+          />
+
+          {/* Search panel */}
+          <div className="relative z-10 bg-[var(--background)] px-4 pt-8 pb-10 md:px-8">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(false)}
+              className="absolute right-4 top-4 p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors md:right-8"
+              aria-label="Đóng tìm kiếm"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mx-auto max-w-2xl">
+              <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[#7B9BB2]">Tìm kiếm</p>
+
+              {/* Search form */}
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)]" />
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  placeholder="Tìm sản phẩm, bộ sưu tập..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full border-b-2 border-[var(--foreground)] bg-transparent pl-8 pr-16 pb-3 text-xl font-light text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50 focus:outline-none md:text-2xl"
+                  autoComplete="off"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                    aria-label="Xóa"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </form>
+
+              {/* Suggestions */}
+              <div className="mt-2">
+                {searchLoading && (
+                  <div className="flex items-center gap-2 py-4 text-xs text-[var(--muted-foreground)]">
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border border-[var(--primary)] border-t-transparent" />
+                    Đang tìm kiếm...
+                  </div>
+                )}
+                {!searchLoading && searchTerm.trim().length >= 2 && searchSuggestions.length === 0 && (
+                  <p className="py-4 text-sm text-[var(--muted-foreground)]">
+                    Không tìm thấy kết quả cho &ldquo;{searchTerm}&rdquo;.
+                  </p>
+                )}
+                {!searchLoading && searchSuggestions.length > 0 && (
+                  <ul className="divide-y divide-[var(--border)]/40">
+                    {searchSuggestions.map((item) => (
+                      <li key={item.slug}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchOpen(false);
+                            navigate(`/products/${item.slug}`);
+                          }}
+                          className="flex w-full items-center gap-4 py-3 text-left transition-colors hover:text-[#7B9BB2]"
+                        >
+                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden border border-[var(--border)]/60 bg-[var(--muted)]">
+                            {item.thumbnailUrl ? (
+                              <img src={item.thumbnailUrl} alt={item.name} className="h-full w-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-sm font-medium tracking-wide">{item.name}</p>
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                              Xem sản phẩm
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </header>
   );
 };

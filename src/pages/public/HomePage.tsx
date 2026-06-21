@@ -255,45 +255,6 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Promotional Banner */}
-      <section className="bg-[var(--foreground)] py-20 md:py-24">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-[0.12em] uppercase">
-            Giảm giá lên đến 50%
-          </h2>
-          <p className="mb-8 text-sm md:text-base text-white/90 font-light tracking-wide">
-            Khám phá bộ sưu tập sale với nhiều ưu đãi hấp dẫn
-          </p>
-          <Link
-            to="/products"
-            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[var(--foreground)] transition-all duration-300"
-          >
-            Mua ngay
-          </Link>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="bg-[var(--background)] border-t border-[var(--border)] py-16 md:py-24">
-        <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-2xl md:text-3xl font-light tracking-[0.1em] uppercase font-serif">
-            SixthSoul Newsletter
-          </h2>
-          <p className="mb-10 text-[12px] text-[var(--muted-foreground)] font-light tracking-wide uppercase">
-            Join our society for early access and exclusive collection updates.
-          </p>
-          <div className="flex flex-col gap-6 sm:flex-row sm:justify-center max-w-lg mx-auto">
-            <input
-              type="email"
-              placeholder="YOUR EMAIL ADDRESS"
-              className="flex-1 border-b border-[var(--border)] bg-transparent px-0 py-3 text-[11px] font-light tracking-widest placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[#7B9BB2] transition-colors uppercase"
-            />
-            <button className="text-[10px] font-medium tracking-[0.2em] uppercase hover:text-[#7B9BB2] transition-all duration-300">
-              SUBSCRIBE
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

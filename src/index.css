@@ -359,3 +359,8 @@ nav.admin-menu-scroll {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

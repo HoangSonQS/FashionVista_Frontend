@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import type { AxiosError } from 'axios';
 import { productService } from '../../services/productService';
 import { cartService } from '../../services/cartService';
-import type { ProductDetail, ProductVariant } from '../../types/product';
+import type { ProductDetail, ProductListItem, ProductVariant } from '../../types/product';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
@@ -12,6 +12,7 @@ import type { ReviewSummary } from '../../types/review';
 import { wishlistService } from '../../services/wishlistService';
 import { getAuthSession } from '../../services/authSession';
 import { ChevronLeft, ChevronRight, X, Maximize2, Minus, Plus, Heart } from 'lucide-react';
+import { ProductCard } from '../../components/common/ProductCard';
 
 const ProductDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +33,8 @@ const ProductDetailPage = () => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<ProductListItem[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   // Sửa lỗi logic: Khi đổi variant, kiểm tra lại số lượng nếu vượt quá stock thì reset về stock hoặc 1
   useEffect(() => {
@@ -59,6 +62,17 @@ const ProductDetailPage = () => {
       }
     };
     fetchProduct();
+  }, [slug]);
+
+  // Load related products khi slug thay đổi
+  useEffect(() => {
+    if (!slug) return;
+    setLoadingRelated(true);
+    productService
+      .getRelatedProducts(slug, 20)
+      .then((items) => setRelatedProducts(items))
+      .catch(() => setRelatedProducts([]))
+      .finally(() => setLoadingRelated(false));
   }, [slug]);
 
   // Load reviews khi đã có product
@@ -629,6 +643,46 @@ const ProductDetailPage = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* You May Also Like */}
+      {(loadingRelated || relatedProducts.length > 0) && (
+        <section className="border-t border-[var(--border)]/40 bg-[var(--background)] py-20 md:py-28">
+          <div className="mx-auto max-w-7xl px-4 md:px-8">
+            <div className="mb-10 border-b border-[var(--border)] pb-6">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-[#7B9BB2]">Gợi ý cho bạn</p>
+              <h2 className="mt-2 font-serif text-2xl font-light uppercase tracking-[0.12em] md:text-3xl">
+                You May Also Like
+              </h2>
+            </div>
+            {loadingRelated ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="aspect-[3/4] bg-[var(--border)]" />
+                    <div className="mt-4 h-3 w-3/4 rounded bg-[var(--border)] mx-auto" />
+                    <div className="mt-2 h-3 w-1/2 rounded bg-[var(--border)] mx-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                {relatedProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    slug={p.slug}
+                    name={p.name}
+                    price={p.price}
+                    compareAtPrice={p.compareAtPrice}
+                    thumbnailUrl={p.thumbnailUrl ?? null}
+                    hoverThumbnailUrl={p.hoverThumbnailUrl}
+                    tags={p.tags ?? []}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       <LoginModal
