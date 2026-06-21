@@ -16,6 +16,7 @@ export interface ProductListItem {
   hoverThumbnailUrl?: string | null;
   sizes?: string[] | null;
   colors?: string[] | null;
+  tags?: string[] | null;
 }
 
 export interface ProductVariant {

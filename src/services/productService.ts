@@ -19,6 +19,8 @@ export interface ProductQueryParams {
   maxPrice?: number;
   page?: number;
   pageSize?: number;
+  tag?: string;
+  sort?: 'newest' | 'price_asc' | 'price_desc';
 }
 
 export const productService = {

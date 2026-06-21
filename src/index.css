@@ -19,11 +19,11 @@
   --card: #FFFFFF;
   --card-foreground: #24324A;
 
-  /* === Primary Button & Actions (Powder Blue) === */
-  --primary: #7FAFD6;
+  /* === Primary Button & Actions (Dusty Blue) === */
+  --primary: #7B9BB2;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #5E97C6;
-  --primary-focus: #9FC8E8;
+  --primary-hover: #5E8A9F;
+  --primary-focus: #9BB8C8;
 
   /* === Accent (Muted Periwinkle — complements blue) === */
   --accent: #C89CA7;
@@ -37,11 +37,11 @@
   /* === Input Fields === */
   --input-background: #FFFFFF;
   --input-border: #E7DCD8;
-  --input-border-focus: #7FAFD6;
+  --input-border-focus: #7B9BB2;
   --input-placeholder: #A89791;
 
   /* === Checkbox === */
-  --checkbox-checked: #7FAFD6;
+  --checkbox-checked: #7B9BB2;
   --checkbox-checked-foreground: #FFFFFF;
 
   /* === System Colors (Adapted to cool palette) === */
@@ -54,13 +54,13 @@
   --success-bg: #D4EFE9;
 
   /* === Auth & Admin === */
-  --auth-text-link: #5E97C6;
-  --auth-focus-ring: #9FC8E8;
-  --auth-button-bg: #7FAFD6;
-  --primary-focus-ring: rgba(127, 175, 214, 0.32);
+  --auth-text-link: #5E8A9F;
+  --auth-focus-ring: #9BB8C8;
+  --auth-button-bg: #7B9BB2;
+  --primary-focus-ring: rgba(123, 155, 178, 0.32);
 
   --scrollbar-thumb: #E7DCD8;
-  --scrollbar-thumb-hover: #7FAFD6;
+  --scrollbar-thumb-hover: #7B9BB2;
 
   /* === Typography & Radius === */
   --font-sans: 'Noto Serif', Georgia, 'Times New Roman', serif;
@@ -84,7 +84,7 @@ body {
 }
 
 ::selection {
-  background: rgba(127, 175, 214, 0.28);
+  background: rgba(123, 155, 178, 0.28);
   color: var(--foreground);
 }
 
@@ -351,4 +351,11 @@ nav.admin-menu-scroll {
 .product-card-image-frame:hover .product-card-image-secondary {
   opacity: 1;
   transform: rotateY(0deg);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
