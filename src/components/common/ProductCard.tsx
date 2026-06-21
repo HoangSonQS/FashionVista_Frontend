@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
 
-// Giá có thể bị thiếu trong một số API (ví dụ search suggestions),
-// nên cần hàm format chịu được undefined / null để tránh lỗi runtime.
 const formatCurrency = (value?: number | null) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return '—';
@@ -16,6 +14,8 @@ export interface BasicProductCardProps {
   compareAtPrice?: number | null;
   thumbnailUrl: string | null;
   hoverThumbnailUrl?: string | null;
+  isNew?: boolean;
+  tags?: string[] | null;
 }
 
 export const ProductCard = ({
@@ -25,9 +25,18 @@ export const ProductCard = ({
   compareAtPrice,
   thumbnailUrl,
   hoverThumbnailUrl,
+  isNew,
+  tags,
 }: BasicProductCardProps) => {
   const hasDiscount = typeof compareAtPrice === 'number' && compareAtPrice > price;
   const hasHoverImage = Boolean(hoverThumbnailUrl && hoverThumbnailUrl !== thumbnailUrl);
+
+  const badge = (() => {
+    if (isNew) return 'NEW';
+    if (hasDiscount) return 'SALE';
+    if (tags?.includes('Luxury')) return 'EXCLUSIVE';
+    return null;
+  })();
 
   return (
     <div className="group relative bg-transparent">
@@ -57,9 +66,9 @@ export const ProductCard = ({
               <span className="text-[10px] uppercase tracking-widest">No Image</span>
             </div>
           )}
-          {hasDiscount && (
-            <div className="absolute left-3 top-3 bg-white/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-widest text-[var(--foreground)] shadow-sm">
-              Sale
+          {badge && (
+            <div className="absolute left-3 top-3 bg-white/90 px-2 py-0.5 text-[9px] font-light uppercase tracking-[0.2em] text-[var(--foreground)] shadow-sm">
+              {badge}
             </div>
           )}
         </div>
