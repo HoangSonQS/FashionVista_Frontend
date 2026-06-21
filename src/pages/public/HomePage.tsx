@@ -114,14 +114,14 @@ const carouselSlides = [
   </div>,
   <div
     key={2}
-    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-top"
     style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
   >
     <Link to="/collections" className="absolute inset-0" aria-label="Xem bộ sưu tập White Romance" />
   </div>,
   <div
     key={3}
-    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-top"
     style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
   >
     <Link to="/sale" className="absolute inset-0" aria-label="Xem ưu đãi Puffy Dress" />
