@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { CategorySummary, ProductListItem } from '../../types/product';
@@ -8,112 +8,169 @@ import { ProductCard } from '../../components/common/ProductCard';
 import { Carousel } from '../../components/common/Carousel';
 import type { EmblaOptionsType } from 'embla-carousel';
 
-type TabType = 'new' | 'collection' | 'sale';
-
 const CAROUSEL_OPTIONS: EmblaOptionsType = { loop: true };
+
+interface EditorialSectionProps {
+  label: string;
+  heading: string;
+  caption?: string;
+  linkText: string;
+  linkHref: string;
+  products: ProductListItem[];
+  loading: boolean;
+  isNewSection?: boolean;
+  background?: string;
+}
+
+const EditorialSection = ({
+  label,
+  heading,
+  caption,
+  linkText,
+  linkHref,
+  products,
+  loading,
+  isNewSection = false,
+  background = 'bg-[var(--background)]',
+}: EditorialSectionProps) => {
+  if (!loading && products.length === 0) return null;
+
+  return (
+    <section className={`${background} py-20 md:py-28`}>
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mb-10 flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#7B9BB2]">{label}</p>
+            <h2 className="mt-2 font-serif text-2xl font-light uppercase tracking-[0.12em] md:text-3xl">
+              {heading}
+            </h2>
+            {caption && (
+              <p className="mt-2 text-[11px] font-light text-[var(--muted-foreground)] tracking-wide">
+                {caption}
+              </p>
+            )}
+          </div>
+          <Link
+            to={linkHref}
+            className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--foreground)] hover:text-[#7B9BB2] transition-colors"
+          >
+            {linkText} <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[3/4] bg-[var(--border)]" />
+                <div className="mt-4 h-3 w-3/4 rounded bg-[var(--border)] mx-auto" />
+                <div className="mt-2 h-3 w-1/2 rounded bg-[var(--border)] mx-auto" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                slug={product.slug}
+                name={product.name}
+                price={product.price}
+                compareAtPrice={product.compareAtPrice}
+                thumbnailUrl={product.thumbnailUrl ?? null}
+                hoverThumbnailUrl={product.hoverThumbnailUrl}
+                isNew={isNewSection}
+                tags={product.tags ?? []}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const carouselSlides = [
+  <div
+    key={1}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    style={{ backgroundImage: 'url(/sixthsoul-banner.png)' }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-r from-black/44 via-black/16 to-transparent" />
+    <div className="absolute inset-x-0 bottom-12 md:bottom-16">
+      <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
+        <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">New Season Edit</h1>
+        <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
+          Những thiết kế nữ tính, thanh lịch cho nhịp sống hiện đại.
+        </p>
+        <Link
+          to="/products"
+          className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
+        >
+          Khám phá ngay
+        </Link>
+      </div>
+    </div>
+  </div>,
+  <div
+    key={2}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
+  >
+    <Link to="/collections" className="absolute inset-0" aria-label="Xem bộ sưu tập White Romance" />
+  </div>,
+  <div
+    key={3}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
+  >
+    <Link to="/sale" className="absolute inset-0" aria-label="Xem ưu đãi Puffy Dress" />
+  </div>,
+];
 
 const HomePage = () => {
   const { showToast } = useToast();
-  const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<CategorySummary[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<ProductListItem[]>([]);
   const [newArrivals, setNewArrivals] = useState<ProductListItem[]>([]);
-  const [saleProducts, setLoadingSaleProducts] = useState<ProductListItem[]>([]);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [loadingNewArrivals, setLoadingNewArrivals] = useState(true);
-  const [loadingSale, setLoadingSale] = useState(false);
-
-  const carouselSlides = useMemo(() => [
-    <div
-      key={1}
-      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: 'url(/sixthsoul-banner.png)' }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-black/44 via-black/16 to-transparent" />
-      <div className="absolute inset-x-0 bottom-12 md:bottom-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
-          <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">New Season Edit</h1>
-          <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
-            Những thiết kế nữ tính, thanh lịch cho nhịp sống hiện đại.
-          </p>
-          <Link
-            to="/products"
-            className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
-          >
-            Khám phá ngay
-          </Link>
-        </div>
-      </div>
-    </div>,
-    <div
-      key={2}
-      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
-    >
-      <Link to="/collections" className="absolute inset-0" aria-label="Xem bộ sưu tập White Romance" />
-    </div>,
-    <div
-      key={3}
-      className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
-    >
-      <Link to="/sale" className="absolute inset-0" aria-label="Xem ưu đãi Puffy Dress" />
-    </div>,
-  ], []);
-
-  // Get active tab from URL params
-  const section = searchParams.get('section');
-  const activeTab: TabType =
-    section === 'collections' ? 'collection' :
-      section === 'sale' ? 'sale' :
-        'new';
+  const [luxuryProducts, setLuxuryProducts] = useState<ProductListItem[]>([]);
+  const [museProducts, setMuseProducts] = useState<ProductListItem[]>([]);
+  const [loadingNew, setLoadingNew] = useState(true);
+  const [loadingLuxury, setLoadingLuxury] = useState(true);
+  const [loadingMuse, setLoadingMuse] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadBase = async () => {
       try {
-        const [cats, featured, newProducts] = await Promise.all([
-          productService.getCategories().catch(() => []),
-          productService.getFeaturedProducts(8).catch(() => []),
-          productService.getNewArrivals(8).catch(() => []),
+        const [cats, newProducts] = await Promise.all([
+          productService.getCategories().catch(() => [] as CategorySummary[]),
+          productService.getNewArrivals(8).catch(() => [] as ProductListItem[]),
         ]);
         setCategories(cats);
-        setFeaturedProducts(featured);
         setNewArrivals(newProducts);
-      } catch (error) {
+      } catch {
         showToast('Không thể tải dữ liệu trang chủ.', 'error');
       } finally {
-        setLoadingFeatured(false);
-        setLoadingNewArrivals(false);
+        setLoadingNew(false);
       }
     };
-    void loadData();
+    void loadBase();
   }, [showToast]);
 
   useEffect(() => {
-    const loadSaleProducts = async () => {
-      if (activeTab !== 'sale') return;
-      setLoadingSale(true);
-      try {
-        const sale = await productService.getSaleProducts(8);
-        setLoadingSaleProducts(sale);
-      } catch (error) {
-        showToast('Không thể tải sản phẩm sale.', 'error');
-      } finally {
-        setLoadingSale(false);
-      }
-    };
-    void loadSaleProducts();
-  }, [activeTab, showToast]);
+    productService
+      .getProducts({ tag: 'Luxury', pageSize: 4 })
+      .then((res) => setLuxuryProducts(res.items))
+      .catch(() => undefined)
+      .finally(() => setLoadingLuxury(false));
+  }, []);
 
-  // Scroll to products section when tab changes
   useEffect(() => {
-    const productsSection = document.getElementById('products-section');
-    if (productsSection && section) {
-      setTimeout(() => {
-        productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  }, [section]);
+    productService
+      .getProducts({ tag: 'Muse', pageSize: 4 })
+      .then((res) => setMuseProducts(res.items))
+      .catch(() => undefined)
+      .finally(() => setLoadingMuse(false));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -121,138 +178,47 @@ const HomePage = () => {
         <Carousel slides={carouselSlides} options={CAROUSEL_OPTIONS} />
       </section>
 
-      {/* Dynamic Products Section based on active tab */}
-      <section id="products-section" className="bg-[var(--background)] py-14 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-10 flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-[var(--primary)]">Online Shop</p>
-              <h2 className="mt-2 text-2xl font-light uppercase tracking-[0.12em] md:text-3xl">
-                {activeTab === 'sale' ? 'Sale Edit' : activeTab === 'collection' ? 'Collection Picks' : 'The New'}
-              </h2>
-            </div>
-            <Link
-              to="/products"
-              className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--foreground)] hover:text-[var(--primary)]"
-            >
-              Xem tat ca
-            </Link>
-          </div>
-          {activeTab === 'new' && (
-            <>
-              {loadingNewArrivals ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-[3/4] bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : newArrivals.length > 0 ? (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {newArrivals.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      slug={product.slug}
-                      name={product.name}
-                      price={product.price}
-                      compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl ?? null}
-                      hoverThumbnailUrl={product.hoverThumbnailUrl}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm mới.</p>
-                </div>
-              )}
-            </>
-          )}
+      <EditorialSection
+        label="Online Shop"
+        heading="The New Season"
+        caption="Những thiết kế mới nhất mùa này"
+        linkText="View all"
+        linkHref="/products"
+        products={newArrivals}
+        loading={loadingNew}
+        isNewSection
+      />
 
-          {activeTab === 'collection' && (
-            <>
-              {loadingFeatured ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-[3/4] bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : featuredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {featuredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      slug={product.slug}
-                      name={product.name}
-                      price={product.price}
-                      compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl ?? null}
-                      hoverThumbnailUrl={product.hoverThumbnailUrl}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm nổi bật.</p>
-                </div>
-              )}
-            </>
-          )}
+      <EditorialSection
+        label="Curated Edit"
+        heading="The Luxury Edit"
+        linkText="Khám phá"
+        linkHref="/products"
+        products={luxuryProducts}
+        loading={loadingLuxury}
+      />
 
-          {activeTab === 'sale' && (
-            <>
-              {loadingSale ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-[3/4] bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : saleProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {saleProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      slug={product.slug}
-                      name={product.name}
-                      price={product.price}
-                      compareAtPrice={product.compareAtPrice}
-                      thumbnailUrl={product.thumbnailUrl ?? null}
-                      hoverThumbnailUrl={product.hoverThumbnailUrl}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm đang giảm giá.</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+      <EditorialSection
+        label="Signature Piece"
+        heading="The Muse"
+        linkText="Xem thêm"
+        linkHref="/products"
+        products={museProducts}
+        loading={loadingMuse}
+        background="bg-[var(--muted)]"
+      />
 
-      {/* Categories Showcase - Modern E-commerce Style */}
+      {/* Categories */}
       {categories.length > 0 && (
         <section className="bg-[var(--background)] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-8">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-2xl md:text-3xl font-light text-[var(--foreground)] tracking-[0.12em] uppercase">
+              <h2 className="text-2xl md:text-3xl font-light tracking-[0.12em] uppercase">
                 Danh mục
               </h2>
               <Link
                 to="/products"
-                className="flex items-center gap-1 text-xs font-light text-[var(--primary)] hover:underline tracking-wider uppercase"
+                className="flex items-center gap-1 text-xs font-light text-[#7B9BB2] hover:underline tracking-wider uppercase"
               >
                 Xem tất cả <ChevronRight className="h-3 w-3" />
               </Link>
@@ -279,7 +245,7 @@ const HomePage = () => {
                       </div>
                     )}
                   </div>
-                  <h3 className="text-[10px] font-medium text-[var(--foreground)] tracking-[0.2em] uppercase">
+                  <h3 className="text-[10px] font-medium tracking-[0.2em] uppercase">
                     {category.name}
                   </h3>
                 </Link>
@@ -289,7 +255,7 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Promotional Banner - Modern E-commerce Style */}
+      {/* Promotional Banner */}
       <section className="bg-[var(--foreground)] py-20 md:py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-8 text-center">
           <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-[0.12em] uppercase">
@@ -307,10 +273,10 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Newsletter Signup - Modern E-commerce Style */}
+      {/* Newsletter */}
       <section className="bg-[var(--background)] border-t border-[var(--border)] py-16 md:py-24">
         <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-2xl md:text-3xl font-light text-[var(--foreground)] tracking-[0.1em] uppercase font-serif">
+          <h2 className="mb-4 text-2xl md:text-3xl font-light tracking-[0.1em] uppercase font-serif">
             SixthSoul Newsletter
           </h2>
           <p className="mb-10 text-[12px] text-[var(--muted-foreground)] font-light tracking-wide uppercase">
@@ -320,15 +286,14 @@ const HomePage = () => {
             <input
               type="email"
               placeholder="YOUR EMAIL ADDRESS"
-              className="flex-1 border-b border-[var(--border)] bg-transparent px-0 py-3 text-[11px] font-light tracking-widest text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors uppercase"
+              className="flex-1 border-b border-[var(--border)] bg-transparent px-0 py-3 text-[11px] font-light tracking-widest placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[#7B9BB2] transition-colors uppercase"
             />
-            <button className="text-[10px] font-medium tracking-[0.2em] uppercase text-[var(--foreground)] hover:text-[var(--primary)] transition-all duration-300">
+            <button className="text-[10px] font-medium tracking-[0.2em] uppercase hover:text-[#7B9BB2] transition-all duration-300">
               SUBSCRIBE
             </button>
           </div>
         </div>
       </section>
-
     </div>
   );
 };
