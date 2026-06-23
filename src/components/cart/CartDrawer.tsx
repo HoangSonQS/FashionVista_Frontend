@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartDrawer } from '../../context/CartDrawerContext';
@@ -10,7 +10,7 @@ import type { CartItem } from '../../types/cart';
 const CartDrawer = () => {
   const { open, cart, loading, closeDrawer, refreshCart, updateCartState } = useCartDrawer();
   const navigate = useNavigate();
-  const cartItems = cart?.items ?? [];
+  const cartItems = useMemo(() => cart?.items ?? [], [cart]);
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shippingFee ?? 0;
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
@@ -60,7 +60,7 @@ const CartDrawer = () => {
         return next;
       });
       return true;
-    } catch (error) {
+    } catch {
       setStockCheckMessages((prev) => ({
         ...prev,
         [item.id]: 'Không thể kiểm tra tồn kho. Vui lòng thử lại.',
@@ -89,7 +89,7 @@ const CartDrawer = () => {
     };
     
     void checkSelectedItemsStock();
-  }, [cartItems, selectedItemIds, checkItemStock]);
+  }, [cartItems, selectedItemIds, checkItemStock, cart]);
 
   useEffect(() => {
     setSelectedItemIds((prev) => {

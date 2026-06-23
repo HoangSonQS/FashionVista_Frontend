@@ -1,11 +1,14 @@
 import { axiosClient } from './axiosClient';
 import type {
   CategorySummary,
-  ProductCreateRequest,
   ProductDetail,
+  ProductListItem,
   ProductListResponse,
   SearchSuggestion,
 } from '../types/product';
+import { cachedRequest } from './requestCache';
+
+const HOME_DATA_CACHE_TTL_MS = 60_000;
 
 export interface ProductQueryParams {
   category?: string;
@@ -15,12 +18,20 @@ export interface ProductQueryParams {
   minPrice?: number;
   maxPrice?: number;
   page?: number;
-  size?: number;
+  pageSize?: number;
+  tag?: string;
+  sort?: 'newest' | 'price_asc' | 'price_desc';
 }
 
 export const productService = {
   async getProducts(params: ProductQueryParams): Promise<ProductListResponse> {
-    const response = await axiosClient.get<ProductListResponse>('/products', { params });
+    const { pageSize, ...rest } = params;
+    const response = await axiosClient.get<ProductListResponse>('/products', {
+      params: {
+        ...rest,
+        size: pageSize, // backend expects `size` for page size
+      },
+    });
     return response.data;
   },
 
@@ -30,8 +41,10 @@ export const productService = {
   },
 
   async getCategories(): Promise<CategorySummary[]> {
-    const response = await axiosClient.get<CategorySummary[]>('/categories');
-    return response.data;
+    return cachedRequest('categories', async () => {
+      const response = await axiosClient.get<CategorySummary[]>('/categories');
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
   },
 
   async getSuggestions(keyword: string): Promise<SearchSuggestion[]> {
@@ -42,31 +55,35 @@ export const productService = {
     return response.data;
   },
 
-  async createProduct(payload: ProductCreateRequest, files: File[]): Promise<ProductDetail> {
-    const formData = new FormData();
-    formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    files.forEach((file) => formData.append('images', file));
-
-    const response = await axiosClient.post<ProductDetail>('/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+  async getFeaturedProducts(limit: number = 8): Promise<ProductListItem[]> {
+    return cachedRequest(`products:featured:${limit}`, async () => {
+      const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
+        params: { limit },
+      });
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
   },
 
-  async getFeaturedProducts(limit: number = 8): Promise<ProductListItem[]> {
-    const response = await axiosClient.get<ProductListItem[]>('/products/featured', {
+  async getNewArrivals(limit: number = 8): Promise<ProductListItem[]> {
+    return cachedRequest(`products:new-arrivals:${limit}`, async () => {
+      const response = await axiosClient.get<ProductListItem[]>('/products/new-arrivals', {
+        params: { limit },
+      });
+      return response.data;
+    }, HOME_DATA_CACHE_TTL_MS);
+  },
+
+  async getSaleProducts(limit: number = 24): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>('/products/sale', {
       params: { limit },
     });
     return response.data;
   },
 
-  async getNewArrivals(limit: number = 8): Promise<ProductListItem[]> {
-    const response = await axiosClient.get<ProductListItem[]>('/products/new-arrivals', {
+  async getRelatedProducts(slug: string, limit: number = 20): Promise<ProductListItem[]> {
+    const response = await axiosClient.get<ProductListItem[]>(`/products/${slug}/related`, {
       params: { limit },
     });
     return response.data;
   },
 };
-

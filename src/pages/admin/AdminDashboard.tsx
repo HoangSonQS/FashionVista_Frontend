@@ -1,152 +1,160 @@
-import { useEffect, useState } from 'react';
-import { adminService } from '../../services/adminService';
-import type { AdminOverview } from '../../types/admin';
-
-const cards = [
-  { key: 'dailyRevenue', label: 'Doanh thu hôm nay' },
-  { key: 'monthlyRevenue', label: 'Doanh thu tháng' },
-  { key: 'yearlyRevenue', label: 'Doanh thu năm' },
-  { key: 'conversionRate', label: 'Tỷ lệ chuyển đổi', suffix: '%' },
-] as const;
+import { useEffect, useMemo, useState } from 'react';
+import { DollarSign, ShoppingBag, Package, Users } from 'lucide-react';
+import KPICard from './components/dashboard/KPICard';
+import RevenueChart from './components/dashboard/RevenueChart';
+import OrderStatusChart from './components/dashboard/OrderStatusChart';
+import TopProductsTable from './components/dashboard/TopProductsTable';
+import RecentActivityTimeline from './components/dashboard/RecentActivityTimeline';
+import adminDashboardService, { type AdminOverviewResponse } from '../../services/adminDashboardService';
 
 const AdminDashboard = () => {
-  const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<AdminOverviewResponse | null>(null);
 
   useEffect(() => {
-    const fetchOverview = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        const data = await adminService.getOverview();
-        setOverview(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu.');
+        const response = await adminDashboardService.getOverview();
+        // Access .data because axios returns AxiosResponse
+        // @ts-ignore
+        setData(response.data ? response.data : response);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchOverview().catch(() => setError('Không thể tải dữ liệu.'));
+    fetchData();
   }, []);
 
-  const formatCurrency = (value: string | number | undefined) => {
-    if (value === undefined || value === null) {
-      return '0₫';
-    }
-    const amount = typeof value === 'string' ? Number(value) : value;
-    if (Number.isNaN(amount)) {
-      return '0₫';
-    }
-    return `${amount.toLocaleString('vi-VN')}₫`;
-  };
+  const kpiItems = useMemo(() => {
+    if (!data) return [];
+    return [
+      {
+        key: 'revenue',
+        label: 'Doanh thu tháng này',
+        value: (data.monthlyRevenue || 0).toLocaleString('vi-VN') + ' ₫',
+        trend: 0,
+        trendType: 'up' as const,
+        icon: DollarSign,
+      },
+      {
+        key: 'newOrders',
+        label: 'Đơn hàng mới',
+        value: data.pendingOrders,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: ShoppingBag,
+      },
+      {
+        key: 'productsSold',
+        label: 'Đơn hoàn thành',
+        value: data.completedOrders,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: Package,
+      },
+      {
+        key: 'newCustomers',
+        label: 'Khách hàng mới',
+        value: data.newCustomers,
+        trend: 0,
+        trendType: 'up' as const,
+        icon: Users,
+      },
+    ];
+  }, [data]);
+
+  const revenueChartData = useMemo(() => {
+    if (!data?.revenueChartData) return [];
+    return data.revenueChartData.map(d => ({
+      name: d.date,
+      value: d.value
+    }));
+  }, [data?.revenueChartData]);
+
+  const orderStatusChartData = useMemo(() => {
+    if (!data) return [];
+    return [
+      { name: 'Pending', value: data.pendingOrders },
+      { name: 'Confirmed', value: 0 },
+      { name: 'Shipping', value: data.shippingOrders },
+      { name: 'Completed', value: data.completedOrders },
+      { name: 'Cancelled', value: data.cancelledOrders },
+    ].filter(d => d.value > 0);
+  }, [data?.pendingOrders, data?.shippingOrders, data?.completedOrders, data?.cancelledOrders]);
+
+  const topProducts = useMemo(() => {
+    if (!data?.topProducts) return [];
+    return data.topProducts.map(p => ({
+      id: p.productId.toString(),
+      name: p.productName,
+      price: p.price || 0,
+      sold: p.quantity,
+      stock: p.stock || 0,
+      image: p.image || 'https://via.placeholder.com/150'
+    }));
+  }, [data?.topProducts]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <div className="p-6 text-center text-red-500">Không thể tải dữ liệu dashboard.</div>;
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {cards.map((card) => (
-          <div key={card.key} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">{card.label}</p>
-            <p className="text-2xl font-semibold mt-2">
-              {card.key === 'conversionRate'
-                ? `${overview?.conversionRate?.toFixed(2) ?? '0.00'}${card.suffix}`
-                : formatCurrency(overview?.[card.key])}
-            </p>
-          </div>
+    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
+      <div className="flex justify-between items-center mb-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Tổng quan số liệu kinh doanh hôm nay</p>
+        </div>
+        <div className="text-sm text-gray-500 bg-white px-3 py-1.5 rounded-md shadow-sm border border-gray-200">
+          Cập nhật: {new Date().toLocaleTimeString('vi-VN')}
+        </div>
+      </div>
+
+      {/* KPI Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {kpiItems.map((item) => (
+          <KPICard
+            key={item.key}
+            label={item.label}
+            value={item.value}
+            trend={item.trend}
+            trendType={item.trendType}
+            icon={item.icon}
+          />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Đơn hàng</p>
-              <h3 className="text-lg font-semibold">Trạng thái hiện tại</h3>
-            </div>
-          </div>
-          <dl className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <dt className="text-[var(--muted-foreground)]">Chờ duyệt</dt>
-              <dd className="text-2xl font-semibold">{overview?.pendingOrders ?? 0}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--muted-foreground)]">Đang giao</dt>
-              <dd className="text-2xl font-semibold">{overview?.shippingOrders ?? 0}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--muted-foreground)]">Hoàn tất</dt>
-              <dd className="text-2xl font-semibold">{overview?.completedOrders ?? 0}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--muted-foreground)]">Hủy/Hoàn tiền</dt>
-              <dd className="text-2xl font-semibold">{overview?.cancelledOrders ?? 0}</dd>
-            </div>
-          </dl>
+      {/* Main Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-[400px]">
+          <RevenueChart data={revenueChartData} />
         </div>
-
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Kho & khách hàng</p>
-              <h3 className="text-lg font-semibold">Cảnh báo nhanh</h3>
-            </div>
-          </div>
-          <dl className="space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-lg bg-[var(--muted)] px-3 py-2">
-              <dt className="text-[var(--foreground)]">Sản phẩm sắp hết</dt>
-              <dd className="text-lg font-semibold text-[var(--warning)]">{overview?.lowStockProducts ?? 0}</dd>
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-[var(--muted)] px-3 py-2">
-              <dt className="text-[var(--foreground)]">Khách hàng mới (7 ngày)</dt>
-              <dd className="text-lg font-semibold text-[var(--success)]">{overview?.newCustomers ?? 0}</dd>
-            </div>
-          </dl>
+        <div className="h-[400px]">
+          <OrderStatusChart data={orderStatusChartData} />
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">Top sản phẩm</p>
-            <h3 className="text-lg font-semibold">Bán chạy nhất</h3>
-          </div>
+      {/* Detail Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 min-h-[400px]">
+          <TopProductsTable products={topProducts} />
         </div>
-        {loading && <p className="text-sm text-[var(--muted-foreground)]">Đang tải dữ liệu...</p>}
-        {error && !loading && <p className="text-sm text-[var(--error)]">{error}</p>}
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-[var(--muted-foreground)]">
-                  <th className="py-2 font-medium">Sản phẩm</th>
-                  <th className="py-2 font-medium">Số lượng</th>
-                  <th className="py-2 font-medium text-right">Doanh thu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview?.topProducts?.length ? (
-                  overview.topProducts.map((product) => (
-                    <tr key={product.productId} className="border-t border-[var(--border)]">
-                      <td className="py-3">{product.productName}</td>
-                      <td className="py-3">{product.quantity}</td>
-                      <td className="py-3 text-right">{formatCurrency(product.revenue)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="py-6 text-center text-[var(--muted-foreground)]">
-                      Chưa có dữ liệu.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="min-h-[400px]">
+          <RecentActivityTimeline activities={data.recentActivities} />
+        </div>
       </div>
     </div>
   );
 };
 
 export default AdminDashboard;
-
-

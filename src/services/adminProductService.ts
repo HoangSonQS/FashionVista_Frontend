@@ -1,11 +1,12 @@
 import { axiosClient } from './axiosClient';
-import type { ProductDetail, ProductListResponse, ProductCreateRequest } from '../types/product';
+import type { ProductDetail, ProductListResponse, ProductCreateRequest, ProductImportResult } from '../types/product';
 
 export interface AdminProductQuery {
   search?: string;
   category?: string;
   status?: string;
   featured?: boolean;
+  visible?: boolean;
   page?: number;
   size?: number;
 }
@@ -15,6 +16,16 @@ export const adminProductService = {
     const response = await axiosClient.get<ProductListResponse>('/admin/products', {
       params,
     });
+    return response.data;
+  },
+
+  async createProduct(payload: ProductCreateRequest, files: File[]): Promise<ProductDetail> {
+    const formData = new FormData();
+    formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    files.forEach((file) => formData.append('images', file));
+
+    // Don't set Content-Type manually - axios will auto-set with boundary
+    const response = await axiosClient.post<ProductDetail>('/admin/products', formData);
     return response.data;
   },
 
@@ -28,16 +39,42 @@ export const adminProductService = {
     formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
     files.forEach((file) => formData.append('images', file));
 
-    const response = await axiosClient.put<ProductDetail>(`/admin/products/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axiosClient.put<ProductDetail>(`/admin/products/${id}`, formData);
     return response.data;
   },
 
   async updateStatus(id: number, data: { status?: string; featured?: boolean }): Promise<void> {
     await axiosClient.patch(`/admin/products/${id}/status`, data);
+  },
+
+  async updateVisibility(id: number, visible: boolean): Promise<void> {
+    await axiosClient.patch(`/admin/products/${id}/visibility`, { visible });
+  },
+
+  async updateVisibilityBulk(productIds: number[], visible: boolean): Promise<void> {
+    await axiosClient.patch(`/admin/products/visibility/bulk`, { productIds, visible });
+  },
+
+  async downloadTemplate(): Promise<Blob> {
+    const response = await axiosClient.get('/admin/products/export-template', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  async exportProducts(params: AdminProductQuery & { visible?: boolean }): Promise<Blob> {
+    const response = await axiosClient.get('/admin/products/export', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  async importProducts(file: File): Promise<ProductImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axiosClient.post<ProductImportResult>('/admin/products/import', formData);
+    return response.data;
   },
 
   async deleteProduct(id: number): Promise<void> {

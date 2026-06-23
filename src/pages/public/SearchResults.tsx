@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { SearchSuggestion, ProductVariant } from '../../types/product';
@@ -7,8 +7,16 @@ import { cartService } from '../../services/cartService';
 import { emitCartUpdated } from '../../utils/cartEvents';
 import { useCartDrawer } from '../../context/CartDrawerContext';
 import { LoginModal } from '../../components/common/LoginModal';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
+import { ProductCard } from '../../components/common/ProductCard';
+import { getAuthSession } from '../../services/authSession';
+
+// Kết quả dùng ở trang search: gồm thông tin suggestion + giá để hiển thị card giống trang home
+type SearchResultItem = SearchSuggestion & {
+  price: number;
+  compareAtPrice?: number | null;
+  hoverThumbnailUrl?: string | null;
+};
 
 const SearchResultsPage = () => {
   const navigate = useNavigate();
@@ -17,12 +25,11 @@ const SearchResultsPage = () => {
   const initialQuery = params.get('q') ?? params.get('search') ?? '';
 
   const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<SearchSuggestion[]>([]);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [quickAddLoading, setQuickAddLoading] = useState<Record<string, boolean>>({});
-  const [quickBuyLoading, setQuickBuyLoading] = useState<Record<string, boolean>>({});
   const [variantModal, setVariantModal] = useState<{
     product: SearchSuggestion;
     variants: ProductVariant[];
@@ -32,9 +39,17 @@ const SearchResultsPage = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [variantSubmitting, setVariantSubmitting] = useState(false);
   const { openDrawer } = useCartDrawer();
-  const { toasts, showToast, removeToast } = useToast();
+  const { showToast } = useToast();
 
   const currentQuery = params.get('q') ?? params.get('search') ?? '';
+
+  // Mỗi lần điều hướng tới trang tìm kiếm (hoặc thay đổi query),
+  // đảm bảo cuộn về đầu trang để không giữ vị trí cuộn cũ.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.search]);
 
   // Đồng bộ ô input với URL khi user thay đổi query từ header / back/forward
   useEffect(() => {
@@ -50,8 +65,39 @@ const SearchResultsPage = () => {
     try {
       setError(null);
       setLoading(true);
-      const data = await productService.getSuggestions(trimmed);
-      setResults(data);
+      const suggestions = await productService.getSuggestions(trimmed);
+
+      // Lấy thêm chi tiết sản phẩm để có giá / giá gạch giống card ở trang home
+      const enriched = await Promise.all(
+        suggestions.map(async (item) => {
+          try {
+            const detail = await productService.getProduct(item.slug);
+            const primaryImage =
+              item.thumbnailUrl ||
+              detail.images.find((img) => img.primary)?.url ||
+              detail.images[0]?.url ||
+              null;
+
+            const secondaryImage =
+              detail.images.filter((img) => !img.primary)[0]?.url ||
+              detail.images[1]?.url ||
+              null;
+
+            return {
+              ...item,
+              price: detail.price,
+              compareAtPrice: detail.compareAtPrice ?? null,
+              thumbnailUrl: primaryImage,
+              hoverThumbnailUrl: secondaryImage,
+            } as SearchResultItem;
+          } catch {
+            // Nếu lỗi lấy chi tiết một sản phẩm, bỏ qua sản phẩm đó
+            return null;
+          }
+        }),
+      );
+
+      setResults(enriched.filter((x): x is SearchResultItem => x !== null));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải kết quả tìm kiếm.');
       setResults([]);
@@ -66,11 +112,7 @@ const SearchResultsPage = () => {
   }, [currentQuery]);
 
   const ensureAuthenticated = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    const raw = window.localStorage.getItem('auth');
-    if (!raw) {
+    if (!getAuthSession('user')) {
       setShowLoginModal(true);
       return false;
     }
@@ -129,46 +171,6 @@ const SearchResultsPage = () => {
     }
   };
 
-  const handleQuickBuy = async (product: SearchSuggestion) => {
-    if (!ensureAuthenticated()) {
-      return;
-    }
-    setQuickBuyLoading((prev) => ({ ...prev, [product.slug]: true }));
-    try {
-      const detail = await productService.getProduct(product.slug);
-      const availableVariants = detail.variants.filter((v) => v.active && v.stock > 0);
-      if (availableVariants.length === 0) {
-        showToast('Sản phẩm đã hết hàng.', 'error');
-        return;
-      }
-
-      const hasSelectableVariant = availableVariants.some(
-        (v) => (v.size && v.size.trim().length > 0) || (v.color && v.color.trim().length > 0),
-      );
-
-      if (!hasSelectableVariant) {
-        const variant = availableVariants[0];
-        const cart = await cartService.addItem(variant.sku, 1);
-        emitCartUpdated(cart);
-        navigate('/checkout');
-      } else {
-        openVariantSelection(product, availableVariants, 'buy');
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Không thể mua ngay sản phẩm.';
-      showToast(message, 'error');
-      if (message.includes('Unauthorized')) {
-        setShowLoginModal(true);
-      }
-    } finally {
-      setQuickBuyLoading((prev) => {
-        const next = { ...prev };
-        delete next[product.slug];
-        return next;
-      });
-    }
-  };
-
   const handleConfirmVariant = async () => {
     if (!variantModal) {
       showToast('Vui lòng chọn biến thể.', 'error');
@@ -195,7 +197,8 @@ const SearchResultsPage = () => {
         openDrawer({ cart });
         showToast('Đã thêm vào giỏ hàng.', 'success');
       } else {
-        navigate('/checkout');
+        // Mua ngay: mở giỏ hàng (drawer) với item vừa thêm, user tự điều chỉnh rồi bấm checkout
+        openDrawer({ cart });
       }
       setVariantModal(null);
     } catch (err) {
@@ -222,9 +225,9 @@ const SearchResultsPage = () => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="inline-flex w-fit items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+            className="inline-flex w-fit items-center justify-center rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-1.5 text-[10px] uppercase tracking-widest text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
           >
-            ← Về trang chủ
+            ← Back to Home
           </button>
           <h1
             className="text-2xl md:text-3xl font-semibold"
@@ -239,21 +242,21 @@ const SearchResultsPage = () => {
           </p>
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 shadow-sm max-w-xl"
+            className="flex items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 shadow-sm max-w-xl"
           >
             <Search className="h-4 w-4 text-[var(--muted-foreground)]" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm váy, áo, màu sắc, bộ sưu tập..."
-              className="flex-1 bg-transparent text-sm text-[var(--foreground)] focus:outline-none"
+              placeholder="SEARCH ITEMS, COLORS, COLLECTIONS..."
+              className="flex-1 bg-transparent text-sm text-[var(--foreground)] focus:outline-none uppercase placeholder:text-[10px]"
             />
             <button
               type="submit"
-              className="rounded-full bg-[var(--primary)] px-3 py-1 text-xs font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)]"
+              className="rounded-sm bg-[var(--primary)] px-4 py-1.5 text-[10px] uppercase tracking-widest font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-all"
             >
-              Tìm
+              Search
             </button>
           </form>
         </section>
@@ -280,54 +283,29 @@ const SearchResultsPage = () => {
 
           {!loading && !error && results.length > 0 && (
             <>
-              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-x-4 gap-y-10 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                 {results.map((product) => (
                   <div
                     key={product.slug}
-                    className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden shadow-lg hover:-translate-y-1 transition-transform flex flex-col"
+                    className="flex flex-col group transition-all duration-300"
                   >
-                    <Link to={`/products/${product.slug}`}>
-                      <div className="bg-[var(--background)] relative flex items-center justify-center overflow-hidden border-b border-[var(--border)] p-4 min-h-[220px]">
-                        {product.thumbnailUrl ? (
-                          <img
-                            src={product.thumbnailUrl}
-                            alt={product.name}
-                            className="max-h-[260px] w-full object-contain group-hover:scale-[1.03] transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
-                            Đang cập nhật
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="p-4 space-y-2 flex-1 flex flex-col">
-                      <p className="text-xs tracking-[0.3em] uppercase text-[var(--muted-foreground)]">Sản phẩm</p>
-                      <Link
-                        to={`/products/${product.slug}`}
-                        className="text-lg font-semibold hover:underline"
-                        style={{ fontFamily: 'var(--font-serif)' }}
+                    <ProductCard
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.price}
+                      compareAtPrice={product.compareAtPrice}
+                      thumbnailUrl={product.thumbnailUrl ?? null}
+                      hoverThumbnailUrl={(product as any).hoverThumbnailUrl}
+                    />
+                    <div className="mt-3 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickAdd(product)}
+                        disabled={Boolean(quickAddLoading[product.slug])}
+                        className="w-full border border-black py-1.5 text-[10px] font-medium uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all disabled:opacity-50"
                       >
-                        {product.name}
-                      </Link>
-                      <div className="mt-auto pt-4 space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickAdd(product)}
-                          disabled={Boolean(quickAddLoading[product.slug])}
-                          className="w-full rounded-full border border-[var(--border)] py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {quickAddLoading[product.slug] ? 'Đang thêm...' : 'Thêm vào giỏ'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickBuy(product)}
-                          disabled={Boolean(quickBuyLoading[product.slug])}
-                          className="w-full rounded-full bg-[var(--primary)] py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {quickBuyLoading[product.slug] ? 'Đang xử lý...' : 'Mua ngay'}
-                        </button>
-                      </div>
+                        {quickAddLoading[product.slug] ? '...' : 'Add to cart'}
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -342,11 +320,11 @@ const SearchResultsPage = () => {
           message="Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng hoặc mua ngay."
         />
 
-        <ToastContainer toasts={toasts} onClose={removeToast} />
+
 
         {variantModal && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-md max-h-[80vh] rounded-3xl bg-[var(--card)] shadow-2xl border border-[var(--border)] flex flex-col">
+            <div className="w-full max-w-md max-h-[80vh] rounded-sm bg-[var(--card)] shadow-2xl border border-[var(--border)] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-[var(--border)]">
                 <div>
@@ -394,11 +372,10 @@ const SearchResultsPage = () => {
                               type="button"
                               disabled={disabled}
                               onClick={() => !disabled && setSelectedColor(color)}
-                              className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-xs transition-colors ${
-                                isActive
-                                  ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
+                              className={`whitespace-nowrap rounded-sm border px-3.5 py-2 text-xs transition-colors ${isActive
+                                  ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
                                   : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                               {color}
                               {disabled && <span className="ml-1 text-[10px]"> (Hết hàng)</span>}
@@ -442,11 +419,10 @@ const SearchResultsPage = () => {
                               type="button"
                               disabled={disabled}
                               onClick={() => !disabled && setSelectedSize(size)}
-                              className={`rounded-lg border px-2 py-1.5 text-xs text-center transition-colors ${
-                                isActive
-                                  ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm ring-2 ring-[var(--primary)]'
+                              className={`rounded-sm border px-2 py-1.5 text-xs text-center transition-colors ${isActive
+                                  ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
                                   : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 hover:text-[var(--foreground)]'
-                              } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                               {size}
                               {disabled && (
@@ -509,24 +485,22 @@ const SearchResultsPage = () => {
                   type="button"
                   onClick={handleConfirmVariant}
                   disabled={variantSubmitting}
-                  className="w-full rounded-full bg-[var(--primary)] py-2.5 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full rounded-sm bg-[var(--primary)] py-2.5 text-[11px] uppercase tracking-[0.2em] font-medium text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {variantSubmitting
-                    ? 'Đang xử lý...'
+                    ? 'Processing...'
                     : variantModal.mode === 'add'
-                      ? 'Thêm vào giỏ hàng'
-                      : 'Mua ngay'}
+                      ? 'Add to collection'
+                      : 'Buy now'}
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
 
 export default SearchResultsPage;
-
 

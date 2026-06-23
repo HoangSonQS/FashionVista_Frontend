@@ -4,6 +4,7 @@ import SiteHeader from './SiteHeader';
 import Footer from './Footer';
 import { CartDrawerProvider } from '../../context/CartDrawerContext';
 import CartDrawer from '../cart/CartDrawer';
+import { ToastContainer } from '../common/Toast';
 
 const MainLayout = () => {
   return (
@@ -15,6 +16,7 @@ const MainLayout = () => {
         </main>
         <Footer />
         <CartDrawer />
+        <ToastContainer />
       </div>
     </CartDrawerProvider>
   );

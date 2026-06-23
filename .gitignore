@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Claude Code personal overrides
+.claude/settings.local.json

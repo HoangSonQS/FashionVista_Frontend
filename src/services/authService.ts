@@ -4,11 +4,44 @@ import type { AuthResponse, LoginRequest, RegisterRequest } from '../types/auth'
 
 function extractErrorMessage(error: unknown, fallback: string): string {
   const axiosError = error as AxiosError<{ message?: string }>;
-  return (
-    axiosError.response?.data?.message ||
-    axiosError.message ||
-    fallback
-  );
+  
+  // Ưu tiên message từ server response
+  if (axiosError.response?.data?.message) {
+    return axiosError.response.data.message;
+  }
+  
+  // Xử lý các HTTP status codes cụ thể
+  if (axiosError.response) {
+    const status = axiosError.response.status;
+    switch (status) {
+      case 404:
+        return 'Không tìm thấy dịch vụ. Vui lòng kiểm tra lại kết nối hoặc liên hệ quản trị viên.';
+      case 500:
+        return 'Lỗi máy chủ. Vui lòng thử lại sau.';
+      case 503:
+        return 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.';
+      case 401:
+        return 'Email/số điện thoại hoặc mật khẩu không đúng.';
+      case 403:
+        return 'Bạn không có quyền truy cập.';
+      case 400:
+        return 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+      default:
+        return `Lỗi kết nối (${status}). Vui lòng thử lại sau.`;
+    }
+  }
+  
+  // Xử lý lỗi mạng
+  if (axiosError.code === 'ECONNABORTED' || axiosError.message?.includes('timeout')) {
+    return 'Hết thời gian chờ. Vui lòng kiểm tra kết nối mạng và thử lại.';
+  }
+  
+  if (axiosError.code === 'ERR_NETWORK' || axiosError.message?.includes('Network Error')) {
+    return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.';
+  }
+  
+  // Fallback về message mặc định
+  return fallback;
 }
 
 export const authService = {
