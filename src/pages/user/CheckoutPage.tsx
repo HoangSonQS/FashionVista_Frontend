@@ -504,6 +504,8 @@ const CheckoutPage = () => {
         value: 'VNPAY',
         label: 'VNPay',
         description: 'Thanh toán online an toàn qua cổng VNPay.',
+        disabled: true,
+        badge: 'Tạm ngưng',
       },
       {
         value: 'MOMO',
