@@ -7,10 +7,16 @@ export interface ProductListItem {
   compareAtPrice?: number;
   status: string;
   featured: boolean;
+  isVisible?: boolean;
+  variantsCount?: number;
+  totalStock?: number;
+  visibleUpdatedAt?: string;
   category?: string | null;
   thumbnailUrl?: string | null;
+  hoverThumbnailUrl?: string | null;
   sizes?: string[] | null;
   colors?: string[] | null;
+  tags?: string[] | null;
 }
 
 export interface ProductVariant {
@@ -34,6 +40,7 @@ export interface ProductDetail {
   id: number;
   name: string;
   slug: string;
+  sku: string;
   description?: string | null;
   shortDescription?: string | null;
   price: number;
@@ -41,6 +48,7 @@ export interface ProductDetail {
   status: string;
   featured: boolean;
   category?: string | null;
+  categorySlug?: string | null;
   tags?: string[];
   sizes?: string[];
   colors?: string[];
@@ -56,10 +64,18 @@ export interface ProductListResponse {
   size: number;
 }
 
+export interface ProductImportResult {
+  createdCount: number;
+  updatedCount: number;
+  errors: string[];
+}
+
 export interface CategorySummary {
   id: number;
   name: string;
   slug: string;
+  description?: string | null;
+  image?: string | null;
 }
 
 export interface SearchSuggestion {
@@ -95,4 +111,3 @@ export interface ProductCreateRequest {
   variants?: ProductVariantRequest[];
   removedImageIds?: number[];
 }
-

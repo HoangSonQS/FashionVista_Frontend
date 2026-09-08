@@ -1,264 +1,224 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { CategorySummary, ProductListItem } from '../../types/product';
-import { ToastContainer } from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
+import { ProductCard } from '../../components/common/ProductCard';
+import { Carousel } from '../../components/common/Carousel';
+import type { EmblaOptionsType } from 'embla-carousel';
 
-const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')}₫`;
+const CAROUSEL_OPTIONS: EmblaOptionsType = { loop: true };
 
-type TabType = 'new' | 'collection' | 'sale';
+interface EditorialSectionProps {
+  label: string;
+  heading: string;
+  caption?: string;
+  linkText: string;
+  linkHref: string;
+  products: ProductListItem[];
+  loading: boolean;
+  isNewSection?: boolean;
+  background?: string;
+}
+
+const EditorialSection = ({
+  label,
+  heading,
+  caption,
+  linkText,
+  linkHref,
+  products,
+  loading,
+  isNewSection = false,
+  background = 'bg-[var(--background)]',
+}: EditorialSectionProps) => {
+  if (!loading && products.length === 0) return null;
+
+  return (
+    <section className={`${background} py-20 md:py-28`}>
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mb-10 flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#7B9BB2]">{label}</p>
+            <h2 className="mt-2 font-serif text-2xl font-light uppercase tracking-[0.12em] md:text-3xl">
+              {heading}
+            </h2>
+            {caption && (
+              <p className="mt-2 text-[11px] font-light text-[var(--muted-foreground)] tracking-wide">
+                {caption}
+              </p>
+            )}
+          </div>
+          <Link
+            to={linkHref}
+            className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--foreground)] hover:text-[#7B9BB2] transition-colors"
+          >
+            {linkText} <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[3/4] bg-[var(--border)]" />
+                <div className="mt-4 h-3 w-3/4 rounded bg-[var(--border)] mx-auto" />
+                <div className="mt-2 h-3 w-1/2 rounded bg-[var(--border)] mx-auto" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                slug={product.slug}
+                name={product.name}
+                price={product.price}
+                compareAtPrice={product.compareAtPrice}
+                thumbnailUrl={product.thumbnailUrl ?? null}
+                hoverThumbnailUrl={product.hoverThumbnailUrl}
+                isNew={isNewSection}
+                tags={product.tags ?? []}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const carouselSlides = [
+  <div
+    key={1}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-center"
+    style={{ backgroundImage: 'url(/sixthsoul-banner.png)' }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-r from-black/44 via-black/16 to-transparent" />
+    <div className="absolute inset-x-0 bottom-12 md:bottom-16">
+      <div className="mx-auto max-w-7xl px-4 md:px-8 text-white">
+        <h1 className="max-w-2xl text-4xl md:text-7xl font-serif mb-4">New Season Edit</h1>
+        <p className="max-w-xl text-sm md:text-base font-light mb-8 tracking-wide">
+          Những thiết kế nữ tính, thanh lịch cho nhịp sống hiện đại.
+        </p>
+        <Link
+          to="/products"
+          className="inline-block border border-white bg-white text-[var(--foreground)] px-8 py-3 text-[11px] font-medium tracking-widest uppercase hover:bg-transparent hover:text-white transition-all duration-300"
+        >
+          Khám phá ngay
+        </Link>
+      </div>
+    </div>
+  </div>,
+  <div
+    key={2}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-top"
+    style={{ backgroundImage: 'url(/sixthsoul-banner-02.png)' }}
+  >
+    <Link to="/collections" className="absolute inset-0" aria-label="Xem bộ sưu tập White Romance" />
+  </div>,
+  <div
+    key={3}
+    className="relative h-[78vh] min-h-[560px] w-full overflow-hidden bg-cover bg-top"
+    style={{ backgroundImage: 'url(/sixthsoul-banner-03.png)' }}
+  >
+    <Link to="/sale" className="absolute inset-0" aria-label="Xem ưu đãi Puffy Dress" />
+  </div>,
+];
 
 const HomePage = () => {
-  const { toasts, showToast, removeToast } = useToast();
-  const [searchParams] = useSearchParams();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<CategorySummary[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<ProductListItem[]>([]);
   const [newArrivals, setNewArrivals] = useState<ProductListItem[]>([]);
-  const [saleProducts, setSaleProducts] = useState<ProductListItem[]>([]);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [loadingNewArrivals, setLoadingNewArrivals] = useState(true);
-  const [loadingSale, setLoadingSale] = useState(false);
-
-  // Get active tab from URL params
-  const section = searchParams.get('section');
-  const activeTab: TabType = 
-    section === 'collections' ? 'collection' :
-    section === 'sale' ? 'sale' :
-    'new';
+  const [luxuryProducts, setLuxuryProducts] = useState<ProductListItem[]>([]);
+  const [museProducts, setMuseProducts] = useState<ProductListItem[]>([]);
+  const [loadingNew, setLoadingNew] = useState(true);
+  const [loadingLuxury, setLoadingLuxury] = useState(true);
+  const [loadingMuse, setLoadingMuse] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadBase = async () => {
       try {
-        const [cats, featured, newProducts] = await Promise.all([
-          productService.getCategories().catch(() => []),
-          productService.getFeaturedProducts(8).catch(() => []),
-          productService.getNewArrivals(8).catch(() => []),
+        const [cats, newProducts] = await Promise.all([
+          productService.getCategories().catch(() => [] as CategorySummary[]),
+          productService.getNewArrivals(8).catch(() => [] as ProductListItem[]),
         ]);
         setCategories(cats);
-        setFeaturedProducts(featured);
         setNewArrivals(newProducts);
-      } catch (error) {
+      } catch {
         showToast('Không thể tải dữ liệu trang chủ.', 'error');
       } finally {
-        setLoadingFeatured(false);
-        setLoadingNewArrivals(false);
+        setLoadingNew(false);
       }
     };
-    void loadData();
+    void loadBase();
   }, [showToast]);
 
   useEffect(() => {
-    const loadSaleProducts = async () => {
-      if (activeTab !== 'sale') return;
-      setLoadingSale(true);
-      try {
-        // Get products with pagination, we'll filter for sale items
-        const response = await productService.getProducts({ page: 0 });
-        // Filter products with discount (compareAtPrice > price)
-        const sale = response.items.filter(
-          (p) => p.compareAtPrice && p.compareAtPrice > p.price
-        );
-        setSaleProducts(sale.slice(0, 8));
-        // If we need more sale products, load more pages
-        if (sale.length < 8 && response.totalPages > 1) {
-          for (let page = 1; page < Math.min(response.totalPages, 5); page++) {
-            const nextResponse = await productService.getProducts({ page });
-            const nextSale = nextResponse.items.filter(
-              (p) => p.compareAtPrice && p.compareAtPrice > p.price
-            );
-            setSaleProducts((prev) => [...prev, ...nextSale].slice(0, 8));
-            if (sale.length + nextSale.length >= 8) break;
-          }
-        }
-      } catch (error) {
-        showToast('Không thể tải sản phẩm sale.', 'error');
-      } finally {
-        setLoadingSale(false);
-      }
-    };
-    void loadSaleProducts();
-  }, [activeTab, showToast]);
+    productService
+      .getProducts({ tag: 'Luxury', pageSize: 4 })
+      .then((res) => setLuxuryProducts(res.items))
+      .catch(() => undefined)
+      .finally(() => setLoadingLuxury(false));
+  }, []);
 
-  // Scroll to products section when tab changes
   useEffect(() => {
-    const productsSection = document.getElementById('products-section');
-    if (productsSection && section) {
-      setTimeout(() => {
-        productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  }, [section]);
-
-  const ProductCard = ({ product }: { product: ProductListItem }) => {
-    const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
-    const discountPercent = hasDiscount
-      ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
-      : 0;
-
-    return (
-      <div className="group relative">
-        <Link to={`/products/${product.slug}`} className="block">
-          <div className="relative overflow-hidden bg-white aspect-square">
-            {product.thumbnailUrl ? (
-              <img
-                src={product.thumbnailUrl}
-                alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
-                <span className="text-sm">No Image</span>
-              </div>
-            )}
-            {hasDiscount && (
-              <div className="absolute top-4 left-4 bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide">
-                -{discountPercent}%
-              </div>
-            )}
-          </div>
-        </Link>
-        <div className="mt-4 space-y-1">
-          <Link to={`/products/${product.slug}`}>
-            <h3 className="font-light text-sm text-[#4DA3E8] hover:underline transition-all line-clamp-2 tracking-wide">
-              {product.name}
-            </h3>
-          </Link>
-          <div className="flex items-baseline gap-2">
-            <span className="font-normal text-sm text-[#4DA3E8]">{formatCurrency(product.price)}</span>
-            {hasDiscount && (
-              <span className="text-xs text-gray-500 line-through font-light">
-                {formatCurrency(product.compareAtPrice!)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
+    productService
+      .getProducts({ tag: 'Muse', pageSize: 4 })
+      .then((res) => setMuseProducts(res.items))
+      .catch(() => undefined)
+      .finally(() => setLoadingMuse(false));
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      {/* Hero Banner - ZARA Style */}
-      <section className="relative w-full">
-        <div className="relative h-[85vh] min-h-[600px] bg-[#4DA3E8] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#4DA3E8]/40 via-[#4DA3E8]/20 to-transparent z-10" />
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <div className="text-center px-4 max-w-4xl">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-light text-white mb-6 tracking-tight">
-                SIXTHSOUL
-              </h1>
-              <p className="text-lg md:text-xl text-white/90 font-light mb-8 tracking-wide">
-                Khám phá bộ sưu tập mới nhất
-              </p>
-              <Link
-                to="/products"
-                className="inline-block border border-white text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-white hover:text-[#4DA3E8] transition-all duration-300"
-              >
-                Xem bộ sưu tập
-              </Link>
-            </div>
-          </div>
-          {/* Placeholder for hero image - can be replaced with actual image */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4DA3E8] via-[#3A8BC7] to-[#2D6FA0]" />
-        </div>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <section id="home-hero" className="relative w-full">
+        <Carousel slides={carouselSlides} options={CAROUSEL_OPTIONS} />
       </section>
 
-      {/* Dynamic Products Section based on active tab */}
-      <section id="products-section" className="bg-white py-16 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          {activeTab === 'new' && (
-            <>
-              {loadingNewArrivals ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : newArrivals.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {newArrivals.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm mới.</p>
-                </div>
-              )}
-            </>
-          )}
+      <EditorialSection
+        label="Online Shop"
+        heading="The New Season"
+        caption="Những thiết kế mới nhất mùa này"
+        linkText="View all"
+        linkHref="/products"
+        products={newArrivals}
+        loading={loadingNew}
+        isNewSection
+      />
 
-          {activeTab === 'collection' && (
-            <>
-              {loadingFeatured ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : featuredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {featuredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm nổi bật.</p>
-                </div>
-              )}
-            </>
-          )}
+      <EditorialSection
+        label="Curated Edit"
+        heading="The Luxury Edit"
+        linkText="Khám phá"
+        linkHref="/products"
+        products={luxuryProducts}
+        loading={loadingLuxury}
+      />
 
-          {activeTab === 'sale' && (
-            <>
-              {loadingSale ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
-                      <div className="mt-4 h-3 w-3/4 rounded bg-gray-100" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : saleProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {saleProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-12 text-center">
-                  <p className="text-gray-500 font-light">Chưa có sản phẩm đang giảm giá.</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+      <EditorialSection
+        label="Signature Piece"
+        heading="The Muse"
+        linkText="Xem thêm"
+        linkHref="/products"
+        products={museProducts}
+        loading={loadingMuse}
+        background="bg-[var(--muted)]"
+      />
 
-      {/* Categories Showcase - ZARA Style */}
+      {/* Categories */}
       {categories.length > 0 && (
-        <section className="bg-white py-16 md:py-20">
+        <section className="bg-[var(--background)] py-16 md:py-20">
           <div className="mx-auto max-w-7xl px-4 md:px-8">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-2xl md:text-3xl font-light text-[#4DA3E8] tracking-wide uppercase">
+              <h2 className="text-2xl md:text-3xl font-light tracking-[0.12em] uppercase">
                 Danh mục
               </h2>
               <Link
                 to="/products"
-                className="flex items-center gap-1 text-xs font-light text-[#4DA3E8] hover:underline tracking-wider uppercase"
+                className="flex items-center gap-1 text-xs font-light text-[#7B9BB2] hover:underline tracking-wider uppercase"
               >
                 Xem tất cả <ChevronRight className="h-3 w-3" />
               </Link>
@@ -267,17 +227,25 @@ const HomePage = () => {
               {categories.slice(0, 6).map((category) => (
                 <Link
                   key={category.slug}
-                  to={`/products?category=${category.slug}`}
-                  className="group text-center transition-opacity hover:opacity-70"
+                  to={`/categories/${category.slug}`}
+                  className="group text-center transition-all"
                 >
-                  <div className="mb-3 aspect-square bg-[#4DA3E8]/10 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center bg-[#4DA3E8]/5 group-hover:bg-[#4DA3E8]/15 transition-colors">
-                      <span className="text-xs text-[#4DA3E8] uppercase tracking-wider">
-                        {category.name.charAt(0)}
-                      </span>
-                    </div>
+                  <div className="mb-4 aspect-square bg-[var(--muted)] overflow-hidden rounded-sm border border-[var(--border)]/30">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-[var(--muted)] group-hover:bg-[var(--border)] transition-colors">
+                        <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-widest">
+                          {category.name}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-xs font-light text-[#4DA3E8] tracking-wide uppercase">
+                  <h3 className="text-[10px] font-medium tracking-[0.2em] uppercase">
                     {category.name}
                   </h3>
                 </Link>
@@ -287,50 +255,8 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Promotional Banner - ZARA Style */}
-      <section className="bg-[#4DA3E8] py-20 md:py-24">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 text-center">
-          <h2 className="mb-4 text-3xl md:text-4xl font-light text-white tracking-wide uppercase">
-            Giảm giá lên đến 50%
-          </h2>
-          <p className="mb-8 text-sm md:text-base text-white/90 font-light tracking-wide">
-            Khám phá bộ sưu tập sale với nhiều ưu đãi hấp dẫn
-          </p>
-          <Link
-            to="/products"
-            className="inline-block border border-white text-white px-8 py-3 text-xs font-light tracking-widest uppercase hover:bg-white hover:text-[#4DA3E8] transition-all duration-300"
-          >
-            Mua ngay
-          </Link>
-        </div>
-      </section>
-
-      {/* Newsletter Signup - ZARA Style */}
-      <section className="bg-white border-t border-[#4DA3E8]/20 py-16 md:py-20">
-        <div className="mx-auto max-w-2xl px-4 md:px-8 text-center">
-          <h2 className="mb-3 text-xl md:text-2xl font-light text-[#4DA3E8] tracking-wide uppercase">
-            Đăng ký nhận tin
-          </h2>
-          <p className="mb-8 text-sm text-gray-600 font-light tracking-wide">
-            Nhận thông tin về sản phẩm mới và khuyến mãi đặc biệt
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <input
-              type="email"
-              placeholder="Nhập email của bạn"
-              className="flex-1 border-b border-[#4DA3E8] bg-transparent px-0 py-2 text-sm font-light text-[#4DA3E8] placeholder:text-gray-400 focus:outline-none focus:border-[#4DA3E8]/70 transition-colors"
-            />
-            <button className="border border-[#4DA3E8] text-[#4DA3E8] px-8 py-2 text-xs font-light tracking-widest uppercase hover:bg-[#4DA3E8] hover:text-white transition-all duration-300">
-              Đăng ký
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
 
 export default HomePage;
-

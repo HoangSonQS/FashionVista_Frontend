@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cartService } from '../../services/cartService';
 import { productService } from '../../services/productService';
 import type { CartItem, CartResponse } from '../../types/cart';
 import { emitCartUpdated } from '../../utils/cartEvents';
 
 const CartPage = () => {
+  const location = useLocation();
+  const locationState = location.state as { selectedItemIds?: number[] } | undefined;
+
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+  const [selectedItemIds, setSelectedItemIds] = useState<number[]>(() => locationState?.selectedItemIds ?? []);
   const [outOfStockItems, setOutOfStockItems] = useState<Set<number>>(new Set());
   const [stockCheckMessages, setStockCheckMessages] = useState<Record<number, string>>({});
   const navigate = useNavigate();
@@ -122,7 +125,6 @@ const CartPage = () => {
     try {
       const response = await cartService.getCart();
       setCart(response);
-      setSelectedItemIds([]);
       emitCartUpdated(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải giỏ hàng.');

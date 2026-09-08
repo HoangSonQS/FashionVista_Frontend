@@ -1,4 +1,4 @@
-# SRS - Software Requirements Specification
+ # SRS - Software Requirements Specification
 
 ## SIXTHSOUL - Fashion E-commerce Platform
 
@@ -27,23 +27,135 @@ Xây dựng nền tảng thương mại điện tử bán quần áo thời tran
 - **Authentication:** Spring Security (JWT + OAuth2 Optional)
 - **Payment:** Tích hợp cổng thanh toán (VNPay/Momo)
 
+### 1.3. Các Task Đã Hoàn Thành (Completed Tasks)
+
+#### ✅ NHÓM 1: Hoàn thiện Category & SALE (Completed: 2025-01-27)
+
+- **Task A1: Category description từ backend** ✅
+  - CategoryPage hiển thị description từ API (`CategorySummary.description`)
+  - Fallback text: "Khám phá các thiết kế trong danh mục [Tên category]." khi không có description
+  - Implementation: `CategoryPage.tsx` (dòng 72-74)
+
+- **Task A2.1: Badge SALE trên ProductDetail** ✅
+  - Badge hiển thị với style: `bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`
+  - Format: "SALE -X%" (X là phần trăm giảm, làm tròn)
+  - Công thức: `Math.round(((compareAtPrice - price) / compareAtPrice) * 100)`
+  - Implementation: `ProductDetail.tsx` (dòng 294-298)
+
+- **Task A2.2: Badge SALE thống nhất trên tất cả ProductCard** ✅
+  - Tất cả trang sử dụng ProductCard đều hiển thị badge nhất quán:
+    - HomePage ✅
+    - SalePage ✅
+    - CategoryPage ✅
+  - CollectionDetail ✅
+    - SearchResults ✅
+    - ProductList ✅
+  - Style thống nhất: `bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`
+  - Badge hiển thị ở góc trên trái ảnh với format "-X%"
+  - Implementation: `ProductCard.tsx` (dòng 47-51)
+
+- **Task A2.3: Công thức tính phần trăm giảm chính xác** ✅
+  - Công thức: `Math.round(((compareAtPrice - price) / compareAtPrice) * 100)`
+  - Edge cases đã được xử lý:
+    - compareAtPrice = 100000, price = 99999 → -0% (không hiển thị badge vì `hasDiscount` chỉ true khi `compareAtPrice > price`)
+    - compareAtPrice = 100000, price = 50000 → -50% ✅
+  - Badge chỉ hiển thị khi `compareAtPrice > price` và `discountPercent > 0`
+
+#### ✅ NHÓM 2: Củng cố Order UX & Tracking (Completed: 2025-01-27)
+
+- **Task B1.1: Status Timeline hiển thị đúng với mọi status** ✅
+  - Timeline hiển thị 5 bước: PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED
+  - Indicator màu sắc:
+    - Bước hiện tại (active): `bg-[var(--primary)]` (xanh dương)
+    - Các bước đã qua (completed): `bg-[var(--success)]` (xanh lá)
+    - Các bước chưa đến: `bg-transparent border-[var(--muted-foreground)]` (xám)
+    - Đơn bị hủy/hoàn tiền (CANCELLED/REFUNDED): Hiển thị riêng với `bg-[var(--error)]` (đỏ)
+  - Test với các status: PENDING, CONFIRMED, PROCESSING, SHIPPING, DELIVERED, CANCELLED ✅
+  - Implementation: `UserOrderDetail.tsx` (dòng 241-288, đã cải thiện để xử lý CANCELLED/REFUNDED)
+
+- **Task B1.2: Shipping Address parse JSON và hiển thị đúng** ✅
+  - Parse JSON string format: `{"fullName":"...","phone":"...","address":"...","ward":"...","district":"...","city":"..."}`
+  - Hiển thị: fullName, phone, address, ward/district/city (ghép thành dòng)
+  - Fallback về plain text nếu không phải JSON
+  - Implementation: `UserOrderDetail.tsx` (dòng 297-318)
+
+- **Task B1.3: Payment Method hiển thị đầy đủ thông tin** ✅
+  - Hiển thị phương thức thanh toán:
+    - COD → "Thanh toán khi nhận hàng (COD)"
+    - VNPAY → "VNPay"
+    - MOMO → "MoMo"
+  - Hiển thị trạng thái thanh toán với màu sắc:
+    - PAID → `text-[var(--success)]` (xanh lá) - "Đã thanh toán"
+    - FAILED → `text-[var(--error)]` (đỏ) - "Thanh toán thất bại"
+    - PENDING → `text-[var(--warning)]` (vàng) - "Chờ thanh toán"
+  - Test với COD, VNPAY, MOMO và các trạng thái PAID, FAILED, PENDING ✅
+  - Implementation: `UserOrderDetail.tsx` (dòng 321-359)
+
+- **Task B2.1: Nút "Xem các đơn khác cùng trạng thái" hoạt động** ✅
+  - Nút hiển thị trong header của Order Detail
+  - Khi click, navigate về `/orders` với state: `{ statusFilter: order.status }`
+  - UserOrders.tsx nhận state và tự động set statusFilter dropdown
+  - Danh sách đơn được filter theo status đó
+  - Implementation: `UserOrderDetail.tsx` (dòng 230-236), `UserOrders.tsx` (dòng 54-56, 88-90)
+
+- **Task B2.2: Filter được giữ khi navigate từ Order Detail về Order List** ✅
+  - UserOrders.tsx đọc `locationState?.statusFilter` và set vào state `statusFilter`
+  - Filter được áp dụng ngay khi component mount
+  - Test filter persistence khi quay lại từ Order Detail ✅
+  - Implementation: `UserOrders.tsx` (dòng 46-56, 82-118)
+
+#### ✅ NHÓM 3: Nhỏ nhưng hữu ích - Notifications (Completed: 2025-01-27)
+
+- **Task C1.1: Toast notification hiển thị khi tạo đơn thành công (COD)** ✅
+  - Toast hiển thị ở góc dưới bên phải (`fixed bottom-4 right-4`)
+  - Message: "Đơn #[orderNumber] đã được tạo, xem chi tiết"
+  - Icon: CheckCircle (success type)
+  - Nút "Xem đơn" dưới message (underline, hover effect)
+  - Duration: 6000ms (6 giây)
+  - Có nút X để đóng toast
+  - Implementation: `CheckoutPage.tsx` (dòng 264-274), `Toast.tsx` (dòng 21-95)
+
+- **Task C1.2: Nút "Xem đơn" trong toast navigate đúng** ✅
+  - Khi click nút "Xem đơn", navigate đến `/orders/[orderNumber]`
+  - Toast tự động đóng sau khi click action button
+  - Implementation: `CheckoutPage.tsx` (dòng 269-272), `Toast.tsx` (dòng 61-66)
+
+- **Task C1.3: Toast với VNPay payment** ✅
+  - Khi chọn VNPay và có paymentUrl, toast hiển thị: "Đang chuyển sang cổng thanh toán VNPay..."
+  - Không có toast "Đơn #... đã được tạo" (vì redirect ngay)
+  - Redirect đến VNPay payment page ngay sau toast
+  - Implementation: `CheckoutPage.tsx` (dòng 258-261)
+
+- **Task C1.4: Toast tự động đóng sau 6 giây** ✅
+  - Toast có useEffect với setTimeout dựa trên duration
+  - CheckoutPage truyền duration = 6000ms cho toast tạo đơn thành công
+  - Toast tự động đóng sau 6 giây với animation mượt mà
+  - Implementation: `Toast.tsx` (dòng 21-29), `CheckoutPage.tsx` (dòng 267)
+
+- **Task C1.5: Multiple toasts stack đúng** ✅
+  - ToastContainer hiển thị nhiều toast trong flex-col với gap-2
+  - Các toast stack theo chiều dọc (từ dưới lên)
+  - Mỗi toast có `pointer-events-auto` riêng, có thể đóng riêng bằng nút X
+  - Không bị overlap hoặc UI broken
+  - Implementation: `ToastContainer.tsx` (dòng 110-131), `useToast.ts` (dòng 6-35)
+
 ---
 
 ## 2. LUỒNG SỰ KIỆN (EVENT FLOWS)
 
-### 2.1. Luồng hiện có (Đã implement)
+### 2.1. Luồng hiện có (Đã implement) **✅**
 
-#### 2.1.1. Luồng xem sản phẩm
+#### 2.1.1. Luồng xem sản phẩm **✅ ĐÃ IMPLEMENT**
 
 User → Home Page → Xem danh sách sản phẩm → Lọc theo category → Xem chi tiết sản phẩm
 
-#### 2.1.2. Luồng giỏ hàng (Local State)
+#### 2.1.2. Luồng giỏ hàng (Local State) **✅ ĐÃ IMPLEMENT**
 
 User → Thêm sản phẩm vào giỏ → Mở giỏ hàng → Cập nhật số lượng → Xóa sản phẩm
 
 ### 2.2. Luồng cần bổ sung
 
-#### 2.2.1. Luồng đăng ký/Đăng nhập
+#### 2.2.1. Luồng đăng ký/Đăng nhập **✅ ĐÃ IMPLEMENT**
 
 1. **Đăng ký:**  
    User → Click "Đăng ký" → Nhập thông tin → Validate → Tạo tài khoản → Gửi email xác nhận → Đăng nhập tự động
@@ -54,19 +166,19 @@ User → Thêm sản phẩm vào giỏ → Mở giỏ hàng → Cập nhật s�
 3. **Đăng xuất:**  
    User → Click "Đăng xuất" → Xóa session → Redirect về Home
 
-#### 2.2.2. Luồng xem chi tiết sản phẩm
+#### 2.2.2. Luồng xem chi tiết sản phẩm **✅ ĐÃ IMPLEMENT**
 
 User → Click sản phẩm → Product Detail Page → Xem hình ảnh, mô tả, size, màu sắc → Chọn size/màu → Thêm vào giỏ hàng / Mua ngay
 
-#### 2.2.3. Luồng thanh toán
+#### 2.2.3. Luồng thanh toán **✅ ĐÃ IMPLEMENT (COD + VNPay cơ bản)**
 
 User → Giỏ hàng → Click "Thanh toán" → Checkout Page → Nhập thông tin giao hàng → Chọn phương thức thanh toán → Xác nhận đơn hàng → Chuyển đến cổng thanh toán → Thanh toán thành công → Tạo đơn hàng → Gửi email xác nhận → Redirect về trang "Đơn hàng của tôi"
 
-#### 2.2.4. Luồng quản lý đơn hàng
+#### 2.2.4. Luồng quản lý đơn hàng **✅ ĐÃ IMPLEMENT (user xem đơn + hủy đơn)**
 
 User → "Đơn hàng của tôi" → Xem danh sách đơn hàng → Click đơn hàng → Xem chi tiết đơn hàng → Hủy đơn hàng (nếu chưa xử lý) / Theo dõi vận chuyển
 
-#### 2.2.5. Luồng tìm kiếm *(ĐÃ IMPLEMENT: Header Search + ProductList.tsx + /products route)*
+#### 2.2.5. Luồng tìm kiếm *(ĐÃ IMPLEMENT: Header Search + ProductList.tsx + /products route)* **✅**
 
 1. User click icon **Search** trên header → ô input tìm kiếm bung rộng từ nút Search về phía logo, tạm ẩn các link `THE NEW / BỘ SƯU TẬP / SALE`.  
 2. User nhập từ khóa (tên sản phẩm, loại váy/áo, màu sắc, bộ sưu tập...).  
@@ -80,15 +192,15 @@ User → "Đơn hàng của tôi" → Xem danh sách đơn hàng → Click đơn
    - Đây là trang kết quả chính cho mọi tìm kiếm full-text (kể cả khi có 1.000+ sản phẩm).  
 6. UI gợi ý trong header dùng nền `--background` khi hover để giữ trải nghiệm nhẹ, sáng, không lấn át trang.
 
-#### 2.2.6. Luồng đánh giá sản phẩm
+#### 2.2.6. Luồng đánh giá sản phẩm **✅ ĐÃ IMPLEMENT (viết + hiển thị review)**
 
 User (đã mua) → Product Detail Page → "Viết đánh giá" → Chọn sao, viết review, upload hình → Submit → Hiển thị review trên trang sản phẩm
 
-#### 2.2.7. Luồng quản lý tài khoản
+#### 2.2.7. Luồng quản lý tài khoản **⏳ MỘT PHẦN (profile, địa chỉ, đơn hàng, wishlist, reviews)**
 
 User → "Tài khoản của tôi" → Xem/Chỉnh sửa thông tin cá nhân → Đổi mật khẩu → Quản lý địa chỉ giao hàng → Xem lịch sử mua hàng → Yêu thích sản phẩm
 
-#### 2.2.8. Luồng Admin (Quản lý)
+#### 2.2.8. Luồng Admin (Quản lý) **⏳ MỘT PHẦN (dashboard + CRUD chính, thiếu báo cáo nâng cao)**
 
 Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý đơn hàng (Xem, Cập nhật trạng thái) → Quản lý người dùng → Quản lý danh mục → Thống kê doanh thu
 
@@ -96,9 +208,9 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 
 ## 3. NGHIỆP VỤ CẦN CÓ
 
-### 3.1. Quản lý người dùng (User Management)
+### 3.1. Quản lý người dùng (User Management) **⏳ ĐÃ LÀM CƠ BẢN**
 
-#### 3.1.1. Đăng ký/Đăng nhập
+#### 3.1.1. Đăng ký/Đăng nhập **✅ ĐÃ IMPLEMENT (email/password, quên mật khẩu)**
 
 - Đăng ký: Email, password, username, họ tên, số điện thoại
 - Đăng nhập: Email/Username + Password
@@ -106,16 +218,16 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Quên mật khẩu: Gửi link reset password
 - Đăng nhập bằng Google/Facebook (Tùy chọn)
 
-#### 3.1.2. Quản lý profile
+#### 3.1.2. Quản lý profile **⏳ Hồ sơ + địa chỉ đã có, avatar/1 số mục nâng cao chưa làm**
 
 - Xem/chỉnh sửa thông tin cá nhân
 - Đổi mật khẩu
 - Upload avatar
 - Quản lý địa chỉ giao hàng (nhiều địa chỉ)
 
-### 3.2. Quản lý sản phẩm (Product Management)
+### 3.2. Quản lý sản phẩm (Product Management) **⏳ PHẦN LỚN ĐÃ LÀM, MỘT SỐ TÍNH NĂNG NÂNG CAO CHƯA**
 
-#### 3.2.1. Cấu trúc dữ liệu
+#### 3.2.1. Cấu trúc dữ liệu **✅ ĐÃ IMPLEMENT (products + product_variants + attributes JSONB cơ bản)**
 
 - Thông tin cơ bản: tên, slug, SKU, barcode, trạng thái hiển thị, mô tả ngắn/dài.
 - Giá: giá niêm yết, giá sale, giá flash sale, đơn vị tiền tệ, lịch áp dụng.
@@ -125,7 +237,7 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Thuộc tính mở rộng (EAV): chất liệu, style, season, care instructions, fitting.
 - SEO fields: meta title, meta description, keywords, canonical URL.
 
-#### 3.2.2. Nghiệp vụ CRUD
+#### 3.2.2. Nghiệp vụ CRUD **⏳ CRUD + ẩn/hiện đã có, versioning/audit log/duplicate chưa đủ**
 
 - Thêm sản phẩm nhiều bước (thông tin → giá → tồn kho → media → SEO).
 - Chỉnh sửa có versioning, lưu audit log (ai sửa gì, khi nào).
@@ -133,56 +245,63 @@ Admin → Login → Dashboard → Quản lý sản phẩm (CRUD) → Quản lý 
 - Soft delete: chỉ đánh dấu `ARCHIVED` nếu sản phẩm đã có đơn hàng.
 - Nhân bản sản phẩm (duplicate) để tạo dòng tương tự nhanh.
 
-#### 3.2.3. Quản lý tồn kho & biến thể
+#### 3.2.3. Quản lý tồn kho & biến thể **✅ ĐÃ IMPLEMENT (variant, trừ tồn theo biến thể, khóa bán khi stock=0)**
 
 - Variant gồm size, màu, vật liệu… với SKU riêng, giá override và barcode.
 - Trừ tồn theo biến thể, tích hợp import tồn kho từ hệ thống WMS.
 - Cho phép khoá bán tự động khi stock ≤ 0, cảnh báo low-stock.
 - Khi sản phẩm nằm trong giỏ của user: kiểm tra stock trước khi checkout, thông báo nếu không đủ.
 
-#### 3.2.4. Hình ảnh & media
+#### 3.2.4. Hình ảnh & media **⏳ Upload nhiều ảnh + thumbnail đã có, video/360 & một số UX nâng cao chưa**
 
 - Upload nhiều hình ảnh, kéo thả reorder, chọn ảnh thumbnail.
 - Gán ALT text cho SEO, hỗ trợ upload từ URL/CDN.
 - Preview trực tiếp trước khi lưu, đánh dấu ảnh chỉ dùng cho một variant.
 
-#### 3.2.5. Danh mục, bộ sưu tập, tag
+#### 3.2.5. Danh mục, bộ sưu tập, tag **⏳ Category + Collections đã có, tag/drag & drop tree view còn thiếu**
 
 - Tree view quản lý category cha/con, drag & drop đổi thứ tự hiển thị.
 - Collections theo chiến dịch (Sale, New Arrival, Holiday), gắn nhiều sản phẩm cùng lúc.
 - Tagging tự do để phục vụ filter và chiến dịch marketing.
 
-#### 3.2.6. Giá & khuyến mãi
+#### 3.2.6. Giá & khuyến mãi **⏳ Giá sale cơ bản (compareAtPrice) + trang SALE đã có, flash sale/lịch sale/chính sách stack voucher chưa**
 
 - Giá sale theo % hoặc số tiền cố định; flash sale với thời gian bắt đầu/kết thúc.
 - Cho phép set lịch giảm giá, chọn có stack với voucher hay không.
 - Theo dõi lịch sử thay đổi giá, cảnh báo nếu giá sale thấp hơn cost.
 
-#### 3.2.7. SEO & URL
+#### 3.2.7. SEO & URL **⏳ Slug + một phần SEO đã có, OG/structured data/snippet preview chưa**
 
 - Chỉnh slug thân thiện, tự sinh nhưng cho phép override.
 - Meta title/description/keywords, snippet preview như Google SERP.
 - Thiết lập OG tags, structured data cho sản phẩm.
 
-#### 3.2.8. Kiểm tra & quy tắc
+#### 3.2.8. Kiểm tra & quy tắc **⏳ Một phần rule (stock/order) đã áp dụng, audit log + rule nâng cao chưa**
 
 - Validate trùng SKU, trùng slug, trùng tên trong cùng category.
 - Không cho xoá sản phẩm có order; chỉ đổi trạng thái.
 - Khi đổi giá/tồn kho: kiểm tra các đơn Pending, giỏ hàng đang giữ; ghi log thay đổi.
 
-#### 3.2.9. Import/Export
+#### 3.2.9. Import/Export **✅ ĐÃ IMPLEMENT (CSV)**
 
-- Template Excel chứa thông tin sản phẩm + variants + stock.
+- Template CSV chứa thông tin sản phẩm + variants + stock.
 - Import hỗ trợ update (match theo SKU) và tạo mới, ghi log kết quả.
-- Export để đồng bộ với kho/marketplace; cho phép lọc trước khi export.
+- Export CSV theo filter (search/status/featured/visible).
+- API:
+  - `GET /api/admin/products/export-template` — tải template CSV
+  - `GET /api/admin/products/export` — export CSV
+  - `POST /api/admin/products/import` — import CSV (create/update theo SKU)
+- Frontend:
+  - Nút Tải template / Export / Import (CSV) trên `AdminProductList`
+  - Hiển thị kết quả import (created/updated/errors)
 
-#### 3.2.10. Danh sách sản phẩm
+#### 3.2.10. Danh sách sản phẩm **✅ ĐÃ IMPLEMENT (filter/search/bulk đơn giản)**
 
 - Filter theo category, status (Active/Hidden/Archived), tồn kho (Out-of-stock), tag, featured.
 - Search theo tên, SKU, barcode.
 - Bulk actions: đổi category, bật/tắt hiển thị, set featured, export, gắn collection.
 
-#### 3.2.11. Product Visibility Management
+#### 3.2.11. Product Visibility Management **✅ ĐÃ IMPLEMENT**
 
 **Mục tiêu:**  
 Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của sản phẩm trên trang Product List, tách bạch với dữ liệu gốc của sản phẩm.
@@ -239,9 +358,39 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Cho phép hiển thị badge cảnh báo (ví dụ: “No image”, “No inventory”) ngay trong bảng.
 - Khi đổi visibility thành công, hiển thị toast “Cập nhật hiển thị sản phẩm thành công”.
 
+**Implementation**
+- Backend:
+  - Migration: `add_product_visibility.sql`
+  - Entity/DTO/Service/Controller: `Product.java`, `ProductListItemDto.java`, `ProductService.java`, `ProductServiceImpl.java`, `AdminProductController.java`
+- Frontend:
+  - Page: `AdminProductVisibility.tsx` (search, filter Visible/Hidden, status, toggle, bulk toggle, pagination, toast)
+  - Routes: `/admin/product-visibility` (AppRoutes)
+  - Service/Types: `adminProductService.ts` (updateVisibility, bulk), `types/product.ts` (isVisible, variantsCount, visibleUpdatedAt)
+
+#### 3.2.12. Bộ sưu tập (Collections)
+
+- Khái niệm: Nhóm sản phẩm theo chiến dịch/chủ đề (New Arrival, Holiday, Capsule, Sale). Một sản phẩm có thể thuộc nhiều bộ sưu tập. **✅ ĐÃ IMPLEMENT (BE + FE)**
+- Trạng thái & lịch hiển thị: `DRAFT`, `SCHEDULED`, `ACTIVE`, `ENDED`/`ARCHIVED`; trường `startAt`, `endAt`; toggle `isVisible` để ẩn/hiện mà không xóa. **✅ ĐÃ IMPLEMENT**
+- Nội dung/SEO: name, slug duy nhất, description, hero/cover image, SEO title/description, optional banner CTA. **✅ ĐÃ IMPLEMENT (trừ banner CTA)**
+- Gắn sản phẩm: CRUD liên kết sản phẩm–collection, cho phép sắp xếp thủ công `position`; optional bulk add; validate không cho ACTIVE nếu rỗng hoặc thiếu hero image (configurable). **✅ ĐÃ IMPLEMENT (CRUD + position + validate cơ bản)**
+- API công khai: **✅ ĐÃ IMPLEMENT**
+  - `GET /api/collections` (lọc ACTIVE + visible + trong khoảng thời gian; search by name; phân trang).
+  - `GET /api/collections/:slug` trả về thông tin + danh sách sản phẩm với filter kế thừa từ products (category, size, color, price, sort manual/newest/price asc/desc; pagination).
+- API admin: **✅ ĐÃ IMPLEMENT**
+  - CRUD collection (`/api/admin/collections`), upload hero image.
+  - Quản lý sản phẩm trong collection: set/bulk update list + `position`, toggle visibility, reorder.
+  - Filter/search by name/slug/status/visible/date range.
+- FE công khai: **✅ ĐÃ IMPLEMENT**
+  - Trang `/collections` (grid danh sách collection với badge trạng thái “Sắp diễn ra/Đang diễn ra/Đã kết thúc”).
+  - Trang `/collections/:slug` (hero + mô tả + CTA + list sản phẩm, filter/sort/pagination; fallback 404 hoặc thông báo nếu hết hạn/ẩn).
+- FE admin: **✅ ĐÃ IMPLEMENT**
+  - Trang danh sách collection: search, filter trạng thái/visible, toggle, xem lịch.
+  - Form tạo/sửa: name, slug, mô tả, hero image, lịch start/end, SEO, visibility.
+  - Tab gắn sản phẩm: search/filter sản phẩm, select nhiều, drag & drop reorder, bulk remove.
+
 ### 3.3. Quản lý giỏ hàng (Cart Management)
 
-#### 3.3.1. Chức năng cơ bản
+#### 3.3.1. Chức năng cơ bản **✅ ĐÃ IMPLEMENT**
 
 - Thêm sản phẩm vào giỏ (chọn size, màu, số lượng)
 - Xem giỏ hàng
@@ -249,15 +398,15 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Xóa sản phẩm
 - Lưu giỏ hàng vào database (đối với user đã đăng nhập)
 
-#### 3.3.2. Tính năng nâng cao
+#### 3.3.2. Tính năng nâng cao **⏳ MỘT PHẦN**
 
 - Lưu giỏ hàng giữa các session
 - Gợi ý sản phẩm tương tự
 - Kiểm tra tồn kho trước khi thêm vào giỏ
 
-### 3.4. Quản lý đơn hàng (Order Management)
+### 3.4. Quản lý đơn hàng (Order Management) **⏳ ĐÃ LÀM CƠ BẢN, THIẾU SHIPPING/REFUND NÂNG CAO**
 
-#### 3.4.1. Trạng thái chuẩn
+#### 3.4.1. Trạng thái chuẩn **✅ CÓ CẤU TRÚC VÀ STATUS CHÍNH**
 
 - `Pending`: User đặt đơn, hệ thống chờ kiểm tra thông tin.
 - `Confirmed`: CSKH xác minh địa chỉ, phí ship, khóa giá.
@@ -269,17 +418,27 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - `Returned`: Khách trả hàng/RTS (Return To Sender).
 - `Refunded`: Hoàn tiền toàn phần/partial và ghi lại chứng từ.
 
-#### 3.4.2. Thông tin chi tiết một đơn
+#### 3.4.2. Thông tin chi tiết một đơn **⏳ ĐÃ CÓ TRANG CHI TIẾT ĐẦY ĐỦ CƠ BẢN, THIẾU MỘT SỐ TRƯỜNG NÂNG CAO**
 
-- Khách hàng: họ tên, email, phone, nhóm khách (New/VIP), ghi chú CSKH.
-- Địa chỉ nhúng kiểu JSON (shipping & billing), lịch sử chỉnh sửa.
-- Thanh toán: phương thức (COD/VNPay/MoMo), transactionId, trạng thái.
-- Vận chuyển: đơn vị ship, mã vận đơn, phí thực tế, tracking URL.
-- Ưu đãi: voucher, mã giảm giá, điểm loyalty, phần trăm chiết khấu.
-- Sản phẩm: danh sách items, biến thể (size/màu), ảnh snapshot, giá tại thời điểm mua, tồn kho snapshot.
-- Log thay đổi: thời gian, nhân viên thao tác, mô tả hành động.
+**Đã có trên trang User Order Detail:**
+- ✅ Status timeline (PENDING → CONFIRMED → PROCESSING → SHIPPING → DELIVERED) với visual indicator.
+- ✅ Địa chỉ giao hàng (shipping address) hiển thị rõ, parse JSON nếu cần.
+- ✅ Phương thức thanh toán (COD/VNPay/MoMo) + trạng thái thanh toán (PAID/PENDING/FAILED) hiển thị rõ.
+- ✅ Vận chuyển: mã vận đơn, tracking URL (nếu có), phí ship.
+- ✅ Sản phẩm: danh sách items với ảnh snapshot, biến thể (size/màu), giá tại thời điểm mua, số lượng, subtotal.
+- ✅ Tổng thanh toán: subtotal, phí ship, giảm giá, tổng cuối.
+- ✅ Tracking info: mã vận đơn + link tracking (nếu đang giao/đã giao).
+- ✅ Nút hủy đơn (nếu status cho phép).
+- ✅ Modal yêu cầu đổi trả (nếu đã giao).
 
-#### 3.4.3. Luồng xử lý nhân viên
+**Còn thiếu (sẽ bổ sung sau):**
+- ⏳ Khách hàng: email, phone, nhóm khách (New/VIP), ghi chú CSKH.
+- ⏳ Billing address (địa chỉ thanh toán riêng).
+- ⏳ TransactionId chi tiết từ payment gateway.
+- ⏳ Ưu đãi: voucher/mã giảm giá chi tiết, điểm loyalty, phần trăm chiết khấu cụ thể.
+- ⏳ Log thay đổi: timeline chi tiết với thời gian, nhân viên thao tác, mô tả hành động.
+
+#### 3.4.3. Luồng xử lý nhân viên **⏳ MỘT PHẦN (workflow cơ bản, chưa đủ RMA/đổi địa chỉ nâng cao)**
 
 1. CSKH duyệt đơn: kiểm tra thông tin, cập nhật ghi chú, xác nhận thanh toán.
 2. Kho tạo vận đơn (qua API), đóng gói, cập nhật `Packing`.
@@ -288,7 +447,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 5. Đơn giao thành công → `Completed`, đối soát tiền, cộng điểm.
 6. Huỷ/đổi trả: chọn lý do, trả tồn, hoàn voucher/điểm, xử lý refund.
 
-#### 3.4.4. Audit log & tồn kho
+#### 3.4.4. Audit log & tồn kho **⏳ MỘT PHẦN (log cơ bản, chưa đủ chi tiết/audit đầy đủ)**
 
 - Mọi thay đổi trạng thái ghi vào `order_history` (thời gian, userId, action, ghi chú).
 - Trừ tồn:
@@ -296,32 +455,42 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
   - Có cấu hình “giữ tồn” cho đơn Pending trong X phút.
 - Khi hủy/Returned/Refunded: tự động trả tồn và ghi lại phiếu nhập kho ngược.
 
-#### 3.4.5. Tích hợp đơn vị vận chuyển
+#### 3.4.5. Tích hợp đơn vị vận chuyển **✅ ĐÃ THÊM MOCK API (GHN/GHTK/J&T)**
 
-- API tạo vận đơn GHN/GHTK/J&T: truyền cân nặng, COD, địa chỉ, gói dịch vụ.
-- Nhận webhook trạng thái (Picked up, In transit, Delivered, Return) → auto update đơn.
-- Cho phép huỷ vận đơn (nếu hãng hỗ trợ) và tạo lại khi đổi địa chỉ.
-- Lưu file vận đơn/nhãn PDF để in trực tiếp.
+- Admin API:
+  - `POST /api/admin/shipping/{orderNumber}/create` — tạo vận đơn (mock, sinh trackingNumber dạng `{CARRIER}-XXXXXXXX`)
+  - `POST /api/admin/shipping/{orderNumber}/cancel` — hủy vận đơn (mock, clear tracking)
+  - `POST /api/admin/shipping/webhook` — nhận trạng thái PickedUp/InTransit/Delivered/Return và cập nhật order.status tương ứng
+- Public API:
+  - `GET /api/shipping/fee` — trả phí mock (30.000 VND)
+- Trạng thái mapping (mock): PickedUp/InTransit → SHIPPING, Delivered → DELIVERED, Return → RETURNED
+- Chưa tích hợp carrier thật; hiện là mock cho luồng quản trị.
 
-#### 3.4.6. Quản lý thanh toán
+#### 3.4.6. Quản lý thanh toán **⏳ VNPay cơ bản; Momo/partial refund chưa**
 
 - COD: theo dõi tiền thu hộ, đối soát với hãng giao nhận, cảnh báo nợ COD.
 - Online: lưu transaction VNPay/MoMo, xử lý callback/webhook, tự động chuyển trạng thái.
 - Partial refund: chọn item/số tiền hoàn, ghi chú lý do, cập nhật Payment record.
 
-#### 3.4.7. Màn hình danh sách đơn
+#### 3.4.7. Màn hình danh sách đơn **⏳ ĐÃ CÓ LIST/FILTER CƠ BẢN (USER & ADMIN), THIẾU BULK/IN ẤN**
 
-- Filter theo trạng thái, khoảng thời gian, phương thức thanh toán, nhân viên xử lý, kênh bán.
-- Search theo mã đơn, email/phone khách, SKU trong đơn.
-- Bulk actions: duyệt hàng loạt, in hàng loạt, cập nhật trạng thái.
+- Filter theo trạng thái cho user (trang "Đơn hàng của tôi") và admin.
+- Filter nhanh theo khoảng thời gian đặt đơn cho user (Mọi thời gian / 7 ngày gần đây / 30 ngày gần đây).
+- Search theo mã đơn, email/phone khách, SKU trong đơn (admin).
+- Empty state cho user: chưa có đơn → CTA "Tiếp tục mua sắm"; không có kết quả phù hợp → nút "Xóa bộ lọc".
+- Badge "Mới" cho đơn vừa tạo (hiển thị dựa trên orderNumber vừa đặt).
+- Bulk actions: duyệt hàng loạt, in hàng loạt, cập nhật trạng thái. **(chưa implement)**
 
-#### 3.4.8. In ấn & xuất dữ liệu
+#### 3.4.8. In ấn & xuất dữ liệu **✅ ĐÃ THÊM BẢN HTML/CSV CƠ BẢN**
 
-- In hóa đơn VAT, phiếu giao hàng, packing slip, tem sản phẩm.
-- Xuất Excel/CSV theo filter hiện tại để gửi kế toán/kho.
-- Sinh vận đơn giấy theo template từng hãng.
+- Admin API:
+  - `GET /api/admin/orders/{orderNumber}/invoice` — HTML đơn giản (invoice)
+  - `GET /api/admin/orders/{orderNumber}/delivery-note` — HTML đơn giản (phiếu giao hàng)
+  - `GET /api/admin/orders/{orderNumber}/packing-slip` — HTML đơn giản (packing slip)
+  - `GET /api/admin/orders/export` — CSV danh sách đơn (filter status)
+- Chưa sinh PDF thực tế; hiện trả về HTML/CSV đơn giản để tải/in nhanh.
 
-#### 3.4.9. Edge cases quan trọng
+#### 3.4.9. Edge cases quan trọng **⏳ MỘT PHẦN (hủy + trả tồn cơ bản; RTS/partial refund chưa)**
 
 - Huỷ sau khi tạo vận đơn: gửi request huỷ tới hãng, trả tồn, log lý do.
 - RTS (Return To Sender): cập nhật trạng thái Returned, kho xác nhận hàng hoàn, cho phép ship lại.
@@ -335,9 +504,9 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - CSKH: duyệt đơn, chỉnh thông tin khách, xử lý hủy/đổi/complaint.
 - Kho: đóng gói, cập nhật tồn, tạo/huỷ vận đơn, xác nhận hàng hoàn.
 
-### 3.5. Thanh toán (Payment)
+### 3.5. Thanh toán (Payment) **⏳ COD + VNPay cơ bản; Momo/Zalo chưa**
 
-#### 3.5.1. Phương thức thanh toán
+#### 3.5.1. Phương thức thanh toán **⏳ COD + VNPay; Momo/Zalo chưa**
 
 - Thanh toán khi nhận hàng (COD)
 - Chuyển khoản ngân hàng
@@ -345,7 +514,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Momo (Ví điện tử)
 - ZaloPay (Tùy chọn)
 
-#### 3.5.2. Xử lý thanh toán
+#### 3.5.2. Xử lý thanh toán **⏳ MỨC CƠ BẢN (tạo payment, redirect VNPay, cập nhật đơn; webhook/partial refund chưa đủ)**
 
 - Tích hợp API thanh toán
 - Webhook xử lý kết quả thanh toán
@@ -354,7 +523,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ### 3.6. Đánh giá và Review
 
-#### 3.6.1. Đánh giá sản phẩm
+#### 3.6.1. Đánh giá sản phẩm **✅ ĐÃ IMPLEMENT (rating + text; upload ảnh sẽ bổ sung sau)**
 
 - Chỉ user đã mua mới được đánh giá
 - Rating (1-5 sao)
@@ -362,78 +531,84 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Upload hình ảnh sản phẩm
 - Like/Dislike review của người khác
 
-#### 3.6.2. Hiển thị review
+#### 3.6.2. Hiển thị review **✅ ĐÃ IMPLEMENT (trang Product Detail)**
 
 - Hiển thị trên trang chi tiết sản phẩm
 - Sort theo: Mới nhất, Hữu ích nhất, Rating cao nhất
 - Phân trang reviews
 
-### 3.7. Yêu thích sản phẩm (Wishlist)
+### 3.7. Yêu thích sản phẩm (Wishlist) **✅ ĐÃ IMPLEMENT (thêm/xóa/xem danh sách, thêm vào giỏ)**
 
 - Thêm/Xóa sản phẩm vào wishlist
 - Xem danh sách yêu thích
 - Chia sẻ wishlist
 - Thông báo khi sản phẩm yêu thích giảm giá
 
-### 3.8. Thông báo (Notifications)
+### 3.8. Thông báo (Notifications) **⏳ MỘT PHẦN (email order + in-app cơ bản đã có, promo/newsletter chưa)**
 
-- Thông báo đơn hàng (email, in-app)
-- Thông báo sản phẩm mới
-- Thông báo khuyến mãi
-- Newsletter subscription
+**Đã có:**
+- ✅ Email xác nhận đơn hàng (order confirmation email) khi đặt hàng thành công.
+- ✅ In-app notification cơ bản cho order creation: Toast notification với message "Đơn #... đã được tạo, xem chi tiết" và nút "Xem đơn" để navigate đến order detail.
+- ✅ Banner "Đặt hàng thành công" trên trang `/orders` khi vừa tạo đơn (hiển thị order number).
 
-### 3.9. Quản trị viên (Admin)
+**Còn thiếu:**
+- ⏳ Thông báo khi đơn đổi trạng thái (PENDING → CONFIRMED → SHIPPING → DELIVERED) qua in-app notification.
+- ⏳ Thông báo sản phẩm mới.
+- ⏳ Thông báo khuyến mãi (flash sale, voucher mới, etc.).
+- ⏳ Newsletter subscription.
 
-#### 3.9.1. Dashboard
+### 3.9. Quản trị viên (Admin) **⏳ CÁC MÀN CHÍNH ĐÃ CÓ, TÍNH NĂNG NÂNG CAO/REPORT CHƯA ĐỦ**
+
+#### 3.9.1. Dashboard **⏳ ĐÃ CÓ DASHBOARD CƠ BẢN, KPI/BÁO CÁO NÂNG CAO CHƯA**
 
 - Cards KPI: doanh thu hôm nay/tháng/năm, tỷ lệ chuyển đổi, khách mới
 - Biểu đồ doanh thu theo thời gian, đơn hàng gần nhất, sản phẩm bán chạy
 - Cảnh báo sản phẩm sắp hết hàng, hiệu suất nhân viên/chiến dịch marketing
 
-#### 3.9.2. Quản lý sản phẩm & danh mục
+#### 3.9.2. Quản lý sản phẩm & danh mục **⏳ CRUD + variants + collections đã có, hiển thị trạng thái sale cơ bản; flash sale/import/export nâng cao chưa**
 
 - CRUD sản phẩm, quản lý biến thể (size, màu), tồn kho theo variant
 - Thiết lập giá gốc/giá sale/flash sale, gắn tags/bộ sưu tập chủ đề
 - Upload hình ảnh, quản lý danh mục cha/con, sắp xếp thứ tự hiển thị
 - (Import/Export Excel được hoãn, sẽ bổ sung sau nếu cần)
 
-#### 3.9.3. Quản lý đơn hàng ✅
+#### 3.9.3. Quản lý đơn hàng ✅ **(đã có màn list + chi tiết + đổi trạng thái cơ bản)**
 
 - ✅ Danh sách đơn, tra cứu theo mã, khách, trạng thái
 - ✅ Quy trình duyệt → đóng gói → giao → hoàn tất, cập nhật trạng thái
 - ⏳ Hủy đơn có lý do, xử lý đổi trả (RMA), đồng bộ đơn vị vận chuyển (sẽ bổ sung sau)
 - ⏳ In hóa đơn/phiếu giao hàng, xuất vận đơn (sẽ bổ sung sau)
 
-#### 3.9.4. Quản lý người dùng & khách hàng ✅
+#### 3.9.4. Quản lý người dùng & khách hàng ✅ **(list, khóa/mở khóa, xem chi tiết)**
 
 - ✅ Danh sách khách, thông tin cá nhân + lịch sử đơn
 - ✅ Khóa/Mở khóa tài khoản
 - ⏳ Phân nhóm (VIP, mới, trung thành...), quản lý loyalty points (sẽ bổ sung sau)
 - ⏳ Blacklist khách (nếu cần), ghi chú CSKH (sẽ bổ sung sau)
 
-#### 3.9.5. Quản lý thanh toán & vận chuyển
+#### 3.9.5. Quản lý thanh toán & vận chuyển **⏳ CẤU HÌNH CƠ BẢN, TÍCH HỢP SHIPPER THẬT/ĐỐI SOÁT CHƯA**
 
 - Cấu hình phương thức thanh toán (COD, VNPay, MoMo...), theo dõi giao dịch, hoàn tiền
 - Thiết lập đơn vị vận chuyển (GHN, GHTK, J&T...), phí ship theo khu vực
 - Theo dõi trạng thái giao hàng, xử lý hàng hoàn (return-to-sender)
 
-#### 3.9.6. Quản lý kho (Warehouse)
+#### 3.9.6. Quản lý kho (Warehouse) **❌ CHƯA IMPLEMENT**
 
 - Danh sách kho, nhập kho/xuất kho, kiểm kê tồn kho
 - Theo dõi sản phẩm sắp hết hàng, nhật ký chuyển kho giữa chi nhánh
 
-#### 3.9.7. Quản lý người dùng nội bộ & phân quyền
+#### 3.9.7. Quản lý người dùng nội bộ & phân quyền **⏳ ĐÃ CÓ LIST ADMIN/STaff, PHÂN QUYỀN CHI TIẾT/AUDIT LOG CHƯA ĐỦ**
 
 - Danh sách admin/staff, phân quyền theo vai trò (quản trị, kho, CSKH…)
 - Tách riêng route đăng nhập `/api/admin/auth/login`
 - Ghi nhật ký hoạt động (audit log) cho thao tác quan trọng
 
-#### 3.9.8. Báo cáo & tìm kiếm nâng cao
+#### 3.9.8. Báo cáo & tìm kiếm nâng cao **❌ CHƯA IMPLEMENT PHẦN REPORT NÂNG CAO**
 
 - Báo cáo doanh thu, lợi nhuận, tỷ lệ hủy/trả, hiệu suất chiến dịch
 - Tìm kiếm nâng cao trong admin: theo sản phẩm, SKU, đơn hàng, khách hàng
 
-### 3.10. Quản lý tài khoản (Account Management)
+### 3.10. Quản lý tài khoản (Account Management) **⏳ MỘT PHẦN (user account đã có, loyalty/segmentation chưa)**
 
 #### 3.10.1. Khách hàng (User)
 
@@ -457,29 +632,29 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ## 5. CÁC TRANG FRONTEND CẦN CÓ
 
-### 5.1. Trang công khai (Public Pages)
+### 5.1. Trang công khai (Public Pages) **⏳ PHẦN LỚN ĐÃ CÓ, CATEGORY PAGE SẼ BỔ SUNG SAU**
 
-#### 5.1.1. Home Page (`/`)
+#### 5.1.1. Home Page (`/`) **✅ ĐÃ IMPLEMENT (hero + featured + collections + newsletter)**
 - Component: `Home.tsx` (Đã có)
 - Tính năng: Hero section, danh sách sản phẩm nổi bật, categories navigation, featured collections, newsletter signup
 
-#### 5.1.2. Product Listing Page (`/products`)
+#### 5.1.2. Product Listing Page (`/products`) **⏳ ĐÃ CÓ GRID + FILTER + SORT CƠ BẢN, CHƯA ĐỦ TOÀN BỘ SPEC**
 - Component: `ProductListing.tsx`
 - Tính năng: Grid/List view toggle, Filter Sidebar, Sort, Pagination, Breadcrumb, URL sync
 
-#### 5.1.3. Product Detail Page (`/products/:slug`)
+#### 5.1.3. Product Detail Page (`/products/:slug`) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ (gallery, biến thể, review, mua ngay, badge SALE)**
 - Component: `ProductDetail.tsx`
-- Tính năng: Image gallery, Product info, Size/Color selector, Quantity selector, Add to cart / Buy now, Product reviews, Related products
+- Tính năng: ✅ Image gallery, Product info, Size/Color selector, Quantity selector, Add to cart / Buy now, Product reviews, Related products. ✅ Badge SALE hiển thị với style thống nhất (`bg-[#4DA3E8] text-white px-3 py-1 text-xs font-medium tracking-wide`) và phần trăm giảm giá tính chính xác.
 
-#### 5.1.4. Search Results Page (`/search?q=...`)
+#### 5.1.4. Search Results Page (`/search?q=...`) **✅ ĐÃ IMPLEMENT**
 - Component: `SearchResults.tsx`
 - Tính năng: Search Input với Autocomplete, Query Parsing Display, Search Results, Filter Sidebar, Search Refinements, Sort, Pagination
 
-#### 5.1.5. Category Page (`/categories/:slug`)
+#### 5.1.5. Category Page (`/categories/:slug`) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ**
 - Component: `CategoryPage.tsx`
-- Tính năng: Hiển thị sản phẩm theo category, Category description, Filter và sort
+- Tính năng: ✅ Hiển thị sản phẩm theo category, hero/breadcrumb, empty state, sort cơ bản (Mới nhất / Giá ↑ / Giá ↓). ✅ Category description lấy từ backend với fallback text khi không có description. ✅ Badge SALE thống nhất trên ProductCard.
 
-### 5.2. Trang xác thực (Auth Pages)
+### 5.2. Trang xác thực (Auth Pages) **✅ ĐÃ IMPLEMENT ĐẦY ĐỦ (login/register/forgot/reset)**
 
 #### 5.2.1. Login Page (`/login`)
 - Component: `Login.tsx`
@@ -497,7 +672,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Component: `ResetPassword.tsx`
 - Tính năng: Form nhập password mới, Validate token
 
-### 5.3. Trang người dùng (User Pages) - Yêu cầu đăng nhập
+### 5.3. Trang người dùng (User Pages) - Yêu cầu đăng nhập **⏳ CÁC MÀN CHÍNH ĐÃ CÓ, MỘT SỐ TÍNH NĂNG NÂNG CAO CHƯA**
 
 #### 5.3.1. Account Dashboard (`/account`)
 - Component: `AccountDashboard.tsx`
@@ -527,7 +702,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Component: `MyReviews.tsx`
 - Tính năng: Danh sách reviews đã viết, Sửa/Xóa review
 
-### 5.4. Trang thanh toán (Checkout Pages)
+### 5.4. Trang thanh toán (Checkout Pages) **⏳ TRANG CHECKOUT CHÍNH ĐÃ CÓ, SUCCESS/FAILED RIÊNG CHƯA ĐẦY ĐỦ**
 
 #### 5.4.1. Checkout Page (`/checkout`)
 - Component: `Checkout.tsx`
@@ -541,17 +716,17 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Component: `PaymentFailed.tsx`
 - Tính năng: Thông báo lỗi, Retry payment button, Contact support
 
-### 5.5. Trang Admin (Admin Pages) - Yêu cầu role admin
+### 5.5. Trang Admin (Admin Pages) - Yêu cầu role admin **⏳ ĐÃ CÓ DASHBOARD + PRODUCTS/ORDERS/USERS, CÒN THIẾU MỘT SỐ MÀN**
 
-#### 5.5.1. Admin Dashboard (`/admin`)
+#### 5.5.1. Admin Dashboard (`/admin`) **⏳ DASHBOARD ĐƠN GIẢN ĐÃ CÓ**
 - Component: `AdminDashboard.tsx`
 - Tính năng: Statistics cards, Charts, Recent orders table, Quick actions
 
-#### 5.5.2. Products Management (`/admin/products`)
+#### 5.5.2. Products Management (`/admin/products`) **✅ ĐÃ IMPLEMENT (list + CRUD cơ bản)**
 - Component: `AdminProducts.tsx`
 - Tính năng: Danh sách sản phẩm, Search, filter, CRUD operations, Bulk actions
 
-#### 5.5.3. Product Form (`/admin/products/new`, `/admin/products/:id/edit`)
+#### 5.5.3. Product Form (`/admin/products/new`, `/admin/products/:id/edit`) **⏳ FORM ĐANG DÙNG `ProductCreate.tsx`, RICH TEXT VÀ 1 SỐ SPEC NÂNG CAO CHƯA ĐỦ**
 - Component: `ProductForm.tsx`
 - Tính năng: Form tạo/sửa sản phẩm, Upload nhiều hình ảnh, Quản lý variants, Rich text editor
 
@@ -563,11 +738,11 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 - Component: `AdminUsers.tsx`
 - Tính năng: ✅ Danh sách users, ✅ Search, filter, ✅ Xem chi tiết, ✅ Khóa/Mở khóa tài khoản
 
-#### 5.5.6. Categories Management (`/admin/categories`)
+#### 5.5.6. Categories Management (`/admin/categories`) **⏳ CRUD DANH MỤC ĐANG ĐƯỢC ĐƠN GIẢN HOÁ; TREE + DRAG&DROP CHƯA ĐỦ**
 - Component: `AdminCategories.tsx`
 - Tính năng: Tree view categories, CRUD categories, Drag & drop để sắp xếp
 
-### 5.6. Trang khác (Other Pages)
+### 5.6. Trang khác (Other Pages) **❌ PHẦN LỚN CHƯA IMPLEMENT (About/Contact/FAQ/Terms/Privacy...)**
 
 #### 5.6.1. About Us (`/about`)
 - Component: `About.tsx`
@@ -595,7 +770,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ---
 
-## 8. SECURITY REQUIREMENTS
+## 8. SECURITY REQUIREMENTS **⏳ MỘT PHẦN (AUTH + BASIC SECURITY ĐÃ CÓ, RATE LIMIT/PCI DSS CHƯA)**
 
 ### 8.1. Authentication & Authorization
 
@@ -620,7 +795,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ---
 
-## 9. PERFORMANCE REQUIREMENTS
+## 9. PERFORMANCE REQUIREMENTS **❌ CHƯA CÓ ĐO ĐẠC/SETUP CHÍNH THỨC, MỚI Ở MỨC HƯỚNG DẪN**
 
 ### 9.1. Frontend
 
@@ -639,7 +814,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ---
 
-## 10. TESTING REQUIREMENTS (Chắc là không có phần này)
+## 10. TESTING REQUIREMENTS (Chắc là không có phần này) **❌ CHƯA IMPLEMENT TEST TỰ ĐỘNG**
 
 ### 10.1. Unit Tests
 
@@ -660,7 +835,7 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ---
 
-## 11. DEPLOYMENT & INFRASTRUCTURE
+## 11. DEPLOYMENT & INFRASTRUCTURE **❌ ĐANG CHẠY LOCAL/DEV, CHƯA CÓ HẠ TẦNG TRIỂN KHAI CHUẨN**
 
 ### 11.1. Environment
 
@@ -682,9 +857,9 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 
 ---
 
-## 12. PHÂN CHIA ƯU TIÊN PHÁT TRIỂN
+## 12. PHÂN CHIA ƯU TIÊN PHÁT TRIỂN **✅ PHASE 1 HOÀN THÀNH, CÁC PHASE SAU ĐANG LÀ ROADMAP**
 
-### Phase 1: MVP (Minimum Viable Product)
+### Phase 1: MVP (Minimum Viable Product) **✅ HOÀN THÀNH**
 
 1. ✅ User authentication (Register/Login)
 2. ✅ Product listing và detail
@@ -695,32 +870,39 @@ Cho phép admin quản lý riêng trạng thái hiển thị (Visible) của s�
 7. ✅ Basic payment (COD)
 8. ✅ User profile
 
-### Phase 2: Enhanced Features
+### Phase 2: Enhanced Features **⏳ ĐANG LÀM / MỘT PHẦN**
 
-1. Advanced Filtering System: Hybrid Filter (Fixed + EAV + JSONB), Precomputed Filter Table, Dynamic filter options, Filter counts và suggestions
-2. Advanced Search: Dictionary-based query parsing, Autocomplete với suggestions, Search analytics, Search refinements
-3. Payment gateway integration (VNPay, Momo)
-4. Product reviews
-5. Wishlist
-6. Email notifications
+**Các mục đã hoàn thành trong Phase 2 (admin):**
+- ✅ M1: Quản lý Biến thể Sản phẩm (Product Variants)
+- ✅ M2: Quản lý Hình ảnh Sản phẩm (Product Images)
+- ✅ M5: Quản lý Sản phẩm trong Bộ sưu tập (Collection Products)
+- ✅ M6: Quản lý Chi tiết Đơn hàng (Order Items)
+- ✅ M9: Trang quản lý Yêu cầu Trả hàng (Return Requests)
 
-### Phase 3: Admin Panel
+1. ⏳ Advanced Filtering System: Hybrid Filter (Fixed + EAV + JSONB), Precomputed Filter Table, Dynamic filter options, Filter counts và suggestions — mới có filter cố định (category/price/size/color); chưa có EAV/hybrid/precomputed.
+2. ⏳ Advanced Search: Dictionary-based query parsing, Autocomplete với suggestions, Search analytics, Search refinements — autocomplete/gợi ý đã có; parser/analytics/refinements chưa đủ.
+3. ⏳ Payment gateway integration (VNPay, Momo) — VNPay cơ bản đã tích hợp; Momo chưa.
+4. ✅ Product reviews.
+5. ✅ Wishlist.
+6. ⏳ Email notifications — mới ở mức cơ bản cho đơn hàng; promo/in-app chưa đầy đủ.
 
-1. Admin dashboard
-2. Product management
-3. Order management
-4. User management
+### Phase 3: Admin Panel **⏳ ĐANG LÀM / MỘT PHẦN**
 
-### Phase 4: Advanced Features
+1. ⏳ Admin dashboard — đã có dashboard cơ bản.
+2. ✅ Product management.
+3. ✅ Order management (cơ bản).
+4. ✅ User management.
 
-1. Coupon system
-2. Advanced analytics
-3. Multi-language support (nếu cần)
-4. Mobile app (nếu cần)
+### Phase 4: Advanced Features **❌ CHƯA THỰC HIỆN**
+
+1. Coupon system.
+2. Advanced analytics.
+3. Multi-language support (nếu cần).
+4. Mobile app (nếu cần).
 
 ---
 
-## 13. MÔ HÌNH LỌC VÀ TÌM KIẾM - CHI TIẾT KỸ THUẬT
+## 13. MÔ HÌNH LỌC VÀ TÌM KIẾM - CHI TIẾT KỸ THUẬT **❌ CHƯA TRIỂN KHAI, TÀI LIỆU ĐỊNH HƯỚNG**
 
 ### 13.1. Hybrid Filter System (Fixed + EAV + Variant + JSONB)
 
@@ -1049,7 +1231,7 @@ function useProductFilters() {
 
 ---
 
-## 14. DATABASE SCHEMA & ERD
+## 14. DATABASE SCHEMA & ERD **✅ ĐÃ ÁP DỤNG (PostgreSQL + JPA/Hibernate)**
 
 ### 14.1. Tổng quan
 

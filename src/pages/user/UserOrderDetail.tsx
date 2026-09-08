@@ -3,6 +3,17 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { orderService } from '../../services/orderService';
 import { returnService } from '../../services/returnService';
 import type { OrderResponse } from '../../types/order';
+import {
+  FileText,
+  CheckCircle,
+  Package,
+  Truck,
+  Home,
+  XCircle,
+  AlertCircle,
+  Check,
+  RotateCcw
+} from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Chờ duyệt',
@@ -54,6 +65,8 @@ const UserOrderDetailPage = () => {
   const [evidenceInput, setEvidenceInput] = useState('');
   const [returnQuantities, setReturnQuantities] = useState<Record<number, number>>({});
   const [returnRequested, setReturnRequested] = useState(false);
+  const [repaying, setRepaying] = useState(false);
+  const [changingMethod, setChangingMethod] = useState(false);
 
   useEffect(() => {
     if (!orderNumber) return;
@@ -156,6 +169,42 @@ const UserOrderDetailPage = () => {
     }
   };
 
+  const handleRepay = async () => {
+    if (!orderNumber) return;
+    try {
+      setRepaying(true);
+      const updated = await orderService.repay(orderNumber);
+      if (updated.paymentUrl) {
+        window.location.href = updated.paymentUrl;
+      } else {
+        setOrder(updated);
+        setActionMessage('Đã tạo liên kết thanh toán mới.');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể thực hiện thanh toán lại.';
+      setActionMessage(message);
+    } finally {
+      setRepaying(false);
+    }
+  };
+
+  const handleChangeToCOD = async () => {
+    if (!orderNumber) return;
+    const confirmed = window.confirm('Bạn muốn đổi sang thanh toán khi nhận hàng (COD)?');
+    if (!confirmed) return;
+    try {
+      setChangingMethod(true);
+      const updated = await orderService.changePaymentMethod(orderNumber, 'COD');
+      setOrder(updated);
+      setActionMessage('Đã đổi sang phương thức COD.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể đổi phương thức thanh toán.';
+      setActionMessage(message);
+    } finally {
+      setChangingMethod(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -207,15 +256,15 @@ const UserOrderDetailPage = () => {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {canCancel && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    disabled={cancelling}
-                    className="inline-flex items-center justify-center rounded-full border border-[var(--error)] px-4 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--error)] px-4 py-2 text-sm font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
+                    </button>
                   </div>
                 )}
                 {canRequestReturn && (
@@ -227,9 +276,200 @@ const UserOrderDetailPage = () => {
                     Yêu cầu đổi trả
                   </button>
                 )}
+                {order.status === 'PENDING' && order.paymentMethod === 'VNPAY' && order.paymentStatus === 'PENDING' && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleRepay}
+                      disabled={repaying || cancelling}
+                      className="inline-flex items-center justify-center rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-60"
+                    >
+                      {repaying ? 'Đang xử lý...' : 'Thanh toán lại'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleChangeToCOD}
+                      disabled={changingMethod || cancelling}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors disabled:opacity-60"
+                    >
+                      {changingMethod ? 'Đang đổi...' : 'Đổi sang COD'}
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigate('/orders', { state: { statusFilter: order.status } })}
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                >
+                  Xem các đơn khác cùng trạng thái →
+                </button>
                 {actionMessage && <span className="text-xs text-[var(--muted-foreground)]">{actionMessage}</span>}
               </div>
             </header>
+
+            {/* Status Timeline */}
+            <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm overflow-hidden">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-6">
+                Trạng thái đơn hàng
+              </h2>
+
+              {/* CANCELLED / REFUNDED / RETURN State */}
+              {(order.status === 'CANCELLED' || order.status === 'REFUNDED' || order.status.startsWith('RETURN')) ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 bg-[var(--muted)]/20 rounded-xl border border-[var(--border)] border-dashed">
+                  {order.status === 'CANCELLED' ? (
+                    <XCircle className="w-12 h-12 text-[var(--error)]" />
+                  ) : order.status === 'REFUNDED' ? (
+                    <RotateCcw className="w-12 h-12 text-[var(--success)]" />
+                  ) : (
+                    <AlertCircle className="w-12 h-12 text-[var(--warning)]" />
+                  )}
+                  <div>
+                    <h3 className={`text-lg font-bold ${order.status === 'CANCELLED' ? 'text-[var(--error)]' :
+                      order.status === 'REFUNDED' ? 'text-[var(--primary)]' : 'text-[var(--warning)]'
+                      }`}>
+                      {STATUS_LABEL[order.status]}
+                    </h3>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {order.status === 'CANCELLED' ? 'Đơn hàng này đã bị hủy.' :
+                        order.status === 'REFUNDED' ? 'Đơn hàng đã được hoàn tiền.' :
+                          'Đơn hàng đang trong quy trình đổi trả.'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Stepper for Standard Flow */
+                <div className="relative">
+                  {/* Desktop Connecting Line (Absolute) */}
+                  <div className="hidden md:block absolute top-[22px] left-0 right-0 h-[2px] bg-[var(--border)] z-0" />
+
+                  {/* Steps */}
+                  <div className="flex flex-col md:flex-row justify-between relative z-10 gap-6 md:gap-0">
+                    {[
+                      { key: 'PENDING', label: 'Đặt hàng', icon: FileText },
+                      { key: 'CONFIRMED', label: 'Đã xác nhận', icon: CheckCircle },
+                      { key: 'PROCESSING', label: 'Đang xử lý', icon: Package },
+                      { key: 'SHIPPING', label: 'Đang giao', icon: Truck },
+                      { key: 'DELIVERED', label: 'Đã giao', icon: Home },
+                    ].map((step, index, arr) => {
+                      // Determine state
+                      const statusOrder = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPING', 'DELIVERED'];
+                      const currentStatusIdx = statusOrder.indexOf(order.status);
+                      const stepIdx = statusOrder.indexOf(step.key);
+
+                      const isCompleted = currentStatusIdx > stepIdx;
+                      const isActive = currentStatusIdx === stepIdx;
+
+                      // Line Color Logic (for visual progress bar effect, requires complex css or just static line behind)
+                      // Simply using the static line background above for now.
+
+                      return (
+                        <div key={step.key} className="flex flex-row md:flex-col items-center gap-4 md:gap-2 flex-1 relative group">
+
+                          {/* Vertical Connector for Mobile */}
+                          {index !== arr.length - 1 && (
+                            <div className={`md:hidden absolute left-[22px] top-[44px] bottom-[-24px] w-[2px] ${isCompleted ? 'bg-[var(--success)]' : 'bg-[var(--border)]'
+                              }`} />
+                          )}
+
+                          {/* Icon Circle */}
+                          <div
+                            className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all duration-300 ${isCompleted || isActive
+                              ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/20'
+                              : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)]'
+                              }`}
+                          >
+                            {isCompleted ? <Check className="w-6 h-6" /> : <step.icon className="w-5 h-5" />}
+                          </div>
+
+                          {/* Text Info */}
+                          <div className={`text-left md:text-center transition-colors duration-300 ${isActive ? 'scale-105 origin-left md:origin-center' : ''}`}>
+                            <p className={`text-sm font-bold ${isActive ? 'text-[var(--primary)]' :
+                              isCompleted ? 'text-[var(--foreground)]' : 'text-[var(--muted-foreground)]'
+                              }`}>
+                              {step.label}
+                            </p>
+                            <p className="text-[10px] md:text-xs text-[var(--muted-foreground)] hidden sm:block">
+                              {isActive ? 'Đang thực hiện' : isCompleted ? 'Hoàn tất' : 'Chờ xử lý'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Shipping Address & Payment Info */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {order.shippingAddress && (
+                <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-3">
+                    Địa chỉ giao hàng
+                  </h2>
+                  <p className="text-sm text-[var(--foreground)] whitespace-pre-line">
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(order.shippingAddress);
+                        if (typeof parsed === 'object' && parsed !== null) {
+                          return [
+                            parsed.fullName,
+                            parsed.phone,
+                            parsed.address,
+                            parsed.ward && parsed.district && parsed.city
+                              ? `${parsed.ward}, ${parsed.district}, ${parsed.city}`
+                              : parsed.city || parsed.district || parsed.ward,
+                          ]
+                            .filter(Boolean)
+                            .join('\n');
+                        }
+                      } catch {
+                        // Not JSON, return as-is
+                      }
+                      return order.shippingAddress;
+                    })()}
+                  </p>
+                </div>
+              )}
+              <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)] mb-3">
+                  Phương thức thanh toán
+                </h2>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Phương thức</span>
+                    <span className="font-medium">
+                      {order.paymentMethod === 'COD'
+                        ? 'Thanh toán khi nhận hàng (COD)'
+                        : order.paymentMethod === 'VNPAY'
+                          ? 'VNPay'
+                          : order.paymentMethod === 'MOMO'
+                            ? 'MoMo'
+                            : order.paymentMethod}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Trạng thái</span>
+                    <span
+                      className={`font-medium ${order.paymentStatus === 'PAID'
+                        ? 'text-[var(--success)]'
+                        : order.paymentStatus === 'FAILED'
+                          ? 'text-[var(--error)]'
+                          : 'text-[var(--warning)]'
+                        }`}
+                    >
+                      {order.paymentStatus === 'PAID'
+                        ? 'Đã thanh toán'
+                        : order.paymentStatus === 'FAILED'
+                          ? 'Thanh toán thất bại'
+                          : order.paymentStatus === 'PENDING'
+                            ? 'Chờ thanh toán'
+                            : order.paymentStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Tracking Info */}
             {(order.status === 'SHIPPING' || order.status === 'DELIVERED') && order.trackingNumber && (

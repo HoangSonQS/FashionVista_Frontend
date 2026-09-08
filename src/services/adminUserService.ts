@@ -1,4 +1,5 @@
 import { axiosClient } from './axiosClient';
+// Force update
 
 export interface AdminUserListResponse {
   id: number;
@@ -37,9 +38,22 @@ export interface UpdateUserRoleRequest {
   role: string;
 }
 
+export interface CreateUserRequest {
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  role: 'ADMIN' | 'STAFF' | 'CUSTOMER';
+  password?: string;
+}
+
 export const adminUserService = {
   async getAllUsers(params: AdminUserListParams): Promise<AdminUserListPage> {
     const response = await axiosClient.get<AdminUserListPage>('/admin/users', { params });
+    return response.data;
+  },
+
+  async createUser(request: CreateUserRequest): Promise<AdminUserListResponse> {
+    const response = await axiosClient.post<AdminUserListResponse>('/admin/users', request);
     return response.data;
   },
 
@@ -68,8 +82,8 @@ export const adminUserService = {
     return response.data;
   },
 
-  async resetPassword(userId: number, request: { sendEmail?: boolean }): Promise<{ temporaryPassword: string; emailSent: boolean }> {
-    const response = await axiosClient.post<{ temporaryPassword: string; emailSent: boolean }>(`/admin/users/${userId}/reset-password`, request);
+  async resetPassword(userId: number, request: { newPassword?: string }): Promise<{ password: string; emailSent: boolean }> {
+    const response = await axiosClient.post<{ password: string; emailSent: boolean }>(`/admin/users/${userId}/reset-password`, request);
     return response.data;
   },
 
